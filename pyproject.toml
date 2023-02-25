@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "nvidia-modulus.sym"
+version = "23.03.0-alpha"
+description = "A deep learning framework for AI-driven multi-physics systems"
+readme = "README.md"
+authors = ["NVIDIA Modulus Team"]
+packages = [ { include="modulus" }, ]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4"
+black = "22.6.0"
+chaospy = "^4.3.7"
+click = "8.0.4"
+Cython = "0.29.28"
+einops = "0.4.1"
+future = "0.18.2"
+h5py = "3.6.0"
+hydra-core = "1.1.1"
+matplotlib = "3.5.1"
+numpy = "1.22.3"
+numpy-stl = "2.16.3"
+omegaconf = "2.1.1"
+opencv-python = "4.5.5.64"
+pytest = "7.1.1"
+scikit-learn = "1.0.2"
+setuptools = "65.6.3"
+symengine = "0.6.1"
+sympy = "1.5.1"
+termcolor = "1.1.0"
+timm = "0.5.4"
+torch-optimizer = "0.3.0"
+transforms3d = "0.3.1"
+typing = "3.7.4.3"
+vtk = "9.1.0"
+pillow = "9.3.0"
+notebook= "6.4.12"
+mistune = "2.0.3"
+torch = "1.13.1"
+functorch = "1.13.1"
+pint = "0.19.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.setuptools.packages.find]
+include = ["modulus.*"]

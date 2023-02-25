@@ -1,0 +1,2 @@
+This docker image contains many open source packages preinstalled. For a complete list of these packages and their license see `oss_licenses.txt'. The list of software installed and licenses can also be generated as a text file with the command `pip-licenses --format=plain-vertical --with-license-file --no-license-path --format=json > all_licenses.txt`. This will return the license for all packages.
+

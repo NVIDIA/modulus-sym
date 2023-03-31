@@ -152,9 +152,9 @@ class DeepONetArch(Arch):
         trunk_output = self.trunk_net._tensor_forward(trunk_x)
 
         # Convert ouputs into 1D feature vectors
-        if functorch._C.is_gradtrackingtensor(
+        if torch._C._functorch.is_gradtrackingtensor(
             trunk_output
-        ) or functorch._C.is_batchedtensor(trunk_output):
+        ) or torch._C._functorch.is_batchedtensor(trunk_output):
             # batched tensor does not have the original shape
             branch_output = branch_output.view(-1)
             trunk_output = trunk_output.view(-1)

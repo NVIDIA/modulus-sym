@@ -101,8 +101,8 @@ def main(config_path: str, config_name: str = "config"):
                 args_parser = get_args_parser()
                 args = args_parser.parse_args()
                 # multiple times (--multirun)
-                # Needs update for 1.2.0
                 _run_hydra(
+                    args=args_parser.parse_args(),
                     args_parser=args_parser,
                     task_function=func,
                     config_path=config_path,

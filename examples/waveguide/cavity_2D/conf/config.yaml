@@ -1,0 +1,22 @@
+defaults :
+  - modulus_default
+  - arch:
+      - modified_fourier
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 5000
+
+training:
+  rec_results_freq: 5000
+  max_steps : 500000
+
+batch_size:
+  PEC: 400
+  Waveguide_port: 200
+  ABC: 200
+  Interior: 4000

@@ -1,0 +1,36 @@
+defaults :
+  - modulus_default
+  - arch:
+      - fourier
+  - optimizer : adam
+  - scheduler : tf_exponential_lr
+  - loss : custom-aggregator
+  - _self_
+
+jit : false
+scheduler : 
+  decay_rate : 0.95
+  decay_steps : 8000
+
+network_dir : "network_checkpoint"
+initialization_network_dir : ""
+save_filetypes : "vtk,npz"
+
+cuda_graphs : False
+
+optimizer: 
+  lr : 1e-4
+
+training:
+  rec_validation_freq: 1000
+  rec_inference_freq: 1000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 1000
+  max_steps : 400000
+
+batch_size:
+  wf_pt: 512
+  interior: 2048 
+  inlet: 256
+  outlet: 256
+  interior_init: 2048

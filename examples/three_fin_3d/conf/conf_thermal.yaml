@@ -1,0 +1,39 @@
+defaults :
+  - modulus_default
+  - arch:
+      - fully_connected
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+run_mode: "train"
+
+custom:
+  parameterized: true
+  turbulent: true
+  num_samples: 3
+
+network_dir : "./"
+initialization_network_dir : "../three_fin_flow"
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 10000
+
+training:
+  rec_validation_freq: 1000
+  rec_inference_freq: 10000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 2000
+  max_steps : 1500000
+
+batch_size:
+  Inlet: 500
+  Outlet: 500
+  ChannelWalls: 500
+  SolidInterface: 500
+  HeatSource: 5000
+  InteriorLR: 1000
+  InteriorHR: 1000
+  SolidInterior: 1000

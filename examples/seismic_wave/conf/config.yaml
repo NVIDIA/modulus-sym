@@ -1,0 +1,32 @@
+defaults :
+  - modulus_default
+  - arch:
+      - fully_connected
+  - scheduler: exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+summary_histograms: true
+jit : true
+save_filetypes : "vtk"
+
+arch:
+  fully_connected:
+    layer_size: 256
+
+scheduler:
+  gamma: 0.99998718
+
+optimizer:
+  lr: 3.e-4
+  betas: [0.9, 0.999]
+
+training:
+  rec_validation_freq: 1000
+  rec_inference_freq: 1000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 2000
+  max_steps: 40000
+
+

@@ -1,0 +1,34 @@
+defaults :
+  - modulus_default
+  - /arch/fully_connected_cfg@arch.branch
+  - /arch/fourier_cfg@arch.trunk
+  - /arch/deeponet_cfg@arch.deeponet
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+arch:
+  branch:
+    nr_layers: 4
+    layer_size: 128
+  trunk:
+    frequencies: "('axis', [i for i in range(5)])"
+    nr_layers: 4
+    layer_size: 128
+  deeponet:
+    output_keys: u
+
+scheduler:
+  decay_rate: 0.9
+  decay_steps: 100
+
+training:
+  rec_validation_freq: 1000
+  max_steps : 10000
+
+batch_size:
+  train: 10000
+  validation: 100
+
+save_filetypes : "np"

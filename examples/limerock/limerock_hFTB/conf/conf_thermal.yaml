@@ -1,0 +1,33 @@
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum 
+  - _self_
+
+network_dir : "network_checkpoint"
+initialization_network_dir : "../limerock_flow/network_checkpoint"
+
+optimizer:
+  lr: 0.001
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1500
+
+training:
+  rec_validation_freq: 20000
+  rec_inference_freq: 1000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 5000
+  max_steps : 150000
+
+batch_size:
+  inlet: 250
+  outlet: 250
+  no_slip: 1000
+  lr_interior_f: 2450
+  hr_interior_f: 3450
+  interior_s: 1400
+  interface: 8500
+  base: 350

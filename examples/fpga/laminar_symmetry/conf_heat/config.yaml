@@ -1,0 +1,40 @@
+defaults:
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+scheduler: 
+  decay_rate: 0.95
+  decay_steps: 4000             
+
+optimizer:
+  lr: 1e-3                      
+
+training:
+  rec_validation_freq: 1000
+  rec_inference_freq: 2000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 2000
+  max_steps: 400000             
+
+custom:
+  arch: "FourierNetArch"
+
+network_dir: "network_checkpoint_heat"
+initialization_network_dir: "../fpga_flow/network_checkpoint_flow"
+save_filetypes: "vtk"
+
+batch_size:
+  inlet: 280
+  outlet: 280
+  channel_walls: 5000 
+  symmetry_fluid: 2500 
+  symmetry_solid: 500 
+  fluid_solid_interface: 5000  
+  heat_source: 1600
+  lr_flow_interior: 1250
+  hr_flow_interior: 1250
+  solid_interior: 1500
+

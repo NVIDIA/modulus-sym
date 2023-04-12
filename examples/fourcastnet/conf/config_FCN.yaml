@@ -1,0 +1,49 @@
+defaults :
+  - modulus_default
+  - arch:
+      - afno
+  - scheduler: cosine_annealing
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+arch:
+  afno:
+    patch_size: 8
+    embed_dim: 768
+    depth: 12
+    num_blocks: 8
+
+optimizer:
+  lr: 0.0005
+
+scheduler:
+  T_max: 80000
+
+custom:
+  n_channels: 20
+  tstep: 1
+  n_tsteps: 1
+  train_dataset:
+    kind: "default"
+    data_path: "/era5/ngc_era5_data/train" # Training dataset path here
+  test_dataset:
+    kind: "default"
+    data_path: "/era5/ngc_era5_data/test" # Test dataset path here
+  num_workers:
+    grid: 8
+    validation: 8
+  tag:
+
+batch_size:
+  grid: 2
+  validation: 2
+
+training:
+  amp: true
+  rec_constraint_freq: 100000 # Dont bother recording constraint here
+  rec_results_freq : 5000
+  save_network_freq: 5000
+  print_stats_freq: 100
+  summary_freq: 5000
+  max_steps : 70000 # 80 epochs * (55k samples / 64 batch size)

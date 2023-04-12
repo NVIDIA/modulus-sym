@@ -1,0 +1,31 @@
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+initialization_network_dir: "../chip_2d_solid_fluid_heat_transfer_flow"
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+
+optimizer:
+  lr: 1e-4
+
+training:
+  rec_results_freq : 1000
+  rec_constraint_freq: 1000
+  max_steps : 150000
+
+batch_size:
+  inlet: 200
+  outlet: 200
+  walls: 1000
+  interior_lr: 2500
+  interior_hr: 2500
+  interiorS: 3000
+  heat_source: 400
+  interface: 400
+  chip_walls: 400

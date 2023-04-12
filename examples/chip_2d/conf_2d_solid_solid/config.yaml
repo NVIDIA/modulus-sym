@@ -1,0 +1,26 @@
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+
+training:
+  rec_results_freq : 1000
+  rec_constraint_freq: 1000
+  max_steps : 100000
+
+batch_size:
+  inlet: 200
+  outlet: 200
+  walls: 1000
+  interior_lr: 2000
+  interior_hr: 2000
+  interiorS: 1000
+  heat_source: 100
+  interface: 400
+  chip_walls: 100

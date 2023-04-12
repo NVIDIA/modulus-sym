@@ -1,0 +1,38 @@
+defaults :
+  - modulus_default
+  - /arch/pix2pix_cfg@arch.branch
+  - /arch/fourier_cfg@arch.trunk
+  - /arch/deeponet_cfg@arch.deeponet
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+arch:
+  branch:
+    input_keys: [coeff]
+    output_keys: [branch]
+    dimension: 2
+    conv_layer_size: 32
+  trunk:
+    input_keys: [x, y]
+    output_keys: ['trunk', 256]
+    frequencies: "('axis', [i for i in range(5)])"
+    nr_layers: 4
+    layer_size: 128
+  deeponet:
+    output_keys: sol
+    branch_dim: 1024
+
+scheduler:
+  decay_rate: 0.9
+  decay_steps: 2000
+
+training:
+  rec_validation_freq: 1000
+  max_steps : 100000
+
+batch_size:
+  train: 1000
+
+save_filetypes : "np"

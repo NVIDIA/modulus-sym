@@ -1,0 +1,61 @@
+# This script allows you to try various combinations of Modulus
+# features by changing only this config.yaml file. For best
+# performance, we recommend the below defaults for each architecture.
+# You can modify them by editing the  correponding entries in this 
+# file
+# Arch	                        Start Lr	Max Steps	Decay Steps 
+# FullyConnectedArch	        1.00E-03	800000	        8000
+# FourierNetArch                1.00E-03	400000	        4000
+# ModifiedFourierNetArch	1.00E-03	400000	        4000
+# SirenArch                     2.00E-05	500000	        5000
+# DGMArch                       1.00E-03        800000          8000
+
+# IMPORTANT: Please ensure you use the same network architecture and configs 
+# for flow and heat. A mismatch will cause errors in initialization of the 
+# flow checkpoint/solution. 
+
+# WARNING: Setting "exact_continuity" to true or setting the arch
+# as "ModifiedFourierNetArch" increases the memory requirements of the 
+# problem. Batchsizes may need to be reduced for such cases.  
+
+
+defaults:
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+scheduler: 
+  decay_rate: 0.95
+  decay_steps: 8000             # Change this based on arch chosen
+
+optimizer:
+  lr: 1e-3                      # Change this based on arch chosen
+
+training:
+  rec_validation_freq: 1000
+  rec_inference_freq: 2000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 2000
+  max_steps: 800000             # Change this based on arch chosen
+
+custom:
+  arch: "FullyConnectedArch"
+  exact_continuity: false
+  quasirandom: false
+  adaptive_activations: false
+
+network_dir: "network_checkpoint_heat"
+initialization_network_dir: "../fpga_flow/network_checkpoint_flow"
+save_filetypes: "vtk"
+
+batch_size:
+  inlet: 560
+  outlet: 560
+  channel_walls: 10000 
+  fluid_solid_interface: 10000  
+  heat_source: 3200
+  lr_flow_interior: 2500
+  hr_flow_interior: 2500
+  solid_interior: 3000

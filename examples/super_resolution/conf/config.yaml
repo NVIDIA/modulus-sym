@@ -1,0 +1,55 @@
+defaults :
+  - modulus_default
+  - /arch/super_res_cfg@arch.super_res
+  - /arch/pix2pix_cfg@arch.pix2pix
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+jit: True
+cuda_graphs: False # Graphs does not work with super res network
+
+arch:
+  super_res:
+    scaling_factor: 4
+  pix2pix:
+    batch_norm: True
+    n_downsampling: 1
+    n_blocks: 9
+    dimension: 3
+    scaling_factor: 4
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 2000
+
+optimizer:
+  lr: 0.0001
+
+training:
+  rec_validation_freq: 250
+  rec_constraint_freq: 250
+  save_network_freq: 250
+  print_stats_freq: 25
+  max_steps : 20000
+
+batch_size:
+  train: 4
+  valid: 4
+
+custom:
+  jhtdb:
+    n_train: 512
+    n_valid: 16
+    domain_size: 128
+    access_token: "edu.jhu.pha.turbulence.testing-201311" #Replace with your own token here
+
+  loss_weights:
+    U: 1.0
+    dU: 0
+    continuity: 0
+    omega: 0.1
+    enstrophy: 0
+    strain: 0
+

@@ -1,0 +1,23 @@
+defaults :
+  - modulus_default
+  - arch:
+      - fully_connected
+  - optimizer : adam
+  - scheduler : tf_exponential_lr
+  - loss : sum
+  - _self_
+jit: false
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+
+training:
+  rec_validation_freq: 1000
+  rec_inference_freq: 1000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 1000
+  max_steps : 100000
+
+batch_size:
+  data: 1024
+

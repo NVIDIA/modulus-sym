@@ -1,0 +1,31 @@
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum 
+  - _self_
+
+network_dir : "network_checkpoint"
+initialization_network_dir : ""
+
+optimizer:
+  lr: 0.0001
+
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 10000
+
+training:
+  rec_validation_freq: 2000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 5000
+  max_steps : 1000000
+
+batch_size:
+  inlet: 256
+  outlet: 256
+  no_slip: 8192
+  lr_interior: 2048
+  hr_interior: 2048
+  integral_continuity: 8192
+  num_integral_continuity: 8

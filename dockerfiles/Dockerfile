@@ -26,9 +26,6 @@ RUN apt-get update && \
     apt-get install -y git-lfs graphviz libgl1 && \
     git lfs install
 
-# Install functorch
-RUN pip install git+https://github.com/pytorch/functorch.git
-
 # Install tiny-cuda-nn
 RUN pip install git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch
 

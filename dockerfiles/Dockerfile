@@ -35,7 +35,7 @@ RUN cd /modulus-sym/ && pip install .
 RUN rm -rf /modulus-sym/
 
 # Install pysdf
-FROM no-pysdf
+FROM no-pysdf as with-pysdf
 # Extract OptiX 7.0.0 SDK and CMake 3.18.2
 COPY ./deps/NVIDIA-OptiX-SDK-7.0.0-linux64.sh /modulus-sym/
 RUN cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.0.0-linux64.sh --skip-license --include-subdir --prefix=/root

@@ -1,3 +1,17 @@
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 "Script to carry out Fourcastnet inference"
 
 import omegaconf
@@ -117,7 +131,6 @@ sd = torch.tensor(test_dataset.sd[0]).to(device)  # shape [C, 1, 1]
 
 # run inference
 with torch.no_grad():
-
     for ic in range(0, min([8 * nics + 1, last])):
         subset = cfg.custom.tstep * np.arange(nsteps) + ic
         if (ic + 1) % 8 == 0 or (ic + 1) % 36 == 0 or ic == 0:
@@ -134,7 +147,6 @@ with torch.no_grad():
             acc_error = torch.zeros(nsteps, test_dataset.nchans)
             rmse_error = torch.zeros(nsteps, test_dataset.nchans)
             for tstep, (invar, true_outvar, _) in enumerate(dataloader):
-
                 if tstep % 10 == 0:
                     logging.info(f"ic: {ic} tstep: {tstep}/{nsteps}")
 

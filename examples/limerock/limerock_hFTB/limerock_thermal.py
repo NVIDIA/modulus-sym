@@ -1,3 +1,17 @@
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torch import Tensor
@@ -69,7 +83,7 @@ class hFTBArch(Arch):
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
         y_prev_step = self.arch_prev_step.forward(in_vars)
         y = self.arch.forward(in_vars)
-        for (key, b) in y_prev_step.items():
+        for key, b in y_prev_step.items():
             y[key + "_prev_step"] = b
         return y
 
@@ -83,7 +97,6 @@ class hFTBArch(Arch):
 
 @modulus.sym.main(config_path="conf", config_name="conf_thermal")
 def run(cfg: ModulusConfig) -> None:
-
     if DistributedManager().distributed:
         print("Multi-GPU currently not supported for this example. Exiting.")
         return

@@ -1,3 +1,17 @@
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 NOTE: run three_fin_flow and Three_fin_thermal in "eval" mode 
 after training to get the monitor values for different designs.
@@ -26,6 +40,7 @@ invar_mapping = [
     "fin_thickness_sides",
 ]
 outvar_mapping = ["pressure_drop", "peak_temp"]
+
 
 # read the monitor files, and perform a design space search
 def DesignOpt(

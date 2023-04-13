@@ -1,3 +1,17 @@
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +21,7 @@ import os
 from modulus.sym.geometry.primitives_2d import Polygon
 from modulus.sym.geometry.parameterization import Parameterization, Parameter
 from modulus.sym.utils.io.vtk import var_to_polyvtk
+
 
 # Naca implementation modified from https://stackoverflow.com/questions/31815041/plotting-a-naca-4-series-airfoil
 # https://en.wikipedia.org/wiki/NACA_airfoil#Equation_for_a_cambered_4-digit_NACA_airfoil
@@ -49,13 +64,13 @@ def naca4(x, m, p, t, c=1):
     yt = thickness(x, t, c)
     yc = camber_line(x, m, p, c)
     line = []
-    for (xi, thi, yti, yci) in zip(x, th, yt, yc):
+    for xi, thi, yti, yci in zip(x, th, yt, yc):
         line.append((xi - yti * sin(thi), yci + yti * cos(thi)))
     x.reverse()
     th.reverse()
     yt.reverse()
     yc.reverse()
-    for (xi, thi, yti, yci) in zip(x, th, yt, yc):
+    for xi, thi, yti, yci in zip(x, th, yt, yc):
         line.append((xi + yti * sin(thi), yci - yti * cos(thi)))
     return line
 

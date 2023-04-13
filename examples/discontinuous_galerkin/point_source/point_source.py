@@ -1,3 +1,17 @@
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -28,6 +42,7 @@ from modulus.sym.loss import Loss
 from sympy import Symbol
 from modulus.sym.constants import tf_dt
 
+
 # custom variational loss
 class DGLoss(Loss):
     def __init__(self):
@@ -48,7 +63,6 @@ class DGLoss(Loss):
         list_outvar,
         step: int,
     ):
-
         # calculate test function
         v_outside = self.v.eval_test("v", x=list_invar[0]["x"], y=list_invar[0]["y"])
         vx_interior = self.v.eval_test("vx", x=list_invar[1]["x"], y=list_invar[1]["y"])
@@ -82,7 +96,6 @@ class DGLoss(Loss):
 
 @modulus.sym.main(config_path="conf", config_name="config")
 def run(cfg: ModulusConfig) -> None:
-
     # make list of nodes to unroll graph on
     df = Diffusion(T="u", D=1.0, dim=2, time=False)
     dg_net = instantiate_arch(

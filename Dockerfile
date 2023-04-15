@@ -12,71 +12,49 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG PYT_VER=22.08
-FROM nvcr.io/nvidia/pytorch:$PYT_VER-py3
+ARG PYT_VER=22.12
+FROM nvcr.io/nvidia/pytorch:$PYT_VER-py3 as no-pysdf
 
-# Specify poetry version
-ENV POETRY_VERSION=1.2
+# Update pip and setuptools
+RUN pip install --upgrade pip setuptools  
 
-# Set default shell to /bin/bash
-SHELL ["/bin/bash", "-cu"]
+# Install Modulus core
+RUN pip install git+https://github.com/NVIDIA/modulus.git@main
 
 # Setup git lfs, graphviz gl1(vtk dep)
 RUN apt-get update && \
     apt-get install -y git-lfs graphviz libgl1 && \
     git lfs install
 
-# Install poetry
-RUN pip install "poetry==$POETRY_VERSION"
-
-# Cache dependencies
-COPY pyproject.toml ./
-
-# Copy files into container
-COPY . /modulus/
-
-# Extract OptiX 7.0.0 SDK and CMake 3.18.2
-RUN cd /modulus && ./NVIDIA-OptiX-SDK-7.0.0-linux64.sh --skip-license --include-subdir --prefix=/root
-RUN cd /root && \
-    wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
-    tar xvfz cmake-3.24.1-linux-x86_64.tar.gz
-
-# Build libsdf.so
-RUN mkdir /modulus/external/pysdf/build && \
-    cd /modulus/external/pysdf/build && \
-    /root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.0.0-linux64 -DCUDA_CUDA_LIBRARY="" && \
-    make -j && \
-    mkdir /modulus/external/lib && \
-    cp libpysdf.so /modulus/external/lib/
-
-ENV LD_LIBRARY_PATH="/modulus/external/lib:${LD_LIBRARY_PATH}" \
-    NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,video \
-    _CUDA_COMPAT_TIMEOUT=90
-
-# Install pysdf
-RUN cd /modulus/external/pysdf && python setup.py install
-
 # Install tiny-cuda-nn
 RUN pip install git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch
 
-# Install functorch
-# Notes about how to find the corresponding functorch commit for a PyTorch container:
-# 1. Find out the PyTorch commit of the NGC container (e.g., 1.13.0a0+d321be6), it shows on the top of the message after you log in to the container.
-# 2. Find out the date of this PyTorch commit.
-# 3. Find a functorch commit near this date, and it should build successfully.
-RUN pip install git+https://github.com/pytorch/functorch.git@8a5465a72330a2d82df577e7211d57b3cfde664e
+# Install modulus sym
+COPY . /modulus-sym/
+RUN cd /modulus-sym/ && pip install .
+RUN rm -rf /modulus-sym/
 
-# Install modulus and dependencies
-RUN cd /modulus && \
-     poetry config virtualenvs.create false && \
-     poetry install --no-interaction
+# Install pysdf
+FROM no-pysdf as with-pysdf
+# Extract OptiX 7.0.0 SDK and CMake 3.18.2
+COPY ./deps/NVIDIA-OptiX-SDK-7.0.0-linux64.sh /modulus-sym/
+RUN cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.0.0-linux64.sh --skip-license --include-subdir --prefix=/root
+RUN cd /root && \
+     wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
+     tar xvfz cmake-3.24.1-linux-x86_64.tar.gz
 
-# Copy Pysdf egg file
-RUN mkdir /modulus/external/eggs
-RUN cp -r /modulus/external/pysdf/dist/pysdf-0.1-py3.8-linux-x86_64.egg /modulus/external/eggs
+# Build libsdf.so
+COPY ./deps/external /external/
+RUN mkdir /external/pysdf/build/ && \
+	cd /external/pysdf/build && \
+	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.0.0-linux64 -DCUDA_CUDA_LIBRARY="" && \
+	make -j && \
+	mkdir /external/lib && \
+	cp libpysdf.so /external/lib/ && \
+	cd /external/pysdf && pip install .
 
-# Cleanup
-RUN rm -rf /root/NVIDIA-OptiX-SDK-7.0.0-linux64 /root/cmake-3.24.1-linux-x86_64 /modulus/external/pysdf  /modulus/.git*
-RUN rm -fv /modulus/setup.py /modulus/setup.cfg /modulus/MANIFEST.in
+ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
+     NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,video \
+    _CUDA_COMPAT_TIMEOUT=90
 
-WORKDIR /examples
+

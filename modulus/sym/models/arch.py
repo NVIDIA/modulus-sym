@@ -527,7 +527,7 @@ class Arch(nn.Module):
                         try:
                             # Try eval for python code that needs to run
                             # Such as list compression
-                            param_literal = eval(cfg[parameter.name])
+                            param_literal = ast.literal_eval(cfg[parameter.name])
                         except:
                             # Fall back... hope a string works
                             param_literal = cfg[parameter.name]

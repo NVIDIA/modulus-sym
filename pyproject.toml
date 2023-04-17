@@ -10,7 +10,7 @@ authors = [
 description = "A deep learning framework for AI-driven multi-physics systems"
 readme = "README.md"
 requires-python = ">=3.7"
-license = {text = "Apache Software License 2.0"}
+license = {text = "Apache 2.0"}
 dependencies = [
     "nvidia-modulus @ git+https://github.com/NVIDIA/modulus.git@main",
     "hydra-core>=1.2.0",

@@ -29,8 +29,8 @@ import csv
 # specify the design optimization requirements
 max_pressure_drop = 2.5
 num_design = 10
-path_flow = to_absolute_path("outputs/three_fin_flow")
-path_thermal = to_absolute_path("outputs/three_fin_thermal")
+path_flow = to_absolute_path("outputs/run_mode=eval/three_fin_flow")
+path_thermal = to_absolute_path("outputs/run_mode=eval/three_fin_thermal")
 invar_mapping = [
     "fin_height_middle",
     "fin_height_sides",

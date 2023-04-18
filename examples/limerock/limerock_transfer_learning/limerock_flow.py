@@ -157,7 +157,6 @@ def run(cfg: ModulusConfig) -> None:
     flow_domain.add_constraint(integral_continuity, "integral_continuity")
 
     print("finished generating points")
-    print(time.time() - tic)
 
     """# add inferencer data
     invar_flow_numpy = limerock.geo.sample_interior(10000, bounds=limerock.geo_bounds)

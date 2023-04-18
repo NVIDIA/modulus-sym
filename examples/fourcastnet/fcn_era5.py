@@ -15,6 +15,13 @@
 # Script to train Fourcastnet on ERA5
 # Ref: https://arxiv.org/abs/2202.11214
 
+from warnings import warn
+
+warn(
+    f"This example will be depricated soon! Please switch to the FourCastNet recipe from Modulus Launch repo.",
+    DeprecationWarning,
+)
+
 import logging
 
 import modulus.sym

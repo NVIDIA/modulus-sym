@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(akamenev): add proper license header.
-
 from typing import Iterable, List
 
 import h5py
@@ -94,7 +92,7 @@ class ERA5HDF5GridDaliIterableDataset(ERA5HDF5GridBaseDataset, IterableDataset):
             yield invar, outvar, lambda_weighting
 
     def _create_pipeline(self) -> dali.Pipeline:
-        # TODO(akamenev): make num_threads and prefetch queue configurable?
+        # TODO: make num_threads and prefetch queue configurable?
         pipe = dali.Pipeline(
             batch_size=self.batch_size,
             num_threads=2,

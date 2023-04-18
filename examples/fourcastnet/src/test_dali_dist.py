@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(akamenev): add proper license header.
-
 from pathlib import Path
 import tempfile
 from termcolor import cprint

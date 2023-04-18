@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(akamenev): add proper license header.
-
 from functools import partial
 from pathlib import Path
 import pytest
@@ -32,7 +30,7 @@ from src.dali_dataset import ERA5HDF5GridDaliIterableDataset
 from src.dataset import ERA5HDF5GridDataset
 
 
-# TODO(akamenev): hardcoded for now. Parameterize in the future.
+# TODO: hardcoded for now. Parameterize in the future.
 NUM_SAMPLES = 4
 NUM_CHANNELS = 3
 IMG_HEIGHT = 17
@@ -196,7 +194,7 @@ def test_distributed_dali_loader(data_path: Path):
 
     m = DistributedManager()
     world_size = m.world_size
-    # TODO(akamenev): temporary restriction, remove.
+    # TODO: temporary restriction, remove.
     assert (
         world_size == 2
     ), "Only 2-GPU configuration is supported for now. Please run with mpirun -np 2"

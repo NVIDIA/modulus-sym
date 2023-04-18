@@ -29,6 +29,8 @@ scheduler:
   decay_rate: 0.95
   decay_steps: 1500
 
+jit: False  
+
 training:
   rec_validation_freq: 20000
   rec_inference_freq: 1000

@@ -1,0 +1,63 @@
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+defaults :
+  - modulus_default
+  - arch:
+      - afno
+  - scheduler: cosine_annealing
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+arch:
+  afno:
+    patch_size: 8
+    embed_dim: 768
+    depth: 12
+    num_blocks: 8
+
+optimizer:
+  lr: 0.0005
+
+scheduler:
+  T_max: 80000
+
+custom:
+  n_channels: 20
+  tstep: 1
+  n_tsteps: 1
+  train_dataset:
+    kind: "default"
+    data_path: "/era5/ngc_era5_data/train" # Training dataset path here
+  test_dataset:
+    kind: "default"
+    data_path: "/era5/ngc_era5_data/test" # Test dataset path here
+  num_workers:
+    grid: 8
+    validation: 8
+  tag:
+
+batch_size:
+  grid: 2
+  validation: 2
+
+training:
+  amp: true
+  rec_constraint_freq: 100000 # Dont bother recording constraint here
+  rec_results_freq : 5000
+  save_network_freq: 5000
+  print_stats_freq: 100
+  summary_freq: 5000
+  max_steps : 70000 # 80 epochs * (55k samples / 64 batch size)

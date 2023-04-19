@@ -31,7 +31,7 @@ a Python ``ModulusConfig`` object which is used by Modulus. Consider the followi
 .. code-block:: python
     :caption: main.py
 
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import to_yaml
     from modulus.sym.hydra.config import ModulusConfig
 
@@ -126,7 +126,7 @@ The following two examples initialize the same neural network.
             - fully_connected
 
     # Python code
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import instantiate_arch
     from modulus.sym.hydra.config import ModulusConfig
 
@@ -147,7 +147,7 @@ The following two examples initialize the same neural network.
     :caption: Explicit model intialization
 
     # Python code
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra.config import ModulusConfig
     from modulus.sym.models.fully_connected import FullyConnectedArch
 
@@ -202,7 +202,7 @@ Examples
 
 
     # Python code
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import instantiate_arch
     from modulus.sym.hydra.config import ModulusConfig
 
@@ -229,7 +229,7 @@ Examples
 
 
     # Python code
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import instantiate_arch
     from modulus.sym.hydra.config import ModulusConfig
 
@@ -399,7 +399,7 @@ Changing a activation function is straight forward using the ``instantiate_arch`
     :caption: Initializing a fully-connect model with Tanh activation functions
 
     # Python code
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import instantiate_arch
     from modulus.sym.hydra.config import ModulusConfig
     from modulus.sym.models.layers import Activation
@@ -463,7 +463,7 @@ Here the ``arch_schema`` config group is used to access an architecture's struct
     :caption: Initialization of two custom architectures
 
     # Python code
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import instantiate_arch
     from modulus.sym.hydra.config import ModulusConfig
 

@@ -54,7 +54,7 @@ Below, a simple boundary condition definition is shown. Here the problem is tryi
     import numpy as np
     from sympy import Symbol, Function, Number, pi, sin
     
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import to_absolute_path, ModulusConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
@@ -131,7 +131,7 @@ Below, a simple interior constraint definition is shown.
     import numpy as np
     from sympy import Symbol, Function, Number, pi, sin
     
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import to_absolute_path, ModulusConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
@@ -235,7 +235,7 @@ Below, a simple integral constraint definition is shown.
     import numpy as np
     from sympy import Symbol, Function, Number, pi, sin
     
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import to_absolute_path, ModulusConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
@@ -307,7 +307,7 @@ Below, a simple supervised grid constraint definition is shown.
 .. code-block:: python
     :caption: Supervised Grid Constraint from the Darcy flow example
 
-    import modulus
+    import modulus.sym
     from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
     from modulus.sym.key import Key
     

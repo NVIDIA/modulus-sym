@@ -510,7 +510,7 @@ class Arch(nn.Module):
             cfg["detach_keys"] = Key.convert_config(cfg["detach_keys"])
 
         # Activation functions
-        if "activation_fn" in cfg:
+        if "activation_fn" in cfg and isinstance(cfg["activation_fn"], str):
             cfg["activation_fn"] = Activation[cfg["activation_fn"]]
 
         params = {}

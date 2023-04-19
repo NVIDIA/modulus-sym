@@ -85,8 +85,8 @@ class StopCriterion:
         """
 
         if self.check_freqs:
-            self.check_frequencies(metric_dict)
-        score = self.get_score(metric_dict, self.target_key)
+            self._check_frequencies(metric_dict)
+        score = self._get_score(metric_dict, self.target_key)
         if self.best_score is None:
             self.best_score = score
         elif self.mode_op(self.best_score + self.min_delta, score):

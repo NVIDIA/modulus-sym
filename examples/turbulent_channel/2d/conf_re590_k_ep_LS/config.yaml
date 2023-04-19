@@ -1,0 +1,50 @@
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+defaults :
+  - modulus_default
+  - arch:
+      - fourier
+  - optimizer : adam
+  - scheduler : tf_exponential_lr
+  - loss : custom-aggregator
+  - _self_
+
+jit : false
+scheduler : 
+  decay_rate : 0.95
+  decay_steps : 8000
+
+network_dir : "network_checkpoint"
+initialization_network_dir : ""
+save_filetypes : "vtk,npz"
+
+cuda_graphs : False
+
+optimizer: 
+  lr : 1e-4
+
+training:
+  rec_validation_freq: 1000
+  rec_inference_freq: 1000
+  rec_monitor_freq: 1000
+  rec_constraint_freq: 1000
+  max_steps : 400000
+
+batch_size:
+  wf_pt: 512
+  interior: 2048 
+  inlet: 256
+  outlet: 256
+  interior_init: 2048

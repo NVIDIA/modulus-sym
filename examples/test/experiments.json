@@ -1,0 +1,389 @@
+{
+    "experiments": {
+        "aneurysm": {
+            "path": "../aneurysm/",
+            "run_cmd": "python aneurysm.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "annular_ring": {
+            "path": "../annular_ring/annular_ring/",
+            "run_cmd": "python annular_ring.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "annular_ring_gradient_enhanced": {
+            "path": "../annular_ring/annular_ring_gradient_enhanced/",
+            "run_cmd": "python annular_ring_gradient_enhanced.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "annular_ring_hardBC": {
+            "path": "../annular_ring/annular_ring_hardBC/",
+            "run_cmd": "python annular_ring_hardBC.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "annular_ring_parameterized": {
+            "path": "../annular_ring/annular_ring_parameterized/",
+            "run_cmd": "python annular_ring_parameterized.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "bracket": {
+            "path": "../bracket/",
+            "run_cmd": "python bracket.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "chip_2d": {
+            "path": "../chip_2d/",
+            "run_cmd": "python chip_2d.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "chip_2d_solid_fluid_flow": {
+            "path": "../chip_2d/",
+            "run_cmd": "python chip_2d_solid_fluid_heat_transfer_flow.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "chip_2d_solid_fluid_heat": {
+            "path": "../chip_2d/",
+            "run_cmd": "python chip_2d_solid_fluid_heat_transfer_heat.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "chip_2d_solid_solid_heat": {
+            "path": "../chip_2d/",
+            "run_cmd": "python chip_2d_solid_solid_heat_transfer.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "cylinder_2d": {
+            "path": "../cylinder/",
+            "run_cmd": "python cylinder_2d.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "darcy_AFNO": {
+            "path": "../darcy/",
+            "run_cmd": "python darcy_AFNO.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "darcy_DeepO": {
+            "path": "../darcy/",
+            "run_cmd": "python darcy_DeepO.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "darcy_FNO": {
+            "path": "../darcy/",
+            "run_cmd": "python darcy_FNO.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "darcy_FNO_lazy": {
+            "path": "../darcy/",
+            "run_cmd": "python darcy_FNO_lazy.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "darcy_PINO": {
+            "path": "../darcy/",
+            "run_cmd": "python darcy_PINO.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "discontinuous_galerkin": {
+            "path": "../discontinuous_galerkin/dg/",
+            "run_cmd": "python dg.py",
+            "tags": [
+            "first",
+            "unit"
+            ]
+        },
+        "fourcastnet_dali_loader_unit_tests": {
+            "path": "../fourcastnet/",
+            "run_cmd": "pytest .",
+            "tags": [
+            "unit"
+            ]
+        },
+        "fpga_flow_laminar": {
+            "path": "../fpga/laminar/",
+            "run_cmd": "python fpga_flow.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "fpga_flow_laminar_sym": {
+            "path": "../fpga/laminar_symmetry/",
+            "run_cmd": "python fpga_flow.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "fpga_flow_turb": {
+            "path": "../fpga/turbulent/",
+            "run_cmd": "python fpga_flow.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "fpga_heat_laminar": {
+            "path": "../fpga/laminar/",
+            "run_cmd": "python fpga_heat.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "fpga_heat_laminar_sym": {
+            "path": "../fpga/laminar_symmetry/",
+            "run_cmd": "python fpga_heat.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "fpga_heat_turb": {
+            "path": "../fpga/turbulent/",
+            "run_cmd": "python fpga_heat.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "helmholtz": {
+            "path": "../helmholtz/",
+            "run_cmd": "python helmholtz.py",
+            "tags": [
+            "first",
+            "unit"
+            ]
+        },
+        "helmholtz_hardBC": {
+            "path": "../helmholtz/",
+            "run_cmd": "python helmholtz_hardBC.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "helmholtz_ntk": {
+            "path": "../helmholtz/",
+            "run_cmd": "python helmholtz_ntk.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "ldc_2d": {
+            "path": "../ldc/",
+            "run_cmd": "python ldc_2d.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "ldc_2d_importance_sampling": {
+            "path": "../ldc/",
+            "run_cmd": "python ldc_2d_importance_sampling.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "ldc_2d_zeroEq": {
+            "path": "../ldc/",
+            "run_cmd": "python ldc_2d_zeroEq.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "panel": {
+            "path": "../fuselage_panel/",
+            "run_cmd": "python panel.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "deepo_anti_derivative_physics": {
+            "path": "../anti_derivative",
+            "run_cmd": "python physics_informed.py",
+            "tags": [
+            "first",
+            "unit"
+            ]
+        },
+        "deepo_anti_derivative_data": {
+            "path": "../anti_derivative",
+            "run_cmd": "python data_informed.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "plane_displacement": {
+            "path": "../plane_displacement/",
+            "run_cmd": "python plane_displacement.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "point_source": {
+            "path": "../discontinuous_galerkin/point_source/",
+            "run_cmd": "python point_source.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "slab_2D": {
+            "path": "../waveguide/slab_2D/",
+            "run_cmd": "python slab_2D.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "slab_3D": {
+            "path": "../waveguide/slab_3D/",
+            "run_cmd": "python slab_3D.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "sphere": {
+            "path": "../surface_pde/sphere/",
+            "run_cmd": "python sphere.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "spring_mass_solver": {
+            "path": "../ode_spring_mass/",
+            "run_cmd": "python spring_mass_solver.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "taylor_green": {
+            "path": "../taylor_green/",
+            "run_cmd": "python taylor_green.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "three_fin_2d": {
+            "path": "../three_fin_2d/",
+            "run_cmd": "python heat_sink.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "three_fin_2d_inverse": {
+            "path": "../three_fin_2d/",
+            "run_cmd": "python heat_sink_inverse.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "three_fin_flow": {
+            "path": "../three_fin_3d/",
+            "run_cmd": "python three_fin_flow.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "three_fin_thermal": {
+            "path": "../three_fin_3d/",
+            "run_cmd": "python three_fin_thermal.py",
+            "tags": [
+            "second"
+            ]
+        },
+        "turbulent_channel_lookup": {
+            "path": "../turbulent_channel/2d_std_wf/",
+            "run_cmd": "python u_tau_lookup.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "turbulent_channel_k_ep": {
+            "path": "../turbulent_channel/2d_std_wf/",
+            "run_cmd": "python re590_k_ep.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "turbulent_channel_k_ep_LS": {
+            "path": "../turbulent_channel/2d/",
+            "run_cmd": "python re590_k_ep_LS.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "turbulent_channel_k_om": {
+            "path": "../turbulent_channel/2d_std_wf/",
+            "run_cmd": "python re590_k_om.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "turbulent_channel_k_om_LS": {
+            "path": "../turbulent_channel/2d/",
+            "run_cmd": "python re590_k_om_LS.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "wave_1d": {
+            "path": "../wave_equation/",
+            "run_cmd": "python wave_1d.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "wave_2d": {
+            "path": "../seismic_wave/",
+            "run_cmd": "python wave_2d.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "wave_inverse": {
+            "path": "../wave_equation/",
+            "run_cmd": "python wave_inverse.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "waveguide2D_TMz": {
+            "path": "../waveguide/cavity_2D/",
+            "run_cmd": "python waveguide2D_TMz.py",
+            "tags": [
+            "first"
+            ]
+        },
+        "waveguide3D": {
+            "path": "../waveguide/cavity_3D/",
+            "run_cmd": "python waveguide3D.py",
+            "tags": [
+            "first"
+            ]
+        }
+    },
+    "run_opts":{
+        "full": [],
+        "single": ["training.max_steps=100"]
+    }
+}

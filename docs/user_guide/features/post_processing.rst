@@ -57,7 +57,7 @@ First you define a custom ``ValidatorPlotter`` class, overriding its ``__call__`
     import scipy.interpolate
     import matplotlib.pyplot as plt
 
-    from modulus.utils.io.plotter import ValidatorPlotter
+    from modulus.sym.utils.io.plotter import ValidatorPlotter
 
     # define custom class
     class CustomValidatorPlotter(ValidatorPlotter):
@@ -215,7 +215,7 @@ To better understand the conversion, consider the following minimal example for 
 .. code-block:: python
 
     import numpy as np
-    from modulus.utils.io.vtk import var_to_polyvtk
+    from modulus.sym.utils.io.vtk import var_to_polyvtk
 
     n_points = 500
     save_var = {
@@ -249,7 +249,7 @@ The following minimal example will demonstrate this function for a 3D grid:
 .. code-block:: python
 
     import numpy as np
-    from modulus.utils.io.vtk import grid_to_vtk
+    from modulus.sym.utils.io.vtk import grid_to_vtk
 
     n_points = 20
     batch_size = 2
@@ -286,8 +286,8 @@ The example below defines a uniform mesh to conduct inference on:
 
 .. code-block:: python
 
-    from modulus.utils.io.vtk import VTKUniformGrid
-    from modulus.domain.inferencer import PointVTKInferencer
+    from modulus.sym.utils.io.vtk import VTKUniformGrid
+    from modulus.sym.domain.inferencer import PointVTKInferencer
 
     vtk_obj = VTKUniformGrid(
         bounds=[[-width / 2, width / 2], [-height / 2, height / 2]],
@@ -336,8 +336,8 @@ An example of reading in a OpenFOAM simulation file and using it for building a 
 
 .. code-block:: python
 
-    from modulus.utils.io.vtk import VTKFromFile
-    from modulus.domain.validator import PointVTKValidator 
+    from modulus.sym.utils.io.vtk import VTKFromFile
+    from modulus.sym.domain.validator import PointVTKValidator 
 
     vtk_obj = VTKFromFile(
         to_absolute_path("./openfoam/cavity_openfoam.vtk"), # Legacy VTK files supported
@@ -383,8 +383,8 @@ For example, you can download the `Stanford bunny <http://graphics.stanford.edu/
 
 .. code-block:: python
 
-    from modulus.utils.io.vtk import VTKFromFile
-    from modulus.domain.inferencer  import PointVTKInferencer 
+    from modulus.sym.utils.io.vtk import VTKFromFile
+    from modulus.sym.domain.inferencer  import PointVTKInferencer 
 
     vtk_obj = VTKFromFile(
         to_absolute_path("./bunny.vtk"), # Legacy VTK files supported
@@ -425,7 +425,7 @@ Masked points are set to ``NaN``, which can then be filtered out in ParaView. Be
 
 .. code-block:: python
 
-    from modulus.domain.inferencer  import VoxelInferencer 
+    from modulus.sym.domain.inferencer  import VoxelInferencer 
 
     # Define mask function, should be a callable with parameters being the variables
     mask_fn = lambda x, y: x**2 + y**2 > 0.001

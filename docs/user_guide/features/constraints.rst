@@ -55,16 +55,16 @@ Below, a simple boundary condition definition is shown. Here the problem is tryi
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus
-    from modulus.hydra import to_absolute_path, ModulusConfig
-    from modulus.solver import Solver
-    from modulus.domain import Domain
-    from modulus.geometry.primitives_1d import Point1D, Line1D
-    from modulus.domain.constraint import (
+    from modulus.sym.hydra import to_absolute_path, ModulusConfig
+    from modulus.sym.solver import Solver
+    from modulus.sym.domain import Domain
+    from modulus.sym.geometry.primitives_1d import Point1D, Line1D
+    from modulus.sym.domain.constraint import (
         PointwiseBoundaryConstraint,
     )
-    from modulus.key import Key
-    from modulus.node import Node
-    from modulus.models.fully_connected import FullyConnectedArch
+    from modulus.sym.key import Key
+    from modulus.sym.node import Node
+    from modulus.sym.models.fully_connected import FullyConnectedArch
     
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:
@@ -132,19 +132,19 @@ Below, a simple interior constraint definition is shown.
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus
-    from modulus.hydra import to_absolute_path, ModulusConfig
-    from modulus.solver import Solver
-    from modulus.domain import Domain
-    from modulus.geometry.primitives_1d import Point1D, Line1D
-    from modulus.domain.constraint import (
+    from modulus.sym.hydra import to_absolute_path, ModulusConfig
+    from modulus.sym.solver import Solver
+    from modulus.sym.domain import Domain
+    from modulus.sym.geometry.primitives_1d import Point1D, Line1D
+    from modulus.sym.domain.constraint import (
         PointwiseBoundaryConstraint,
         PointwiseInteriorConstraint,
     )
-    from modulus.domain.inferencer import PointwiseInferencer
-    from modulus.key import Key
-    from modulus.node import Node
-    from modulus.models.fully_connected import FullyConnectedArch
-    from modulus.eq.pde import PDE
+    from modulus.sym.domain.inferencer import PointwiseInferencer
+    from modulus.sym.key import Key
+    from modulus.sym.node import Node
+    from modulus.sym.models.fully_connected import FullyConnectedArch
+    from modulus.sym.eq.pde import PDE
     
     class CustomPDE(PDE):
         def __init__(self, f=1.0):
@@ -236,18 +236,18 @@ Below, a simple integral constraint definition is shown.
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus
-    from modulus.hydra import to_absolute_path, ModulusConfig
-    from modulus.solver import Solver
-    from modulus.domain import Domain
-    from modulus.geometry.primitives_1d import Point1D, Line1D
-    from modulus.domain.constraint import (
+    from modulus.sym.hydra import to_absolute_path, ModulusConfig
+    from modulus.sym.solver import Solver
+    from modulus.sym.domain import Domain
+    from modulus.sym.geometry.primitives_1d import Point1D, Line1D
+    from modulus.sym.domain.constraint import (
         IntegralBoundaryConstraint,
     )
-    from modulus.domain.inferencer import PointwiseInferencer
-    from modulus.key import Key
-    from modulus.node import Node
-    from modulus.models.fully_connected import FullyConnectedArch
-    from modulus.eq.pde import PDE
+    from modulus.sym.domain.inferencer import PointwiseInferencer
+    from modulus.sym.key import Key
+    from modulus.sym.node import Node
+    from modulus.sym.models.fully_connected import FullyConnectedArch
+    from modulus.sym.eq.pde import PDE
     
     
     @modulus.main(config_path="conf", config_name="config")
@@ -308,15 +308,15 @@ Below, a simple supervised grid constraint definition is shown.
     :caption: Supervised Grid Constraint from the Darcy flow example
 
     import modulus
-    from modulus.hydra import to_absolute_path, instantiate_arch, ModulusConfig
-    from modulus.key import Key
+    from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
+    from modulus.sym.key import Key
     
-    from modulus.solver import Solver
-    from modulus.domain import Domain
-    from modulus.domain.constraint import SupervisedGridConstraint
-    from modulus.dataset import HDF5GridDataset
+    from modulus.sym.solver import Solver
+    from modulus.sym.domain import Domain
+    from modulus.sym.domain.constraint import SupervisedGridConstraint
+    from modulus.sym.dataset import HDF5GridDataset
     
-    from modulus.utils.io.plotter import GridValidatorPlotter
+    from modulus.sym.utils.io.plotter import GridValidatorPlotter
     
     from utilities import download_FNO_dataset
     

@@ -16,8 +16,8 @@ Below example shows a simple CSG primitive being built using Modulus.
     :caption: Constructive solid geometry
         
     import numpy as np
-    from modulus.geometry.primitives_3d import Box, Sphere, Cylinder
-    from modulus.utils.io.vtk import var_to_polyvtk
+    from modulus.sym.geometry.primitives_3d import Box, Sphere, Cylinder
+    from modulus.sym.utils.io.vtk import var_to_polyvtk
     
     # number of points to sample
     nr_points = 100000
@@ -90,9 +90,9 @@ The CSG objects can be easily parameterized using sympy. An example of this is u
 .. code-block:: python
     :caption: Parameterized geometry
 
-    from modulus.geometry.primitives_2d import Rectangle, Circle
-    from modulus.utils.io.vtk import var_to_polyvtk
-    from modulus.geometry.parameterization import Parameterization, Parameter
+    from modulus.sym.geometry.primitives_2d import Rectangle, Circle
+    from modulus.sym.utils.io.vtk import var_to_polyvtk
+    from modulus.sym.geometry.parameterization import Parameterization, Parameter
     
     # make plate with parameterized hole
     # make parameterized primitives
@@ -162,12 +162,12 @@ expression for the signed distance field and the surfaces of the geometry. An ex
 
     from sympy import Symbol, pi, sin, cos, sqrt, Min, Max, Abs
     
-    from modulus.geometry.geometry import Geometry, csg_curve_naming
-    from modulus.geometry.helper import _sympy_sdf_to_sdf
-    from modulus.geometry.curve import SympyCurve, Curve
-    from modulus.geometry.parameterization import Parameterization, Parameter, Bounds
-    from modulus.geometry.primitives_3d import Cylinder
-    from modulus.utils.io.vtk import var_to_polyvtk
+    from modulus.sym.geometry.geometry import Geometry, csg_curve_naming
+    from modulus.sym.geometry.helper import _sympy_sdf_to_sdf
+    from modulus.sym.geometry.curve import SympyCurve, Curve
+    from modulus.sym.geometry.parameterization import Parameterization, Parameter, Bounds
+    from modulus.sym.geometry.primitives_3d import Cylinder
+    from modulus.sym.utils.io.vtk import var_to_polyvtk
     
     class InfiniteCylinder(Geometry):
         """
@@ -270,9 +270,9 @@ Tesselated geometries can also be combined with the primitives
     :caption: Tesselated Geometry
 
     import numpy as np
-    from modulus.geometry.tessellation import Tessellation
-    from modulus.geometry.primitives_3d import Plane
-    from modulus.utils.io.vtk import var_to_polyvtk
+    from modulus.sym.geometry.tessellation import Tessellation
+    from modulus.sym.geometry.primitives_3d import Plane
+    from modulus.sym.utils.io.vtk import var_to_polyvtk
     
     # number of points to sample
     nr_points = 100000

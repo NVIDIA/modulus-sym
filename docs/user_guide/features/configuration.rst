@@ -32,8 +32,8 @@ a Python ``ModulusConfig`` object which is used by Modulus. Consider the followi
     :caption: main.py
 
     import modulus
-    from modulus.hydra import to_yaml
-    from modulus.hydra.config import ModulusConfig
+    from modulus.sym.hydra import to_yaml
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:
@@ -127,8 +127,8 @@ The following two examples initialize the same neural network.
 
     # Python code
     import modulus
-    from modulus.hydra import instantiate_arch
-    from modulus.hydra.config import ModulusConfig
+    from modulus.sym.hydra import instantiate_arch
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:
@@ -148,8 +148,8 @@ The following two examples initialize the same neural network.
 
     # Python code
     import modulus
-    from modulus.hydra.config import ModulusConfig
-    from modulus.models.fully_connected import FullyConnectedArch
+    from modulus.sym.hydra.config import ModulusConfig
+    from modulus.sym.models.fully_connected import FullyConnectedArch
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:
@@ -203,8 +203,8 @@ Examples
 
     # Python code
     import modulus
-    from modulus.hydra import instantiate_arch
-    from modulus.hydra.config import ModulusConfig
+    from modulus.sym.hydra import instantiate_arch
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:
@@ -230,8 +230,8 @@ Examples
 
     # Python code
     import modulus
-    from modulus.hydra import instantiate_arch
-    from modulus.hydra.config import ModulusConfig
+    from modulus.sym.hydra import instantiate_arch
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:
@@ -400,9 +400,9 @@ Changing a activation function is straight forward using the ``instantiate_arch`
 
     # Python code
     import modulus
-    from modulus.hydra import instantiate_arch
-    from modulus.hydra.config import ModulusConfig
-    from modulus.models.layers import Activation
+    from modulus.sym.hydra import instantiate_arch
+    from modulus.sym.hydra.config import ModulusConfig
+    from modulus.sym.models.layers import Activation
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:
@@ -464,8 +464,8 @@ Here the ``arch_schema`` config group is used to access an architecture's struct
 
     # Python code
     import modulus
-    from modulus.hydra import instantiate_arch
-    from modulus.hydra.config import ModulusConfig
+    from modulus.sym.hydra import instantiate_arch
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:

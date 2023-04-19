@@ -169,7 +169,7 @@ As an example, for LDC the following code snippet turns on meshless finite deriv
 
 .. code:: python
 
-    from modulus.eq.derivatives import MeshlessFiniteDerivative
+    from modulus.sym.eq.derivatives import MeshlessFiniteDerivative
 
     # Make list of nodes to unroll graph on
     ns = NavierStokes(nu=0.01, rho=1.0, dim=2, time=False)

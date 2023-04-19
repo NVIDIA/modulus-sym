@@ -43,8 +43,8 @@ The architecture, its intermediate layers can be visualized by printing the mode
 .. code-block:: python
    :caption: Architecture node in Modulus
 
-   from modulus.models.fully_connected import FullyConnectedArch
-   from modulus.key import Key
+   from modulus.sym.models.fully_connected import FullyConnectedArch
+   from modulus.sym.key import Key
    
    u_net = FullyConnectedArch(
        input_keys=[Key("x")], output_keys=[Key("u")], nr_layers=3, layer_size=32
@@ -98,7 +98,7 @@ Since the PDEs are defined symbolically, they can be printed to ensure correct i
 .. code-block:: python
    :caption: Equations in Modulus
 
-   >>> from modulus.eq.pdes.navier_stokes import NavierStokes
+   >>> from modulus.sym.eq.pdes.navier_stokes import NavierStokes
 
    >>> ns = NavierStokes(nu=0.01, rho=1, dim=2)
    >>> ns.pprint()
@@ -117,7 +117,7 @@ Below, the code to setup a simple PDE is shown.
    :caption: Custom equations in Modulus
 
    from sympy import Symbol, Number, Function
-   from modulus.eq.pde import PDE
+   from modulus.sym.eq.pde import PDE
    
    class CustomPDE(PDE):
        def __init__(self, f=1.0):
@@ -161,7 +161,7 @@ Custom Nodes using ``torch.nn.Module``
    >>> from torch import Tensor
    >>> from typing import Dict
    >>> import numpy as np
-   >>> from modulus.node import Node
+   >>> from modulus.sym.node import Node
    >>> class ComputeSin(nn.Module):
    ...     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
    ...         return {"sin_x": torch.sin(in_vars["x"])}
@@ -190,7 +190,7 @@ Below, an example code to generate a ``Node`` using a symbolic expression is sho
    >>> import torch
    >>> import numpy as np
    >>> from sympy import Symbol, sin
-   >>> from modulus.node import Node
+   >>> from modulus.sym.node import Node
    >>> node = Node.from_sympy(sin(Symbol("x")), "sin_x")
    >>> node.evaluate({"x": (torch.ones(10, 1))*np.pi/4,})
      {'sin_x': tensor([[0.7071],

@@ -402,7 +402,7 @@ Changing a activation function is straight forward using the ``instantiate_arch`
     import modulus
     from modulus.hydra import instantiate_arch
     from modulus.hydra.config import ModulusConfig
-    from modulus.models.layers.layers import Activation
+    from modulus.models.layers import Activation
 
     @modulus.main(config_path="conf", config_name="config")
     def run(cfg: ModulusConfig) -> None:

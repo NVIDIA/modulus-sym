@@ -32,7 +32,7 @@ System Requirements
 
       -  Volta GPUs - V100
 
-      -  Turing GPUs - T1 
+      -  Turing GPUs - T4 
 
    - Other Supported GPUs:
       
@@ -40,7 +40,7 @@ System Requirements
 
       - Volta GPUs - Titan V, Quadro GV100
 
-   - For others, please email us at : `modulus-team@exchange.nvidia.com <modulus-team@exchange.nvidia.com>`_
+   - For others, please reach us out at `Modulus Forums <https://forums.developer.nvidia.com/t/welcome-to-the-modulus-physics-ml-model-framework-forum>`_ 
 
 **All studies in the User Guide are done using V100 on DGX-1. A100 has also been tested.**
 

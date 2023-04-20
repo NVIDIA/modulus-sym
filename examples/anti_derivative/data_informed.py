@@ -36,18 +36,15 @@ from modulus.sym.key import Key
 @modulus.sym.main(config_path="conf", config_name="config")
 def run(cfg: ModulusConfig) -> None:
     # [init-model]
-    trunk_net = instantiate_arch(
-        cfg=cfg.arch.trunk,
+    trunk_net = FourierNetArch(
         input_keys=[Key("x")],
         output_keys=[Key("trunk", 128)],
     )
-    branch_net = instantiate_arch(
-        cfg=cfg.arch.branch,
+    branch_net = FullyConnectedArch(
         input_keys=[Key("a", 100)],
         output_keys=[Key("branch", 128)],
     )
-    deeponet = instantiate_arch(
-        cfg=cfg.arch.deeponet,
+    deeponet = DeepONetArch(
         output_keys=[Key("u")],
         branch_net=branch_net,
         trunk_net=trunk_net,

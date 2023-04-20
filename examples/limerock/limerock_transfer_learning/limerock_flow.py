@@ -47,10 +47,9 @@ def run(cfg: ModulusConfig) -> None:
     ze = ZeroEquation(nu=nu, dim=3, time=False, max_distance=0.5)
     ns = NavierStokes(nu=ze.equations["nu"], rho=rho, dim=3, time=False)
     normal_dot_vel = NormalDotVec()
-    flow_net = instantiate_arch(
+    flow_net = FourierNetArch(
         input_keys=[Key("x"), Key("y"), Key("z")],
         output_keys=[Key("u"), Key("v"), Key("w"), Key("p")],
-        cfg=cfg.arch.fourier,
     )
     flow_nodes = (
         ns.make_nodes()

@@ -39,8 +39,8 @@ class MultiscaleFourierNetArch(Arch):
         Output key list
     detach_keys : List[Key], optional
         List of keys to detach gradients, by default []
-    frequencies : Tuple[str, List[float]] = ("axis", [i for i in range(10)])
-        A tuple that describes the Fourier encodings to use any inputs in
+    frequencies : Tuple[Tuple[str, List[float]],...] = (("axis", [i for i in range(10)]),)
+        A set of Fourier encoding tuples to use any inputs in
         the list `['x', 'y', 'z', 't']`.
         The first element describes the type of frequency encoding
         with options, `'gaussian', 'full', 'axis', 'diagonal'`.
@@ -48,7 +48,7 @@ class MultiscaleFourierNetArch(Arch):
         `'axis'` samples along axis of spectral space with the given list range of frequencies.
         `'diagonal'` samples along diagonal of spectral space with the given list range of frequencies.
         `'full'` samples along entire spectral space for all combinations of frequencies in given list.
-    frequencies_params : Tuple[str, List[float]] = ("axis", [i for i in range(10)])
+    frequencies_params : Tuple[Tuple[str, List[float]],...] = (("axis", [i for i in range(10)]),)
         Same as `frequencies` except these are used for encodings
         on any inputs not in the list `['x', 'y', 'z', 't']`.
     activation_fn : layers.Activation = layers.Activation.SILU
@@ -71,8 +71,8 @@ class MultiscaleFourierNetArch(Arch):
         input_keys: List[Key],
         output_keys: List[Key],
         detach_keys: List[Key] = [],
-        frequencies=("axis", [i for i in range(10)]),
-        frequencies_params=("axis", [i for i in range(10)]),
+        frequencies=(("axis", [i for i in range(10)]),),
+        frequencies_params=(("axis", [i for i in range(10)]),),
         activation_fn=layers.Activation.SILU,
         layer_size: int = 512,
         nr_layers: int = 6,

@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG PYT_VER=22.12
-FROM nvcr.io/nvidia/pytorch:$PYT_VER-py3 as no-pysdf
+ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:22.12-py3
+FROM $BASE_CONTAINER as no-pysdf
 
 # Update pip and setuptools
 RUN pip install --upgrade pip setuptools  
-
-# Install Modulus core
-RUN pip install git+https://github.com/NVIDIA/modulus.git@main
 
 # Setup git lfs, graphviz gl1(vtk dep)
 RUN apt-get update && \

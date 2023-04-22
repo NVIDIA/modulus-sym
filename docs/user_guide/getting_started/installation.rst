@@ -12,16 +12,14 @@ System Requirements
 
 - **Driver and GPU Requirements** 
 
-   -  Bare Metal version: NVIDIA driver that is compatible with local PyTorch installation.
+   -  ``pip``: NVIDIA driver that is compatible with local PyTorch installation.
    
-   -  Docker container: Modulus Sym container is based on CUDA 11.7, which requires NVIDIA Driver release 515 or later. However, if you are running on a data center GPU (for example, T4 or any other data center GPU), you can use NVIDIA driver release 450.51 (or later R450), 470.57 (or later R470), or 510.47 (or later R510). However, any drivers older than 465 will not support the SDF library. For additional support details, see `PyTorch NVIDIA Container <https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel_22-05.html#rel_22-05>`_.
+   -  Docker container: Modulus container is based on CUDA 11.8, which requires NVIDIA which requires NVIDIA Driver release 520 or later. However, if you are running on a data center GPU (for example, T4 or any other data center GPU), you can use NVIDIA driver release 450.51 (or later R450), 470.57 (or later R470), 510.47 (or later R510), or 515.65 (or later R515).The CUDA driver's compatibility package only supports particular drivers. Thus, users should upgrade from all R418, R440, and R460 drivers, which are not forward-compatible with CUDA 11.8. 3Driver release 515 or later. However, if you are running on a data center GPU (for example, T4 or any other data center GPU), you can use NVIDIA driver release 450.51 (or later R450), 470.57 (or later R470), or 510.47 (or later R510). However, any drivers older than 465 will not support the SDF library. For additional support details, see `PyTorch NVIDIA Container <https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-22-12.html#rel-22-12>`_.
     
-- **Required installations for Bare Metal version** 
+- **Required installations for pip install** 
 
    -  Python 3.8
    
-   -  PyTorch 1.12
-
 - **Recommended Hardware** 
 
    -  64-bit x86
@@ -40,7 +38,7 @@ System Requirements
 
       - Volta GPUs - Titan V, Quadro GV100
 
-   - For others, please reach us out at `Modulus Sym Forums <https://forums.developer.nvidia.com/t/welcome-to-the-modulus-physics-ml-model-framework-forum>`_ 
+   - For others, please reach us out at `Modulus Forums <https://forums.developer.nvidia.com/t/welcome-to-the-modulus-physics-ml-model-framework-forum>`_ 
 
 **All studies in the User Guide are done using V100 on DGX-1. A100 has also been tested.**
 
@@ -70,48 +68,20 @@ To run the docker commands without :code:`sudo`, add yourself to the docker grou
 Install Modulus Sym
 ^^^^^^^^^^^^^^^^^^^  
 
-Download the Modulus Sym docker container. 
-Once downloaded, load the Modulus Sym container into docker using the following command (This may take several minutes): 
-
-Replace the ``xx.xx`` with the release version you are using. The latest release is ``22.09`` 
+Download the Modulus Sym docker container from NGC using:
 
 .. code-block::
    
-   docker load -i modulus_image_vxx.xx.tar.gz
-
-Once complete, ``Loaded image: modulus:xx.xx`` will get printed in the console.
+   docker pull nvcr.io/nvidia/modulus/modulus:<tag>
 
 
 Using the Modulus Sym examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Run the docker container using: 
+
 .. note::
-   All examples can be found in the `Modulus Sym GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
-   the `NVIDIA Modulus Sym Downloads page <https://developer.nvidia.com/modulus-downloads>`_ and sign up 
-   for the `Modulus Sym GitLab Repository Access <https://developer.nvidia.com/modulus-gitlab-repository-access>`_ .
-
-.. note:: 
-   NVIDIA Modulus Sym recommends using SSH to clone the GitLab repos. Information on adding SSH keys to your GitLab account can be found on `GitLab SSH Tutorial <https://docs.gitlab.com/ee/user/ssh.html>`_.
-   The basic steps to create and add a SSH key is below:
-   
-   #. Generate SSH key:  ``ssh-keygen -t ed25519 -C "<comment>"`` (`More Info <https://docs.gitlab.com/ee/user/ssh.html#generate-an-ssh-key-pair-for-a-fidou2f-hardware-security-key>`__)
-   
-   #. Copy the public key: ``xclip -sel clip < ~/.ssh/id_ed25519.pub`` (`More Info <https://docs.gitlab.com/ee/user/ssh.html#add-an-ssh-key-to-your-gitlab-account>`__)
-   
-   #. Paste public key and set expiration date at https://gitlab.com/-/profile/keys    
-   
-   #. Verify ssh set up with ``ssh -T git@gitlab.example.com`` (`More Info  <https://docs.gitlab.com/ee/user/ssh.html#verify-that-you-can-connect>`__)
-
-
-You can clone the examples repository using:
-
-.. code-block::
-
-   git clone git@gitlab.com:nvidia/modulus/examples.git
-
-Once the repository is cloned, you can run the docker image and mount the Modulus Sym examples using: 
-
-Replace the ``xx.xx`` with the release version you are using. The latest release is ``22.09``
+   All examples can be found in the ``examples/`` directory from the `GitHub Repo <https://github.com/NVIDIA/modulus-sym/>`_. 
 
 .. code-block::
    
@@ -119,7 +89,7 @@ Replace the ``xx.xx`` with the release version you are using. The latest release
               --runtime nvidia -v ${PWD}/examples:/examples \              
               -it --rm modulus:xx.xx bash                                      
 .. warning::
-   The examples repository contains several validation data files that are stored as LFS objects. You will need to have Git LFS installed for the all the examples to work correctly. 
+   The modulus-sym repository has Git LFS enabled. You will need to have Git LFS installed for the clone to work correctly. 
    More information about Git LFS can be found `here <https://git-lfs.github.com/>`_ .
 
 To verify the installation has been done correctly, run these commands: 
@@ -129,75 +99,38 @@ To verify the installation has been done correctly, run these commands:
    cd helmholtz/                                                           
    python helmholtz.py                                                     
 
-
-If you see the ``outputs/`` directory created after the execution of the command (~5 min), the installation is successful. For some of the examples, we have trained checkpoints for reference contained here, ``https://gitlab.com/nvidia/modulus/checkpoints.git`` . We will continue to add checkpoints for more examples in the future. 
+If you see the ``outputs/`` directory created after the execution of the command (~5 min), the installation is successful.
 
 .. note:: 
     If you intend to use the quadrature functionality of Modulus Sym :ref:`variational-example` please install the ``quadpy``, ``orthopy``, and ``ndim`` packages inside the container. Similarly, if you plan to use the Neural operators within Modulus Sym and wish to download some of the example data, install the ``gdown`` package. Both these packages can easily be installed inside the container using ``pip install <package-name>``.
 
 .. _install_modulus_bare_metal:
 
-Modulus Sym Bare Metal Install
-------------------------------
+Modulus Sym ``pip`` Install
+----------------------------
 
-While NVIDIA recommends using the docker image provided to run Modulus Sym, installation instructions for Ubuntu 20.04 are also provided. Currently the bare metal installation does not support the tesselated geometry module in Modulus Sym. If this is required please use the docker image provided. 
+While NVIDIA recommends using the docker image provided to run Modulus Sym, installation instructions for Ubuntu 20.04 are also provided. Currently the ``pip`` installation does not support the tesselated geometry module in Modulus Sym. If this is required please use the docker image provided. 
 Modulus Sym requires CUDA to be installed. 
-For compatibility with PyTorch 1.12, use CUDA 11.6 or later. Modulus Sym requires Python 3.8 or later. 
+For compatibility with PyTorch >=1.12, use CUDA 11.6 or later. Modulus Sym requires Python 3.8 or later. 
 
-Other dependencies can be installed using: 
+Modulus Sym can then be installed using 
 
 .. code-block::
 
-   pip3 install matplotlib transforms3d future typing numpy quadpy\    
-         	numpy-stl==2.16.3 h5py sympy==1.5.1 termcolor psutil\            
-          	symengine==0.6.1 numba Cython chaospy torch_optimizer\
-                vtk chaospy termcolor omegaconf hydra-core==1.1.1 einops\
-                timm tensorboard pandas orthopy ndim functorch pint
+   pip install nvidia-modulus-sym
 
 .. warning:: Depending on the version of PyTorch, you would need a specific version of functorch. The best recommended way is to use latest version for both PyTorch and functorch.
 
-.. warning:: Currently, Modulus Sym has only been tested for ``numpy-stl`` 2.16.3, ``sympy`` 1.5.1, ``symengine`` 0.6.1 and ``hydra-core`` 1.1.1 versions. 
-   Using other versions for these packages might give errors. 
-   Add packages for ``quadpy``, ``orthopy``, ``ndim`` and ``gdown`` if you intend to use the quadrature functionality of Modulus Sym :ref:`variational-example` or wish to download the example data for the Neural Operator training.
+.. warning:: Add packages for ``quadpy``, ``orthopy``, ``ndim`` and ``gdown`` if you intend to use the quadrature functionality of Modulus Sym :ref:`variational-example` or wish to download the example data for the Neural Operator training.
 
-
-Once all dependencies are installed, the Modulus Sym source code can be downloaded from Modulus Sym GitLab repository. Modulus Sym can be installed from the Modulus Sym repository using: 
-
-.. code-block:: bash
-
-   git clone git@gitlab.com:nvidia/modulus/modulus.git
-   cd ./Modulus Sym/                                                                 
-   python setup.py install                                                       
-
-
-Using the Modulus Sym examples
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. note::
-   All examples can be found in the `Modulus Sym GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
-   the `NVIDIA Modulus Sym Downloads page <https://developer.nvidia.com/modulus-downloads>`_ and sign up 
-   for the `Modulus Sym GitLab Repository Access <https://developer.nvidia.com/modulus-gitlab-repository-access>`_ .
-
-You can clone the examples repository using:
-
-.. code-block::
-
-   git clone git@gitlab.com:nvidia/modulus/examples.git
-
-.. warning::
-   The examples repository contains several validation data files that are stored as LFS objects. You will need to have Git LFS installed for the all the examples to work correctly. 
-   More information about Git LFS can be found `here <https://git-lfs.github.com/>`_ .
-
-
-To verify the installation has been done correctly, run these commands: 
+To verify the installation, run these commands: 
 
 .. code-block:: bash
 
    cd examples/helmholtz/                                                                      
    python helmholtz.py                                                           
 
-
-If you see ``outputs/`` directory created after the execution of the command (~5 min), the installation is successful. For some of the examples, we have trained checkpoints for reference contained here, ``https://gitlab.com/nvidia/modulus/checkpoints.git`` . We will continue to add checkpoints for more examples in the future.
+If you see ``outputs/`` directory created after the execution of the command (~5 min), the installation is successful. 
 
 Modulus Sym on Public Cloud instances
 -------------------------------------

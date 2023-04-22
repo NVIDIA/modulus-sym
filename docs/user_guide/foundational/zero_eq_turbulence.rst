@@ -7,17 +7,17 @@ Introduction
 ------------
 
 This tutorial walks you through the process of adding a
-algebraic (zero equation) turbulence model to the Modulus simulations. 
+algebraic (zero equation) turbulence model to the Modulus Sym simulations. 
 In this tutorial you will learn the following:
 
-#. How to use the Zero equation turbulence model in Modulus.
+#. How to use the Zero equation turbulence model in Modulus Sym.
 
 #. How to create nodes in the graph for arbitrary variables.
 
 .. note::
    This tutorial assumes that you have completed the :ref:`ldc`
    tutorial on Lid Driven Cavity Flow and have familiarized yourself with the basics
-   of the Modulus APIs.
+   of the Modulus Sym APIs.
 
 Problem Description
 -------------------
@@ -42,7 +42,7 @@ It only describes the additions that are made to the previous code.
 Importing the required packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Import Modulus' ``ZeroEquation`` to help setup the problem. 
+Import Modulus Sym' ``ZeroEquation`` to help setup the problem. 
 Other import are very similar to previous LDC. 
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d_zeroEq.py
@@ -83,7 +83,7 @@ distance from wall, :math:`d_{max}` is maximum normal distance and
 The zero equation turbulence model requires normal distance
 from no slip walls to compute the turbulent viscosity. For most examples, 
 signed distance field (SDF) can act as a normal distance. When the geometry is generated 
-using either the Modulus' geometry module/tesselation module you have access to the ``sdf``
+using either the Modulus Sym' geometry module/tesselation module you have access to the ``sdf``
 variable similar to the other coordinate variables when used in interior sampling. Since 
 zero equation also computes the derivatives of the viscosity, when using the ``PointwiseInteriorConstraint``, 
 you can pass an argument that says ``compute_sdf_derivatives=True``. This will compute 
@@ -115,10 +115,10 @@ The results of the turbulent lid driven cavity flow are shown below.
    Visualizing variables from Inference domain
 
 .. figure:: /images/user_guide/try_decoupled.png
-   :alt: Comparison with OpenFOAM data. Left: Modulus Prediction. Center: OpenFOAM, Right: Difference
+   :alt: Comparison with OpenFOAM data. Left: Modulus Sym Prediction. Center: OpenFOAM, Right: Difference
    :name: fig:zeroValidation
    :width: 80.0%
    :align: center
 
-   Comparison with OpenFOAM data. Left: Modulus Prediction. Center:
+   Comparison with OpenFOAM data. Left: Modulus Sym Prediction. Center:
    OpenFOAM, Right: Difference

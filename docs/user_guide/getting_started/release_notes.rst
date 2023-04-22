@@ -9,7 +9,7 @@ New features/Highlights v22.09
 New Network Architectures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **Generalized Neural Operators**: Extended Fourier Neural Operator (FNO) and DeepONet to support compatibility with other built in Modulus networks. FNO can now use any point wise network inside of Modulus for its decoder. DeepONet can now accept any branch/trunk net.
+* **Generalized Neural Operators**: Extended Fourier Neural Operator (FNO) and DeepONet to support compatibility with other built in Modulus Sym networks. FNO can now use any point wise network inside of Modulus Sym for its decoder. DeepONet can now accept any branch/trunk net.
 
 * Model parallelism has been introduced as a beta feature with model-parallel AFNO. This allows for parallelizing the model across multiple GPUs along the channel dimension.
 
@@ -20,7 +20,7 @@ Training features
 
 * **Criteria based training termination**: APIs to terminate training based on the convergence criteria like total loss or individual loss terms.
 
-* **Utilities for Nondimensionalization**: Nondimensionalization tools are now provided in Modulus to help users properly scale their system’s units for physics informed training.
+* **Utilities for Nondimensionalization**: Nondimensionalization tools are now provided in Modulus Sym to help users properly scale their system’s units for physics informed training.
 
 * **Causal weighting scheme**: Causal weighting scheme by reformulating the losses for the residual and initial conditions for better convergence in case of transient problems.
 
@@ -29,14 +29,14 @@ Training features
 Performance Enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **FuncTorch Integration**: Modulus now supports FuncTorch gradient calculations (A Jax like paradigm) for faster gradient calculations in physics-informed training. 
+* **FuncTorch Integration**: Modulus Sym now supports FuncTorch gradient calculations (A Jax like paradigm) for faster gradient calculations in physics-informed training. 
 
 Documentation Enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * More example-guided workflows for beginners and Jupyter notebook based getting started example.
 
-* Enhancements to Modulus Features section to serve as a user guide.
+* Enhancements to Modulus Sym Features section to serve as a user guide.
 
 
 New features/Highlights v22.07
@@ -45,7 +45,7 @@ New features/Highlights v22.07
 New Network Architectures 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **Generalized DeepONet architecture**: DeepONet in Modulus is restructured so that it can easily be applied to data-informed and physics-informed 1D/2D problems with any arbitrary network architectures as the backbone.
+* **Generalized DeepONet architecture**: DeepONet in Modulus Sym is restructured so that it can easily be applied to data-informed and physics-informed 1D/2D problems with any arbitrary network architectures as the backbone.
 
 * **FourCastNet**: FourCastNet, short for **Four**\ier Fore\ **\Cast**\ing Neural **Net**\work, is a global data-driven weather forecasting model that provides accurate short to medium range global predictions at :math:`0.25^{\circ}` resolution. In the current iteration, FourCastNet forecasts 20 atmospheric variables. (`Paper <https://arxiv.org/abs/2202.11214>`_)
   
@@ -57,15 +57,15 @@ Training features
 
 Performance Enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-* **Meshless Finite Differentiation**: Modulus now includes a new approximate differentiation approach for physics-informed problems based on finite difference calculations. This new method allows for the computational complexity of training to be dramatically decrease compared to the standard automatic differentiation approach. For some examples this can yield upto 4x speed up in training time with minimal impact on accuracy. This feature is in beta and subject to change with improvements in the future. 
+* **Meshless Finite Differentiation**: Modulus Sym now includes a new approximate differentiation approach for physics-informed problems based on finite difference calculations. This new method allows for the computational complexity of training to be dramatically decrease compared to the standard automatic differentiation approach. For some examples this can yield upto 4x speed up in training time with minimal impact on accuracy. This feature is in beta and subject to change with improvements in the future. 
 
-* **Dataset Refactor**: Both map style PyTorch datasets and iterable style datasets are supported inside of Modulus for both physics based and data-driven problems. This includes built in functionality for multithreading workers and data parallel training in multi-GPU / multi-node environments. 
+* **Dataset Refactor**: Both map style PyTorch datasets and iterable style datasets are supported inside of Modulus Sym for both physics based and data-driven problems. This includes built in functionality for multithreading workers and data parallel training in multi-GPU / multi-node environments. 
 
-* **Tiny CUDA NN**: Modulus now offers several Tiny CUDA NN architectures which are fully fused neural networks. These models provide a lightweight, heavily optimized implementation which can improve computation performance. Tiny Cuda NN combined with meshless finite derivatives can yield significant speed up over vanilla physics-informed implementations. 
+* **Tiny CUDA NN**: Modulus Sym now offers several Tiny CUDA NN architectures which are fully fused neural networks. These models provide a lightweight, heavily optimized implementation which can improve computation performance. Tiny Cuda NN combined with meshless finite derivatives can yield significant speed up over vanilla physics-informed implementations. 
 
-* **CUDA Graphs**: Modulus now leverages `CUDA graphs <https://developer.nvidia.com/blog/cuda-graphs/>`_ to record the series of CUDA kernels used during a training iteration and save it as a single graph that can then be replayed on the GPU as opposed to individual launches reducing CPU launch latency bottlenecks.
+* **CUDA Graphs**: Modulus Sym now leverages `CUDA graphs <https://developer.nvidia.com/blog/cuda-graphs/>`_ to record the series of CUDA kernels used during a training iteration and save it as a single graph that can then be replayed on the GPU as opposed to individual launches reducing CPU launch latency bottlenecks.
 
-* **Geometry Module Refactor**: The geometry module inside of Modulus has been refactored to improve point sampling performance for both continuous and tessellated geometries. This greatly reduces the initial overhead of creating training/testing datasets from complex geometries.
+* **Geometry Module Refactor**: The geometry module inside of Modulus Sym has been refactored to improve point sampling performance for both continuous and tessellated geometries. This greatly reduces the initial overhead of creating training/testing datasets from complex geometries.
 
  
 New features/Highlights v22.03
@@ -94,15 +94,15 @@ Modeling Enhancements
 Training features
 ^^^^^^^^^^^^^^^^^^ 
 
-* **Support for new optimizers**: Modulus now supports 30+ optimizers including the built-in PyTorch optimizers and the optimizers in the `torch-optimizer`` library. Includes support for AdaHessian, a second-order stochastic optimizer that approximates an exponential moving average of the Hessian diagonal for adaptive preconditioning of the gradient vector.  
+* **Support for new optimizers**: Modulus Sym now supports 30+ optimizers including the built-in PyTorch optimizers and the optimizers in the `torch-optimizer`` library. Includes support for AdaHessian, a second-order stochastic optimizer that approximates an exponential moving average of the Hessian diagonal for adaptive preconditioning of the gradient vector.  
 
 * **New algorithms for loss balancing**: Three new loss balancing algorithms, namely Grad Norm, ReLoBRaLo (Relative Loss Balancing with Random Lookback), and Soft Adapt are implemented. These algorithms dynamically tune the loss weights based on the relative training rates of different losses. Also, Neural Tangent Kernel (NTK) analysis is implemented. NTK is a neural network analysis tool that indicates the convergent speed of each component. It will provide an explainable choice for the weights for different loss terms. Grouping the MSE of the loss allows computation of NTK dynamically. 
 
 * **Sobolev (gradient-enhanced) training**: Sobolev training of neural networks solvers incorporate derivative information of the PDE residuals into the loss function.
 
-* **Hydra Configs**: A big part of model development is hyperparameter tuning that requires performing multiple training runs with different configurations. Usage of Hydra within Modulus allows for more extensibility and configurability. Certain components of the training pipeline can now be switched out for other variants with no code change. Hydra multi-run also allows for better training workflows and running a hyperparameter sweep with a single command. 
+* **Hydra Configs**: A big part of model development is hyperparameter tuning that requires performing multiple training runs with different configurations. Usage of Hydra within Modulus Sym allows for more extensibility and configurability. Certain components of the training pipeline can now be switched out for other variants with no code change. Hydra multi-run also allows for better training workflows and running a hyperparameter sweep with a single command. 
 
-* **Post-processing**: Modulus now supports new Tensorboard and VTK features that will allow better visualizations of the Model outputs during and after training. 
+* **Post-processing**: Modulus Sym now supports new Tensorboard and VTK features that will allow better visualizations of the Model outputs during and after training. 
   
 
 Feature Summary
@@ -185,7 +185,7 @@ Feature Summary
   * APIs to automatically generate point clouds from boolean compositions of geometry primitives or import point clouds for complex geometry (STL files)
   * STL point cloud generation from superfast ray tracing method with uniformly emanating rays using Fibonacci sphere. Points categorized as inside, outside and on the surface, SDF, and its derivative calculation
   * Logically separate APIs for physics, boundary conditions and geometry consistent with traditional solver datasets
-  * Support for optimizers: Modulus supports 30+ optimizers including the built-in PyTorch optimizers and optimizers from the `torch-optimizer` library. Support for AdaHessian optimizer 
+  * Support for optimizers: Modulus Sym supports 30+ optimizers including the built-in PyTorch optimizers and optimizers from the `torch-optimizer` library. Support for AdaHessian optimizer 
   * Hydra configs to allow for easy customization, improved accessibility and hyperparameter tuning
   * Tensorboard plots to easily visualize the outputs, histograms, etc. during training
 
@@ -193,6 +193,6 @@ Feature Summary
 Known Issues
 ------------
 
-* The Modulus team is aware of `CVE-2021-29063 <https://nvd.nist.gov/vuln/detail/CVE-2021-29063#range-8144236>`_ in the ``mpmath`` library. This flaw in the regex parsing could DoS the container process if untrusted users are allowed to send crafted regex input. As soon as the released fix is available, the Modulus team will update this image. 
+* The Modulus Sym team is aware of `CVE-2021-29063 <https://nvd.nist.gov/vuln/detail/CVE-2021-29063#range-8144236>`_ in the ``mpmath`` library. This flaw in the regex parsing could DoS the container process if untrusted users are allowed to send crafted regex input. As soon as the released fix is available, the Modulus Sym team will update this image. 
 * Tiny CUDA NN models are only supported on Ampere or newer GPU architectures using the Docker container.
 * Multi-GPU training not supported for all use cases of Sequential Solver.

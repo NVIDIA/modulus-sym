@@ -1,4 +1,4 @@
-Modulus Inferencers
+Modulus Sym Inferencers
 ===================
 
 

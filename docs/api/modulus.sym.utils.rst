@@ -1,4 +1,4 @@
-Modulus Symbolic Utilities
+Modulus Sym Utilities
 ============================
 
 

@@ -3,45 +3,45 @@
 Computational Graph, Nodes and Architectures 
 ===============================================
 
-Modulus contains APIs that make adding a neural network architecture or a equation to your problem very easy. 
-Modulus relies on Pytorch's ``torch.nn.Module`` to build these various nodes. Nodes are used to represent components that will be executed in the forward pass
-during the training. The nodes in Modulus can be thought as a ``torch.nn.Module`` wrapper that contains additional information regarding what the input/output 
-variables are needed allowing Modulus to develop execution graphs for multi-objective problems. Nodes may contain models or functions such as PyTorch neural networks that
-are built into Modulus, user defined PyTorch networks, feature transformations and equations. 
+Modulus Sym contains APIs that make adding a neural network architecture or a equation to your problem very easy. 
+Modulus Sym relies on Pytorch's ``torch.nn.Module`` to build these various nodes. Nodes are used to represent components that will be executed in the forward pass
+during the training. The nodes in Modulus Sym can be thought as a ``torch.nn.Module`` wrapper that contains additional information regarding what the input/output 
+variables are needed allowing Modulus Sym to develop execution graphs for multi-objective problems. Nodes may contain models or functions such as PyTorch neural networks that
+are built into Modulus Sym, user defined PyTorch networks, feature transformations and equations. 
 
 The nodes are combined in such a way that they can interact with one another easily. In other words, within a few lines of code, it is possible to 
 create a computational graph that computes the PDE loss using the outputs of a neural network architecture and also create an architecture that uses 
-the outputs of some equations. Modulus solves problems by setting them up like optimization problems. The optimization objectives are defined using 
-constraints in Modulus. The different type of constraints are covered in detail in :ref:`constraints_doc` . One of the input to each of the constraints is the ``nodes``.
-This is basically a list of all the Modulus nodes (architecures, equations, etc.) that are required to compute the desired output (specified in the ``outvar`` of either 
-the constraint or the dataset) from the inputs to the constraint (specified in the ``invar`` of either the constraint or the dataset). Modulus figures out to compute the 
-required derivatives and model gradients to prepare a computational graph and evaluate the loss. If any information is missing that prevents Modulus to compute the required 
-outvars from the given invars, Modulus will throw a graph unroll error. 
+the outputs of some equations. Modulus Sym solves problems by setting them up like optimization problems. The optimization objectives are defined using 
+constraints in Modulus Sym. The different type of constraints are covered in detail in :ref:`constraints_doc` . One of the input to each of the constraints is the ``nodes``.
+This is basically a list of all the Modulus Sym nodes (architecures, equations, etc.) that are required to compute the desired output (specified in the ``outvar`` of either 
+the constraint or the dataset) from the inputs to the constraint (specified in the ``invar`` of either the constraint or the dataset). Modulus Sym figures out to compute the 
+required derivatives and model gradients to prepare a computational graph and evaluate the loss. If any information is missing that prevents Modulus Sym to compute the required 
+outvars from the given invars, Modulus Sym will throw a graph unroll error. 
 
 .. note::
-   When using constraints from ``modulus.domain.continuous`` module on Modulus' CSG/Tessellated geometry objects, additional information like normals, area, signed distance functions,
+   When using constraints from ``modulus.domain.continuous`` module on Modulus Sym' CSG/Tessellated geometry objects, additional information like normals, area, signed distance functions,
    etc. are implicitly added to the invar dictionary as required. 
 
 
-This example explores the different types of architecures and equations available within Modulus and also looks at how 
+This example explores the different types of architecures and equations available within Modulus Sym and also looks at how 
 to customize each of these to prepare your own custom models to train. 
 
 
 Architectures
 -------------
 
-Modulus comes with a model zoo containing several optimized architectures such as fully connected multi-layer perceptrons, Fourier feature neural networks, SiReNs, Fourier Neural Operators, 
+Modulus Sym comes with a model zoo containing several optimized architectures such as fully connected multi-layer perceptrons, Fourier feature neural networks, SiReNs, Fourier Neural Operators, 
 DeepNeuralOperators and etc. Each of these architectures can be instantiated in your project very easily and the hyper parameters of the model can be tuned using hydra. 
 Please refer :ref:`config` for more information on the configurations for these various neural networks. 
 For a deep dive into the theory and the mathematical underpinnings of these models, please refer: :ref:`architectures`. 
-Below, you can find two different ways of using the neural network models within Modulus. 
+Below, you can find two different ways of using the neural network models within Modulus Sym. 
 
-All the models in Modulus have a method called ``.make_nodes()`` that is used to generate the computational graph for the network architecture. 
+All the models in Modulus Sym have a method called ``.make_nodes()`` that is used to generate the computational graph for the network architecture. 
 
 The architecture, its intermediate layers can be visualized by printing the model or using visualization libraries like ``torchviz``. 
 
 .. code-block:: python
-   :caption: Architecture node in Modulus
+   :caption: Architecture node in Modulus Sym
 
    from modulus.sym.models.fully_connected import FullyConnectedArch
    from modulus.sym.key import Key
@@ -63,11 +63,11 @@ The architecture, its intermediate layers can be visualized by printing the mode
 
 
 .. figure:: /user_guide/notebook/u_network.png
-   :alt: Visualizing a neural network model in Modulus using Torchviz
+   :alt: Visualizing a neural network model in Modulus Sym using Torchviz
    :width: 80.0%
    :align: center
 
-   Visualizing a neural network model in Modulus using Torchviz
+   Visualizing a neural network model in Modulus Sym using Torchviz
 
 
 At several places you will see the use of a ``Key`` and ``Node``. A ``Key`` class is used for describing inputs and outputs used for graph unroll/evaluation. The most basic key is just a string that is used 
@@ -77,10 +77,10 @@ to represent the name of inputs or outputs of the model. A ``Node`` class repres
 Equations
 ---------
 
-Modulus is a framework to develop solutions to problems in science and engineering. Since both these fields have equations at their core, Modulus has several utilities to aid 
-defining these equations with ease. With Modulus' symbolic library, you can define the equations using SymPy in the most natural way possible. The expressions are converted to PyTorch 
-expressions in the backend. Modulus comes with several built-in PDEs that are customizable such that they can be applied to steady-state or transient problems in 1D/2D/3D (this is not applicable
-to all the PDEs). A nonexhaustive list of PDEs that are currently available in Modulus include:
+Modulus Sym is a framework to develop solutions to problems in science and engineering. Since both these fields have equations at their core, Modulus Sym has several utilities to aid 
+defining these equations with ease. With Modulus Sym' symbolic library, you can define the equations using SymPy in the most natural way possible. The expressions are converted to PyTorch 
+expressions in the backend. Modulus Sym comes with several built-in PDEs that are customizable such that they can be applied to steady-state or transient problems in 1D/2D/3D (this is not applicable
+to all the PDEs). A nonexhaustive list of PDEs that are currently available in Modulus Sym include:
 
 * ``AdvectionDiffusion``: Advection diffusion equation
 * ``GradNormal``: Normal gradient of a scalar 
@@ -96,7 +96,7 @@ to all the PDEs). A nonexhaustive list of PDEs that are currently available in M
 Since the PDEs are defined symbolically, they can be printed to ensure correct implementation.
 
 .. code-block:: python
-   :caption: Equations in Modulus
+   :caption: Equations in Modulus Sym
 
    >>> from modulus.sym.eq.pdes.navier_stokes import NavierStokes
 
@@ -114,7 +114,7 @@ The ``PDE`` class allows you to write the equations symbolically in SymPy. This 
 Below, the code to setup a simple PDE is shown. 
 
 .. code-block:: python
-   :caption: Custom equations in Modulus
+   :caption: Custom equations in Modulus Sym
 
    from sympy import Symbol, Number, Function
    from modulus.sym.eq.pde import PDE
@@ -148,7 +148,7 @@ Below, the code to setup a simple PDE is shown.
 Custom Nodes
 ------------
 
-Modulus also allows users to create simple nodes for custom calculation. These can be generated either using SymPy or using the base ``Node`` class. Some examples of this are shown below. 
+Modulus Sym also allows users to create simple nodes for custom calculation. These can be generated either using SymPy or using the base ``Node`` class. Some examples of this are shown below. 
 
 Custom Nodes using ``torch.nn.Module``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

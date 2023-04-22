@@ -11,10 +11,10 @@ Lid Driven Cavity Background
 This tutorial steps through the process of solving a 2D flow
 for the Lid Driven Cavity (LDC) example
 using physics-informed neural networks (PINNs)
-from NVIDIA's Modulus software framework.
+from NVIDIA's Modulus Sym software framework.
 In this tutorial, you will learn how to:
 
-#. generate a 2D geometry using Modulus' geometry module;
+#. generate a 2D geometry using Modulus Sym' geometry module;
 
 #. set up the boundary conditions;
 
@@ -25,7 +25,7 @@ In this tutorial, you will learn how to:
 #. do basic post-processing.
 
 .. note::
-   The tutorial assumes that you have successfully downloaded the Modulus
+   The tutorial assumes that you have successfully downloaded the Modulus Sym
    repository.
 
 Problem Description
@@ -63,13 +63,13 @@ Case Setup
 ^^^^^^^^^^
 
 We first summarize the key concepts
-and how they relate to Modulus' features.
+and how they relate to Modulus Sym' features.
 (For a more detailed discussion, please see :ref:`nn_methodology`.)
 Solving any physics-driven simulation that is defined by
 differential equations requires information about the domain of the
 problem and its governing equations and boundary conditions.
 Users can define the domain using
-Modulus' Constructive Solid Geometry (CSG) module, the STL module,
+Modulus Sym' Constructive Solid Geometry (CSG) module, the STL module,
 or data from external sources like text files in comma-separated values (CSV) format,
 NumPy files, or HDF5 files.
 Once you have this geometry or point cloud, it can be sub-sampled into two sets:
@@ -77,8 +77,8 @@ points on the boundaries to satisfy the boundary conditions,
 and interior regions to minimize the PDE/ODE residuals.
 
 .. note::
-   From v22.03 Modulus will support APIs and architectures to solve the problems using
-   only data, only physics, or a hybrid of the two. Modulus also now
+   From v22.03 Modulus Sym will support APIs and architectures to solve the problems using
+   only data, only physics, or a hybrid of the two. Modulus Sym also now
    uses PyTorch as the backend framework (:ref:`whatsnew`). The major APIs for generating the
    neural networks, generating and sampling geometries have remained the same,
    however there is a change in how these things come together to solve the problem.
@@ -117,7 +117,7 @@ We will solve for three variables:
 The incompressible Navier-Stokes equations have two parameters:
 the *kinematic velocity* :math:`\nu`,
 and the *density* of the fluid :math:`\rho`.
-Modulus can solve problems with nonconstant :math:`\nu` and :math:`\rho`,
+Modulus Sym can solve problems with nonconstant :math:`\nu` and :math:`\rho`,
 but we leave them constant to keep this example simple.
 
 If we assume that the density is a constant and rescale so that :math:`\rho` is 1,
@@ -135,7 +135,7 @@ expresses that the flow is incompressible
 The second and third equations are the *momentum* or momentum balance equations.
 
 Line 27 of the example shows how we call the ``NavierStokes`` function
-to tell Modulus that we want to solve the Navier-Stokes equations.
+to tell Modulus Sym that we want to solve the Navier-Stokes equations.
 We set the kinematic viscosity ``nu=0.01`` and the density ``rho=1.0``.
 We set ``time=False`` because this is a steady-state problem (time is not a variable),
 and ``dim=2`` because this is a 2D problem.
@@ -154,14 +154,14 @@ for the given boundary conditions.
 The neural network will have two inputs :math:`x, y`
 and three outputs :math:`u, v, p`.
 
-Modulus comes with several different neural network architectures.
+Modulus Sym comes with several different neural network architectures.
 Different architectures may perform better or worse on different problems.
 "Performance" may refer to any combination of time to solution,
 total memory use, or efficiency when scaling out on a cluster of parallel computers.
 For simplicity and not necessarily for best performance,
 we will use a fully connected neural network in this example.
 
-We create the neural network by calling Modulus' ``instantiate_arch`` function.
+We create the neural network by calling Modulus Sym' ``instantiate_arch`` function.
 The ``input_keys`` argument specifies the inputs,
 and the ``output_keys`` argument the outputs.
 We specify each input or output as a ``Key`` object
@@ -174,7 +174,7 @@ to represent the name of inputs or outputs of the model.
 
 Setting ``cfg=cfg.arch.fully_connected`` selects the default
 ``FullyConnectedArch`` neural network architecture.
-This tells Modulus to use a multi-layer perceptron (MLP) neural network with 6 layers.
+This tells Modulus Sym to use a multi-layer perceptron (MLP) neural network with 6 layers.
 Each layer contains 512 perceptrons
 and uses the "swish" (also known as SiLU) activation function.
 All these parameters -- e.g., the number of layers,
@@ -197,12 +197,12 @@ Once all the PDEs and architectures are defined,
 we will create a list of nodes to pass to different constraints that need to be satisfied for this problem.
 The constraints include equations, residuals, and boundary conditions.
 
-Using Hydra to Configure Modulus
+Using Hydra to Configure Modulus Sym
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Hydra configuration files are at the heart of using Modulus.
+Hydra configuration files are at the heart of using Modulus Sym.
 Each configuration file is a text file in YAML format.
-Most of Modulus' features can be customized through Hydra.
+Most of Modulus Sym' features can be customized through Hydra.
 More information can be found in :ref:`config`.
 
 We show the configuration file for this example below.
@@ -216,8 +216,8 @@ Creating Geometry
 We now create the geometry for the LDC example problem.
 "Geometry" refers to the physical shapes of the domain and its boundaries.
 The geometry can be created either before or after creating the PDE and the neural network.
-Modulus lets users create the geometry in different ways.
-For this example, we will use Modulus' CSG module.
+Modulus Sym lets users create the geometry in different ways.
+For this example, we will use Modulus Sym' CSG module.
 The CSG module supports a wide variety of primitive shapes.
 In 2D, these shapes include rectangles, circles, triangles, infinite channels, and lines.
 In 3D, they include spheres, cones, cuboids, infinite channels, planes, cylinders,
@@ -229,7 +229,7 @@ as well as updates on newly added geometries.
 
 We begin by defining the required symbolic variables for the geometry and then
 generating the 2D square geometry by using the ``Rectangle`` geometry object.
-In Modulus, a ``Rectangle`` is defined using the coordinates for two opposite
+In Modulus Sym, a ``Rectangle`` is defined using the coordinates for two opposite
 corner points.
 The symbolic variable will be used to later sub-sample the geometry to create
 different boundaries, interior regions, etc. while defining constraints.
@@ -266,7 +266,7 @@ Setting up the Domain
 
 The ``Domain`` object contains the PDE and its boundary conditions,
 as well as the ``Validator`` and ``Inferencer`` objects in this example.
-Modulus calls the PDE and its boundary conditions "constraints."
+Modulus Sym calls the PDE and its boundary conditions "constraints."
 The PDE, in particular, constrains the outputs on the interior of the domain.
 The ``Domain`` and the configuration options both in turn
 will be used to create an instance of the ``Solver`` class.
@@ -288,11 +288,11 @@ problem, these constraints are the boundary conditions and equation residuals.
 The goal is to satisfy the boundary conditions exactly,
 and have the interior (PDE) residual (a measure of the error) go to zero.
 The constraints can be specified within
-Modulus using classes like ``PointwiseBoundaryConstrant`` and ``PointwiseInteriorConstraint``.
-Modulus then constructs a *loss function* --
+Modulus Sym using classes like ``PointwiseBoundaryConstrant`` and ``PointwiseInteriorConstraint``.
+Modulus Sym then constructs a *loss function* --
 a measure of the neural network's approximation error --
 from the constraints.
-By default, Modulus will use L2 (sum of squares) loss, but it is possible to change this.
+By default, Modulus Sym will use L2 (sum of squares) loss, but it is possible to change this.
 The optimizer will train the neural network by minimizing the loss function.
 This way of specifying the constraints is called *soft constraints*.
 In what follows, we will explain how to specify the constraints.
@@ -300,7 +300,7 @@ In what follows, we will explain how to specify the constraints.
 Boundary Constraints
 ^^^^^^^^^^^^^^^^^^^^
 
-To create a boundary condition constraint in Modulus,
+To create a boundary condition constraint in Modulus Sym,
 first sample the points on that part of the geometry,
 then specify the nodes you want to evaluate on those points,
 and finally assign them the desired true values.
@@ -321,7 +321,7 @@ In this example, the interior ``Constraint``
 requires derivatives of the output with respect to the input
 in order to compute residuals of the continuity and momentum equations.
 The loss value comes from the sum of squares of those residuals.
-Internally, Modulus needs to figure out how to evaluate the model and the PDE
+Internally, Modulus Sym needs to figure out how to evaluate the model and the PDE
 and compute the required intermediate quantities (the derivatives, for example).
 This amounts to connecting nodes (quantities to compute)
 with edges (methods for combining quantities to compute other quantities)
@@ -405,7 +405,7 @@ This represents the desired residual for these keys at the chosen points
 A nonzero value is allowed, and behaves as a custom forcing or source term.
 More examples of this can be found in the later chapters of this User Guide.
 To see how the equation keys are defined, you can look at
-the Modulus source or see the API documentation (``modulus/eq/pdes/navier_stokes.py``).
+the Modulus Sym source or see the API documentation (``modulus/eq/pdes/navier_stokes.py``).
 
 As an example, the definition of ``'continuity'`` is presented here.
 
@@ -456,17 +456,17 @@ since it avoids discontinuities at the boundaries
 Adding Validation Node
 ^^^^^^^^^^^^^^^^^^^^^^
 
-"Validation" means comparing the approximate solution computed by Modulus
+"Validation" means comparing the approximate solution computed by Modulus Sym
 with data representing results obtained by some other method.
 The results could come from any combination of simulation or experiment.
 This section shows how to
-set up such a validation domain in Modulus. Here, we use results from
+set up such a validation domain in Modulus Sym. Here, we use results from
 OpenFOAM, an open-source computational fluid dynamics (CFD) solver
 that discretizes the Navier-Stokes equations on a mesh
 and solves them using nonlinear and linear solvers not based on neural networks.
-Results can be imported into Modulus from any of various standard file formats,
+Results can be imported into Modulus Sym from any of various standard file formats,
 including ``.csv``, ``.npz``, or ``.vtk``.
-Modulus requires that the data be converted into a dictionary of NumPy variables for input and output.
+Modulus Sym requires that the data be converted into a dictionary of NumPy variables for input and output.
 For a ``.csv`` file, this can be done using the ``csv_to_dict`` function.
 
 The validation data is then added to the domain using ``PointwiseValidator``.
@@ -488,8 +488,8 @@ We then call the ``solve()`` method on the ``Solver`` to solve the problem.
    :lines: 112-116
 
 
-The file set up for Modulus is now complete. You are now
-ready to solve the CFD simulation using Modulus' neural network solver.
+The file set up for Modulus Sym is now complete. You are now
+ready to solve the CFD simulation using Modulus Sym' neural network solver.
 
 Training the model
 ^^^^^^^^^^^^^^^^^^
@@ -591,7 +591,7 @@ important files/directories.
    data), pred (model's inference) on the chosen points. For example, the ``./validators/validator.vtp``
    contains variables like ``true_u``, ``true_v``, ``true_p``, and ``pred_u``, ``pred_v``, ``pred_p``
    corresponding to the true and the network predicted values for the variables :math:`u`, :math:`y`, and :math:`p`.
-   Figure :numref:`fig-val-vs-train-1` shows the comparison between true and Modulus predicted values of such variables.
+   Figure :numref:`fig-val-vs-train-1` shows the comparison between true and Modulus Sym predicted values of such variables.
 
 
 .. _fig-val-vs-train-1:
@@ -610,7 +610,7 @@ Extra: Adding Monitor and Inferencer
 Monitor Node
 ^^^^^^^^^^^^^
 
-Modulus allows you to monitor desired quantities by plotting them every
+Modulus Sym allows you to monitor desired quantities by plotting them every
 fixed number of iterations in Tensorboard as the simulation progresses,
 and analyze convergence based on the relative changes in the
 monitored quantities. A ``PointwiseMonitor`` can be used to create such an
@@ -656,8 +656,8 @@ The points to sample can be selected using the ``sample_interior`` and ``sample_
 Inferencer Node
 ^^^^^^^^^^^^^^^^^
 
-Modulus also allows you to plot the results on arbitrary domains. You can then monitor these domains
-in Paraview or Tensorboard itself. More details on how to add Modulus information to Tensorboard can be
+Modulus Sym also allows you to plot the results on arbitrary domains. You can then monitor these domains
+in Paraview or Tensorboard itself. More details on how to add Modulus Sym information to Tensorboard can be
 found in :ref:`tensorboard`. The code below shows use of ``PointwiseInferencer``.
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d.py

@@ -1,10 +1,10 @@
 ********************************************
-Modulus User Guide
+Modulus Sym User Guide
 ********************************************
 ..
    TODO: add conf.py and root_doc
 
-NVIDIA Modulus is a deep learning framework that blends the power of 
+NVIDIA Modulus Sym is a deep learning framework that blends the power of 
 physics and partial differential equations (PDEs) with AI to build more 
 robust models for better analysis. 
 
@@ -20,17 +20,17 @@ that involve both the physics and data assimilation.
    :width: 80.0%
    :align: center
 
-With NVIDIA Modulus, we aim to provide researchers and industry specialists, 
+With NVIDIA Modulus Sym, we aim to provide researchers and industry specialists, 
 various tools that will help accelerate your development of such models for the 
 scientific discipline of your need. Experienced users can start with exploring the 
-Modulus APIs and building the models while beginners can use this User Guide 
+Modulus Sym APIs and building the models while beginners can use this User Guide 
 as a portal to explore the possibilities of AI in the domain of scientific 
 computation. The User Guide comes in with several examples that will help 
 you jumpstart your development of AI driven models.
 
 For Beginners
 -------------
-New to Modulus? No worries, we will get you up and running with physics driven AI in a few minutes. 
+New to Modulus Sym? No worries, we will get you up and running with physics driven AI in a few minutes. 
 Check out the following tutorials to get started. 
 
 .. raw:: html
@@ -70,8 +70,8 @@ Check out the following tutorials to get started.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Modulus Features
-   :name: Modulus Features
+   :caption: Modulus Sym Features
+   :name: Modulus Sym Features
    :hidden:
    
    Geometry and Tesselation Modules <user_guide/features/csg_and_tessellated_module.rst>
@@ -135,8 +135,8 @@ Check out the following tutorials to get started.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Modulus API
-   :name: Modulus API
+   :caption: Modulus Sym API
+   :name: Modulus Sym API
    :hidden:
    
    api/api_index

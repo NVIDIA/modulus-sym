@@ -1,4 +1,4 @@
-Modulus Loss
+Modulus Sym Loss
 ===============
 
 modulus.sym.loss.loss

@@ -7,12 +7,12 @@ Introduction
 ------------
 
 This tutorial illustrates the linear elasticity
-implementation in Modulus. Modulus offers the capability of solving the
+implementation in Modulus Sym. Modulus Sym offers the capability of solving the
 linear elasticity equations in the differential or variational form,
 allowing to solve a wide range of problems with a variety of boundary
 conditions. Three examples are presented in this chapter, namely the 3D
 bracket, the fuselage panel, and the plane displacement, to discuss the
-details of the linear elasticity in Modulus. In this tutorial, you
+details of the linear elasticity in Modulus Sym. In this tutorial, you
 will learn:
 
 -  How to solve linear elasticity equations using the differential and
@@ -26,12 +26,12 @@ will learn:
 .. note::
    This tutorial assumes that you have completed :ref:`ldc` tutorial
    and have familiarized yourself with the basics of
-   the Modulus APIs. See :ref:`weak-solutions-pinn` 
+   the Modulus Sym APIs. See :ref:`weak-solutions-pinn` 
    for more details on weak solutions of PDEs. Some of the boundary
    conditions are defined more elaborately in the tutorial
    :ref:`variational-example` . 
 
-   The linear elasticity equations in Modulus can be found in the 
+   The linear elasticity equations in Modulus Sym can be found in the 
    source code directory ``modulus/eq/pdes/linear_elasticity.py``.
 
 .. warning::
@@ -217,7 +217,7 @@ done only to generate the interior points more efficiently.
 
 
 :numref:`fig-bracket-results` shows
-the Modulus results and also a comparison with a commercial solver
+the Modulus Sym results and also a comparison with a commercial solver
 results. The results of these two solvers show good agreement, with only
 a 8% difference in maximum bracket displacement.
 
@@ -227,12 +227,12 @@ a 8% difference in maximum bracket displacement.
    :width: 100.0%
    :align: center
 
-   Modulus linear elasticity results for the bracket deflection example
+   Modulus Sym linear elasticity results for the bracket deflection example
 
 Problem 2: Stress analysis for aircraft fuselage panel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example uses Modulus for the analysis of stress
+This example uses Modulus Sym for the analysis of stress
 concentration in an aircraft fuselage panel. Depending on the altitude
 of the flying plane, the fuselage panel is exposed to different values
 of hoop stress that can cause accumulated damage to the panel over the
@@ -263,7 +263,7 @@ thickness of the panel is very small (i.e., :math:`2 \, \text{mm}`),
 plane stress equations can be used in this example. The python script
 for this problem can be found at
 ``examples/fuselage_panel/panel_solver.py``. The plane stress form of
-the linear elasticity equations in Modulus can be called by using the
+the linear elasticity equations in Modulus Sym can be called by using the
 ``LinearElasticityPlaneStress`` class:
 
 .. literalinclude:: ../../../examples/fuselage_panel/panel.py
@@ -271,19 +271,19 @@ the linear elasticity equations in Modulus can be called by using the
    :lines: 30-45
 
 :numref:`fig-panel-results` shows
-the Modulus results for panel displacements and stresses. For comparison,
-the commercial solver results are also presented in :numref:`fig-panel-abaqus-results`. The Modulus
+the Modulus Sym results for panel displacements and stresses. For comparison,
+the commercial solver results are also presented in :numref:`fig-panel-abaqus-results`. The Modulus Sym
 and commercial solver results are in close agreement, with a difference
 of less than 5% in the maximum Von Mises stress.
 
 .. _fig-panel-results:
 
 .. figure:: /images/user_guide/panel_results_combined.png
-   :alt: Modulus linear elasticity results for the aircraft fuselage panel example with parameterized hoop stress. The results are for :math:`\sigma_{hoop}` = 46
+   :alt: Modulus Sym linear elasticity results for the aircraft fuselage panel example with parameterized hoop stress. The results are for :math:`\sigma_{hoop}` = 46
    :width: 100.0%
    :align: center
 
-   Modulus linear elasticity results for the aircraft fuselage panel example with parameterized hoop stress. The results are for :math:`\sigma_{hoop}` = 46
+   Modulus Sym linear elasticity results for the aircraft fuselage panel example with parameterized hoop stress. The results are for :math:`\sigma_{hoop}` = 46
 
 .. _fig-panel-abaqus-results:
 
@@ -302,10 +302,10 @@ Linear elasticity equations in the variational form
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In addition to the differential form of the linear elasticity equations,
-Modulus also enables the use of variational form of these equations
+Modulus Sym also enables the use of variational form of these equations
 (:ref:`variational-example`). This section presents 
 the linear elasticity equations in the variational
-form as implemented in Modulus. Nondimensionalized
+form as implemented in Modulus Sym. Nondimensionalized
 variables will be used in this derivation. The inner product of
 Equation :eq:`eqn-equilibrium` and a vector test
 function :math:`v \in \mathbf{V}`, and integrating over the domain is given as
@@ -324,7 +324,7 @@ where :math:`T_i` is the traction. The first term is zero for
 the traction free boundaries. Equation
 :eq:`eqn-elasticity_variational` is the
 variational form of the linear elasticity equations that is adopted in
-Modulus. The term :math:`\hat{\sigma}_{ji}` in this equation is computed
+Modulus Sym. The term :math:`\hat{\sigma}_{ji}` in this equation is computed
 using the stress-displacement relation in Equation
 :eq:`eqn-stress_displacement`.
 
@@ -409,10 +409,10 @@ to the overall loss as follows:
    :language: python
    :lines: 160-188
 
-:numref:`fig-plane_displacement-results` shows the Modulus results for this
+:numref:`fig-plane_displacement-results` shows the Modulus Sym results for this
 plane displacement example. The results are in good agreement with the
 FEM results reported in [#rao2020physics]_, verifying
-the accuracy of the Modulus results in the variational form.
+the accuracy of the Modulus Sym results in the variational form.
 
 .. _fig-plane_displacement-results:
 
@@ -420,7 +420,7 @@ the accuracy of the Modulus results in the variational form.
    :width: 100.0%
    :align: center
 
-   Modulus results for the plane displacement example.
+   Modulus Sym results for the plane displacement example.
 
 
 

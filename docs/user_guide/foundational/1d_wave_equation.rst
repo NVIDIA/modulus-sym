@@ -7,15 +7,15 @@ Introduction
 ------------
 
 This tutorial, walks you through the process of setting up a
-custom PDE in Modulus. It demonstrates the process on a
+custom PDE in Modulus Sym. It demonstrates the process on a
 time-dependent, simple 1D wave equation problem. It
-also shows how to solve transient physics in Modulus. In this tutorial you
+also shows how to solve transient physics in Modulus Sym. In this tutorial you
 will learn the following:
 
 #. How to write your own Partial Differential Equation and boundary
-   conditions in Modulus.
+   conditions in Modulus Sym.
 
-#. How to solve a time-dependent problem in Modulus.
+#. How to solve a time-dependent problem in Modulus Sym.
 
 #. How to impose initial conditions and boundary conditions for a transient problem.
 
@@ -25,7 +25,7 @@ will learn the following:
 .. note::
    This tutorial assumes that you have completed the 
    :ref:`ldc` tutorial and have familiarized
-   yourself with the basics of Modulus APIs.
+   yourself with the basics of Modulus Sym APIs.
 
 Problem Description
 -------------------
@@ -51,7 +51,7 @@ Writing custom PDEs and boundary/initial conditions
 ---------------------------------------------------
 
 In this tutorial, you will write the `1D wave equation
-<https://en.wikipedia.org/wiki/Wave_equation>`_ using Modulus APIs. You will also see how to
+<https://en.wikipedia.org/wiki/Wave_equation>`_ using Modulus Sym APIs. You will also see how to
 handle derivative type boundary conditions. The PDEs defined in the
 source directory ``modulus/eq/pdes/`` can be used for reference.
 
@@ -92,7 +92,7 @@ to move all the terms of the PDE either to LHS or RHS and just have the
 source term on one side. This way, while using the equations in the constraints, you can assign a custom source function to the ``'wave_equation'`` key instead of 0 to add the source to the PDE.
 
 Once you have written your own PDE for the wave equation, you can verify the
-implementation, by refering to the script ``modulus/eq/pdes/wave_equation.py`` from Modulus source. 
+implementation, by refering to the script ``modulus/eq/pdes/wave_equation.py`` from Modulus Sym source. 
 Also, once you have understood the
 process to code a simple PDE, you can easily extend the procedure for
 different PDEs in multiple dimensions (2D, 3D, etc.) by making additional
@@ -177,15 +177,15 @@ the process define such a dataset:
 Results
 -------
 
-The figure below shows the comparison of Modulus results with the analytical solution. You can see that the error in Modulus prediction increases as the time increases. Some advanced approaches to tackle transient problems are covered in :ref:`transient-navier-stokes`. 
+The figure below shows the comparison of Modulus Sym results with the analytical solution. You can see that the error in Modulus Sym prediction increases as the time increases. Some advanced approaches to tackle transient problems are covered in :ref:`transient-navier-stokes`. 
 
 .. figure:: /images/user_guide/try12.png
-   :alt: Left: Modulus. Center: Analytical Solution. Right: Difference
+   :alt: Left: Modulus Sym. Center: Analytical Solution. Right: Difference
    :name: fig:wave1
    :width: 100.0%
    :align: center
 
-   Left: Modulus. Center: Analytical Solution. Right: Difference
+   Left: Modulus Sym. Center: Analytical Solution. Right: Difference
 
 Temporal loss weighting and time marching schedule
 --------------------------------------------------
@@ -215,31 +215,31 @@ compared to later times. Several schedules can be considered, for instance, you 
 
 
 Where :math:`T_v (s)` is the variable time domain upper bound, :math:`s` is the training iteration number, and :math:`S` is the 
-maximum number of training iterations. At each training iteration, Modulus will then sample continuously from the time domain in the range of :math:`[0, T_v (s)]`.
+maximum number of training iterations. At each training iteration, Modulus Sym will then sample continuously from the time domain in the range of :math:`[0, T_v (s)]`.
 
-The below figures show the Modulus validation error for models trained with and without using temporal loss weighting and time 
+The below figures show the Modulus Sym validation error for models trained with and without using temporal loss weighting and time 
 marching for transient 1D, 2D wave examples and a 2D channel flow over a bump. It is evident that these two simple tricks
 can improve the training accuracy. 
 
 .. figure:: /images/user_guide/continuous_time_vs_temporal_marching_1.png
-   :alt:  Modulus validation error for the 1D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching.
+   :alt:  Modulus Sym validation error for the 1D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching.
    :width: 60%
    :align: center
 
-   Modulus validation error for the 1D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching.
+   Modulus Sym validation error for the 1D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching.
 
 .. figure:: /images/user_guide/continuous_time_vs_temporal_marching_2.png
-   :alt: Modulus validation error for the 2D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching. 
+   :alt: Modulus Sym validation error for the 2D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching. 
    :width: 60%
    :align: center
 
-   Modulus validation error for the 2D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching.
+   Modulus Sym validation error for the 2D transient wave example: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting and time marching.
 
 
 .. figure:: /images/user_guide/continuous_time_vs_temporal_marching_3.png
-   :alt: Modulus validation error for a 2D transient channel flow over a bump: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting.
+   :alt: Modulus Sym validation error for a 2D transient channel flow over a bump: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting.
    :width: 80%
    :align: center
 
-   Modulus validation error for a 2D transient channel flow over a bump: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting. 
+   Modulus Sym validation error for a 2D transient channel flow over a bump: (a) standard continuous time approach; (b) continuous time approach with temporal loss weighting. 
 

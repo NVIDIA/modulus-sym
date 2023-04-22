@@ -1,4 +1,4 @@
-Modulus Equations
+Modulus Sym Equations
 ====================
 
 

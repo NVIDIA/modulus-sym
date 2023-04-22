@@ -14,7 +14,7 @@ System Requirements
 
    -  Bare Metal version: NVIDIA driver that is compatible with local PyTorch installation.
    
-   -  Docker container: Modulus container is based on CUDA 11.7, which requires NVIDIA Driver release 515 or later. However, if you are running on a data center GPU (for example, T4 or any other data center GPU), you can use NVIDIA driver release 450.51 (or later R450), 470.57 (or later R470), or 510.47 (or later R510). However, any drivers older than 465 will not support the SDF library. For additional support details, see `PyTorch NVIDIA Container <https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel_22-05.html#rel_22-05>`_.
+   -  Docker container: Modulus Sym container is based on CUDA 11.7, which requires NVIDIA Driver release 515 or later. However, if you are running on a data center GPU (for example, T4 or any other data center GPU), you can use NVIDIA driver release 450.51 (or later R450), 470.57 (or later R470), or 510.47 (or later R510). However, any drivers older than 465 will not support the SDF library. For additional support details, see `PyTorch NVIDIA Container <https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel_22-05.html#rel_22-05>`_.
     
 - **Required installations for Bare Metal version** 
 
@@ -40,22 +40,22 @@ System Requirements
 
       - Volta GPUs - Titan V, Quadro GV100
 
-   - For others, please reach us out at `Modulus Forums <https://forums.developer.nvidia.com/t/welcome-to-the-modulus-physics-ml-model-framework-forum>`_ 
+   - For others, please reach us out at `Modulus Sym Forums <https://forums.developer.nvidia.com/t/welcome-to-the-modulus-physics-ml-model-framework-forum>`_ 
 
 **All studies in the User Guide are done using V100 on DGX-1. A100 has also been tested.**
 
 .. note::
- To get the benefits of all the performance improvements (e.g. AMP, multi-GPU scaling, etc.), use the NVIDIA container for Modulus. This container comes with all the prerequisites and dependencies and allows you to get started efficiently with Modulus.
+ To get the benefits of all the performance improvements (e.g. AMP, multi-GPU scaling, etc.), use the NVIDIA container for Modulus Sym. This container comes with all the prerequisites and dependencies and allows you to get started efficiently with Modulus Sym.
 
 .. _install_modulus_docker:
 
-Modulus with Docker Image (Recommended)
+Modulus Sym with Docker Image (Recommended)
 ---------------------------------------
 
 Install the Docker Engine
 ^^^^^^^^^^^^^^^^^^^^^^^^^   
 
-To start working with Modulus, ensure that you have `Docker Engine <https://docs.docker.com/engine/install/ubuntu/>`_ installed. 
+To start working with Modulus Sym, ensure that you have `Docker Engine <https://docs.docker.com/engine/install/ubuntu/>`_ installed. 
 
 You will also need to install the `NVIDIA docker toolkit <https://github.com/NVIDIA/nvidia-docker>`_. This should work on most debian based systems: 
 
@@ -63,15 +63,15 @@ You will also need to install the `NVIDIA docker toolkit <https://github.com/NVI
    
    sudo apt-get install nvidia-docker2 
        
-Running Modulus in the docker image while using SDF library may require NVIDIA container toolkit version greater or equal to 1.0.4.
+Running Modulus Sym in the docker image while using SDF library may require NVIDIA container toolkit version greater or equal to 1.0.4.
 
 To run the docker commands without :code:`sudo`, add yourself to the docker group by following the steps 1-4 found in `Manage Docker as a non-root user <https://docs.docker.com/engine/install/linux-postinstall/>`_ . 
 
-Install Modulus
+Install Modulus Sym
 ^^^^^^^^^^^^^^^  
 
-Download the Modulus docker container. 
-Once downloaded, load the Modulus container into docker using the following command (This may take several minutes): 
+Download the Modulus Sym docker container. 
+Once downloaded, load the Modulus Sym container into docker using the following command (This may take several minutes): 
 
 Replace the ``xx.xx`` with the release version you are using. The latest release is ``22.09`` 
 
@@ -82,16 +82,16 @@ Replace the ``xx.xx`` with the release version you are using. The latest release
 Once complete, ``Loaded image: modulus:xx.xx`` will get printed in the console.
 
 
-Using the Modulus examples
+Using the Modulus Sym examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
-   All examples can be found in the `Modulus GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
-   the `NVIDIA Modulus Downloads page <https://developer.nvidia.com/modulus-downloads>`_ and sign up 
-   for the `Modulus GitLab Repository Access <https://developer.nvidia.com/modulus-gitlab-repository-access>`_ .
+   All examples can be found in the `Modulus Sym GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
+   the `NVIDIA Modulus Sym Downloads page <https://developer.nvidia.com/modulus-downloads>`_ and sign up 
+   for the `Modulus Sym GitLab Repository Access <https://developer.nvidia.com/modulus-gitlab-repository-access>`_ .
 
 .. note:: 
-   NVIDIA Modulus recommends using SSH to clone the GitLab repos. Information on adding SSH keys to your GitLab account can be found on `GitLab SSH Tutorial <https://docs.gitlab.com/ee/user/ssh.html>`_.
+   NVIDIA Modulus Sym recommends using SSH to clone the GitLab repos. Information on adding SSH keys to your GitLab account can be found on `GitLab SSH Tutorial <https://docs.gitlab.com/ee/user/ssh.html>`_.
    The basic steps to create and add a SSH key is below:
    
    #. Generate SSH key:  ``ssh-keygen -t ed25519 -C "<comment>"`` (`More Info <https://docs.gitlab.com/ee/user/ssh.html#generate-an-ssh-key-pair-for-a-fidou2f-hardware-security-key>`__)
@@ -109,7 +109,7 @@ You can clone the examples repository using:
 
    git clone git@gitlab.com:nvidia/modulus/examples.git
 
-Once the repository is cloned, you can run the docker image and mount the Modulus examples using: 
+Once the repository is cloned, you can run the docker image and mount the Modulus Sym examples using: 
 
 Replace the ``xx.xx`` with the release version you are using. The latest release is ``22.09``
 
@@ -133,16 +133,16 @@ To verify the installation has been done correctly, run these commands:
 If you see the ``outputs/`` directory created after the execution of the command (~5 min), the installation is successful. For some of the examples, we have trained checkpoints for reference contained here, ``https://gitlab.com/nvidia/modulus/checkpoints.git`` . We will continue to add checkpoints for more examples in the future. 
 
 .. note:: 
-    If you intend to use the quadrature functionality of Modulus :ref:`variational-example` please install the ``quadpy``, ``orthopy``, and ``ndim`` packages inside the container. Similarly, if you plan to use the Neural operators within Modulus and wish to download some of the example data, install the ``gdown`` package. Both these packages can easily be installed inside the container using ``pip install <package-name>``.
+    If you intend to use the quadrature functionality of Modulus Sym :ref:`variational-example` please install the ``quadpy``, ``orthopy``, and ``ndim`` packages inside the container. Similarly, if you plan to use the Neural operators within Modulus Sym and wish to download some of the example data, install the ``gdown`` package. Both these packages can easily be installed inside the container using ``pip install <package-name>``.
 
 .. _install_modulus_bare_metal:
 
-Modulus Bare Metal Install
+Modulus Sym Bare Metal Install
 --------------------------
 
-While NVIDIA recommends using the docker image provided to run Modulus, installation instructions for Ubuntu 20.04 are also provided. Currently the bare metal installation does not support the tesselated geometry module in Modulus. If this is required please use the docker image provided. 
-Modulus requires CUDA to be installed. 
-For compatibility with PyTorch 1.12, use CUDA 11.6 or later. Modulus requires Python 3.8 or later. 
+While NVIDIA recommends using the docker image provided to run Modulus Sym, installation instructions for Ubuntu 20.04 are also provided. Currently the bare metal installation does not support the tesselated geometry module in Modulus Sym. If this is required please use the docker image provided. 
+Modulus Sym requires CUDA to be installed. 
+For compatibility with PyTorch 1.12, use CUDA 11.6 or later. Modulus Sym requires Python 3.8 or later. 
 
 Other dependencies can be installed using: 
 
@@ -156,27 +156,27 @@ Other dependencies can be installed using:
 
 .. warning:: Depending on the version of PyTorch, you would need a specific version of functorch. The best recommended way is to use latest version for both PyTorch and functorch.
 
-.. warning:: Currently, Modulus has only been tested for ``numpy-stl`` 2.16.3, ``sympy`` 1.5.1, ``symengine`` 0.6.1 and ``hydra-core`` 1.1.1 versions. 
+.. warning:: Currently, Modulus Sym has only been tested for ``numpy-stl`` 2.16.3, ``sympy`` 1.5.1, ``symengine`` 0.6.1 and ``hydra-core`` 1.1.1 versions. 
    Using other versions for these packages might give errors. 
-   Add packages for ``quadpy``, ``orthopy``, ``ndim`` and ``gdown`` if you intend to use the quadrature functionality of Modulus :ref:`variational-example` or wish to download the example data for the Neural Operator training.
+   Add packages for ``quadpy``, ``orthopy``, ``ndim`` and ``gdown`` if you intend to use the quadrature functionality of Modulus Sym :ref:`variational-example` or wish to download the example data for the Neural Operator training.
 
 
-Once all dependencies are installed, the Modulus source code can be downloaded from Modulus GitLab repository. Modulus can be installed from the Modulus repository using: 
+Once all dependencies are installed, the Modulus Sym source code can be downloaded from Modulus Sym GitLab repository. Modulus Sym can be installed from the Modulus Sym repository using: 
 
 .. code-block:: bash
 
    git clone git@gitlab.com:nvidia/modulus/modulus.git
-   cd ./Modulus/                                                                 
+   cd ./Modulus Sym/                                                                 
    python setup.py install                                                       
 
 
-Using the Modulus examples
+Using the Modulus Sym examples
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
-   All examples can be found in the `Modulus GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
-   the `NVIDIA Modulus Downloads page <https://developer.nvidia.com/modulus-downloads>`_ and sign up 
-   for the `Modulus GitLab Repository Access <https://developer.nvidia.com/modulus-gitlab-repository-access>`_ .
+   All examples can be found in the `Modulus Sym GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
+   the `NVIDIA Modulus Sym Downloads page <https://developer.nvidia.com/modulus-downloads>`_ and sign up 
+   for the `Modulus Sym GitLab Repository Access <https://developer.nvidia.com/modulus-gitlab-repository-access>`_ .
 
 You can clone the examples repository using:
 
@@ -199,11 +199,11 @@ To verify the installation has been done correctly, run these commands:
 
 If you see ``outputs/`` directory created after the execution of the command (~5 min), the installation is successful. For some of the examples, we have trained checkpoints for reference contained here, ``https://gitlab.com/nvidia/modulus/checkpoints.git`` . We will continue to add checkpoints for more examples in the future.
 
-Modulus on Public Cloud instances
+Modulus Sym on Public Cloud instances
 ---------------------------------
 
-Modulus can be used on public cloud instances like AWS and GCP. To install and run Modulus, 
+Modulus Sym can be used on public cloud instances like AWS and GCP. To install and run Modulus Sym, 
 
 #. Get your GPU instance on AWS or GCP. (Please see :ref:`system_requirements` for recommended hardware platform)
 #. Use the `NVIDIA GPU-Optimized VMI <https://aws.amazon.com/marketplace/pp/prodview-7ikjtg3um26wq?sr=0-3&ref_=beagle&applicationId=AWSMPContessa>`_ on the cloud instance. For detailed instructions on setting up VMI refer `NGC Certified Public Clouds <https://docs.nvidia.com/ngc/ngc-deploy-public-cloud/index.html#ngc-certified-public-clouds>`_.
-#. Once the instance spins up, follow the :ref:`install_modulus_docker` to load the Modulus Docker container and the examples. 
+#. Once the instance spins up, follow the :ref:`install_modulus_docker` to load the Modulus Sym Docker container and the examples. 

@@ -6,7 +6,7 @@ FPGA Heat Sink with Laminar Flow
 Introduction
 ------------
 
-This tutorial shows how some of the features in Modulus apply for a
+This tutorial shows how some of the features in Modulus Sym apply for a
 complicated FPGA heat sink design and solve the conjugate heat transfer.
 In this tutorial you will learn:
 
@@ -18,7 +18,7 @@ In this tutorial you will learn:
 #. How to formulate velocity field as a vector potential (Exact
    continuity feature)
 
-#. How different features and architectures in Modulus perform on a
+#. How different features and architectures in Modulus Sym perform on a
    problem with complicated geometry
 
 .. note::
@@ -53,7 +53,7 @@ fully connected neural network (slow convergence).
    FPGA heat sink geometry
 
 This section solves the conjugate heat transfer problem for the
-geometry above at :math:`Re=50`. The dimensions of the geometry, as modeled in Modulus,
+geometry above at :math:`Re=50`. The dimensions of the geometry, as modeled in Modulus Sym,
 are summarized here: 
 
 .. table:: FPGA Dimensions 
@@ -101,7 +101,7 @@ the geometry definition, flow constraints and solver and heat constraints and so
 Solver using Fourier Network Architecture
 -----------------------------------------
 
-As described in the :ref:`theory`, in Modulus, the spectral bias of the neural networks can be overcome by
+As described in the :ref:`theory`, in Modulus Sym, the spectral bias of the neural networks can be overcome by
 using the Fourier Networks. These networks have shown a significant
 improvement in results over the regular fully connected neural networks
 due to their ability to capture sharp gradients.
@@ -114,7 +114,7 @@ class of problems covered in the User Guide. More details about architecture con
 can be found in the Hydra configs section (:ref:`config`).
 
 **A note on frequencies:** One of the main parameters of these networks are 
-the frequencies. In Modulus, you can choose frequencies from the spectrum you
+the frequencies. In Modulus Sym, you can choose frequencies from the spectrum you
 want to sample (full/axis/gaussian/diagonal) and the number of frequencies in the
 spectrum. The optimal number of frequencies depends on every problem and one 
 often needs to balance the accuracy benefits and the
@@ -269,27 +269,27 @@ comparison for the loss values from different runs.
    | **Case Description**  | :math:`P_{drop}`     | :math:`T_{peak}`     |
    |                       | :math:`(Pa)`         | :math:`(^{\circ} C)` |
    +-----------------------+----------------------+----------------------+
-   | **Modulus:** Fully    | 29.24                | 77.90                |
+   | **Modulus Sym:** Fully    | 29.24                | 77.90                |
    | Connected Networks    |                      |                      |
    +-----------------------+----------------------+----------------------+
-   | **Modulus:** Fully    | 28.92                | 90.63                |
+   | **Modulus Sym:** Fully    | 28.92                | 90.63                |
    | Connected Networks    |                      |                      |
    | with Exact            |                      |                      |
    | Continuity            |                      |                      |
    +-----------------------+----------------------+----------------------+
-   | **Modulus:** Fourier  | 29.19                | 77.08                |
+   | **Modulus Sym:** Fourier  | 29.19                | 77.08                |
    | Networks              |                      |                      |
    +-----------------------+----------------------+----------------------+
-   | **Modulus:** Modified | 29.23                | 80.96                |
+   | **Modulus Sym:** Modified | 29.23                | 80.96                |
    | Fourier Networks      |                      |                      |
    +-----------------------+----------------------+----------------------+
-   | **Modulus:** SiReNs   | 29.21                | 76.54                |
+   | **Modulus Sym:** SiReNs   | 29.21                | 76.54                |
    +-----------------------+----------------------+----------------------+
-   | **Modulus:** Fourier  | 29.14                | 78.56                |
+   | **Modulus Sym:** Fourier  | 29.14                | 78.56                |
    | Networks with         |                      |                      |
    | Symmetry              |                      |                      |
    +-----------------------+----------------------+----------------------+
-   | **Modulus:** DGM      | 29.10                | 76.86                |
+   | **Modulus Sym:** DGM      | 29.10                | 76.86                |
    | Networks with Global  |                      |                      |
    | LR annealing, Global  |                      |                      |
    | Adaptive              |                      |                      |

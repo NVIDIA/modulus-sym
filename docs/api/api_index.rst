@@ -1,5 +1,5 @@
 
-Welcome to the Modulus API documentation.
+Welcome to the Modulus Sym API documentation.
 
 Core API
 ===========

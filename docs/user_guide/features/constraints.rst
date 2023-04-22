@@ -3,14 +3,14 @@
 Constraints
 ===========
 
-Modulus uses constraints to define the objectives for neural network training. These house a set of nodes from which a computational graph is built for execution as well as loss function. 
-Many physical problems require multiple training objectives/constraints to be defined in a well-posed manner. The constraints in Modulus are designed to provide the means for intuitively 
+Modulus Sym uses constraints to define the objectives for neural network training. These house a set of nodes from which a computational graph is built for execution as well as loss function. 
+Many physical problems require multiple training objectives/constraints to be defined in a well-posed manner. The constraints in Modulus Sym are designed to provide the means for intuitively 
 setting up multi-objective problems.
 
-Several types of constraints are available within Modulus that allow you to quickly setup your AI training either in a physics-informed or data-informed fashion. 
-At the core, the various constraints in Modulus sample a dataset, execute the computational nodes on the generated samples and compute the loss for each constraint. This individual loss is 
+Several types of constraints are available within Modulus Sym that allow you to quickly setup your AI training either in a physics-informed or data-informed fashion. 
+At the core, the various constraints in Modulus Sym sample a dataset, execute the computational nodes on the generated samples and compute the loss for each constraint. This individual loss is 
 then combined with the losses of other user-defined constraints using a aggregator method selected. The combined loss is then passed to the optimizer for 
-optimization. The different variants available in Modulus makes the definition of some common types of constraints easy so that you do not have to write a lot of boilerplate code
+optimization. The different variants available in Modulus Sym makes the definition of some common types of constraints easy so that you do not have to write a lot of boilerplate code
 for sampling and evaluating. Each constraint is recorded in the ``Domain`` class which is input to the ``Solver``. 
 
 Continuous Constraints
@@ -22,7 +22,7 @@ to apply the PDE constraints in the interior of the domain and boundary conditio
 PointwiseBoundaryConstraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The boundary of a Modulus' geometry object can be sampled using ``PointwiseBoundaryConstraint`` class. 
+The boundary of a Modulus Sym' geometry object can be sampled using ``PointwiseBoundaryConstraint`` class. 
 This will sample the entire boundary of the geometry specified as input to the ``geometry`` parameter. 
 In the case of 1D, the boundaries are the end points, for 2D, its the points along the perimeter, 
 and for 3D its the points on the surface of the geometry. 
@@ -55,7 +55,7 @@ Below, a simple boundary condition definition is shown. Here the problem is tryi
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, ModulusConfig
+    from modulus.sym.hydra import to_absolute_path, Modulus SymConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
     from modulus.sym.geometry.primitives_1d import Point1D, Line1D
@@ -67,7 +67,7 @@ Below, a simple boundary condition definition is shown. Here the problem is tryi
     from modulus.sym.models.fully_connected import FullyConnectedArch
     
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: ModulusConfig) -> None:
+    def run(cfg: Modulus SymConfig) -> None:
     
         # make list of nodes to unroll graph on
         u_net = FullyConnectedArch(
@@ -105,7 +105,7 @@ Below, a simple boundary condition definition is shown. Here the problem is tryi
 PointwiseInteriorConstraint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The interior of a Modulus' geometry object can be sampled using ``PointwiseInteriorConstraint`` class. 
+The interior of a Modulus Sym' geometry object can be sampled using ``PointwiseInteriorConstraint`` class. 
 This will sample the entire interior of the geometry specified as input to the ``geometry`` parameter. 
 
 Similar to boundary sampling, subsampling is possible using the ``criteria`` parameter. The ``outvar`` and ``batch_size`` parameters 
@@ -132,7 +132,7 @@ Below, a simple interior constraint definition is shown.
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, ModulusConfig
+    from modulus.sym.hydra import to_absolute_path, Modulus SymConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
     from modulus.sym.geometry.primitives_1d import Point1D, Line1D
@@ -171,7 +171,7 @@ Below, a simple interior constraint definition is shown.
     
     
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: ModulusConfig) -> None:
+    def run(cfg: Modulus SymConfig) -> None:
     
         # make list of nodes to unroll graph on
         eq = CustomPDE(f=1.0)
@@ -236,7 +236,7 @@ Below, a simple integral constraint definition is shown.
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, ModulusConfig
+    from modulus.sym.hydra import to_absolute_path, Modulus SymConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
     from modulus.sym.geometry.primitives_1d import Point1D, Line1D
@@ -251,7 +251,7 @@ Below, a simple integral constraint definition is shown.
     
     
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: ModulusConfig) -> None:
+    def run(cfg: Modulus SymConfig) -> None:
     
         # make list of nodes to unroll graph on
         u_net = FullyConnectedArch(
@@ -308,7 +308,7 @@ Below, a simple supervised grid constraint definition is shown.
     :caption: Supervised Grid Constraint from the Darcy flow example
 
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
+    from modulus.sym.hydra import to_absolute_path, instantiate_arch, Modulus SymConfig
     from modulus.sym.key import Key
     
     from modulus.sym.solver import Solver
@@ -322,7 +322,7 @@ Below, a simple supervised grid constraint definition is shown.
     
     
     @modulus.main(config_path="conf", config_name="config_FNO")
-    def run(cfg: ModulusConfig) -> None:
+    def run(cfg: Modulus SymConfig) -> None:
     
         # load training/ test data
         input_keys = [Key("coeff", scale=(7.48360e00, 4.49996e00))]

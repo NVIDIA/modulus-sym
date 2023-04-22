@@ -1,4 +1,4 @@
-Modulus Geometry
+Modulus Sym Geometry
 ========================
 
 geometry.geometry

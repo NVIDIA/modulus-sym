@@ -1,5 +1,5 @@
 Physics Informed Neural Networks in Modulus Sym
-===========================================
+===============================================
 
 .. _nn_methodology:
 

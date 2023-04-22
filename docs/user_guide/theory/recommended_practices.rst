@@ -1,7 +1,7 @@
 .. _tipsTricks:
 
 Recommended Practices in Modulus Sym
-================================
+====================================
 
 Physics Informed Neural Networks
 --------------------------------

@@ -198,7 +198,7 @@ we will create a list of nodes to pass to different constraints that need to be 
 The constraints include equations, residuals, and boundary conditions.
 
 Using Hydra to Configure Modulus Sym
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Hydra configuration files are at the heart of using Modulus Sym.
 Each configuration file is a text file in YAML format.

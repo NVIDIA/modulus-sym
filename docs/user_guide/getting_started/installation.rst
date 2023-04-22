@@ -50,7 +50,7 @@ System Requirements
 .. _install_modulus_docker:
 
 Modulus Sym with Docker Image (Recommended)
----------------------------------------
+-------------------------------------------
 
 Install the Docker Engine
 ^^^^^^^^^^^^^^^^^^^^^^^^^   
@@ -68,7 +68,7 @@ Running Modulus Sym in the docker image while using SDF library may require NVID
 To run the docker commands without :code:`sudo`, add yourself to the docker group by following the steps 1-4 found in `Manage Docker as a non-root user <https://docs.docker.com/engine/install/linux-postinstall/>`_ . 
 
 Install Modulus Sym
-^^^^^^^^^^^^^^^  
+^^^^^^^^^^^^^^^^^^^  
 
 Download the Modulus Sym docker container. 
 Once downloaded, load the Modulus Sym container into docker using the following command (This may take several minutes): 
@@ -83,7 +83,7 @@ Once complete, ``Loaded image: modulus:xx.xx`` will get printed in the console.
 
 
 Using the Modulus Sym examples
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
    All examples can be found in the `Modulus Sym GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
@@ -138,7 +138,7 @@ If you see the ``outputs/`` directory created after the execution of the command
 .. _install_modulus_bare_metal:
 
 Modulus Sym Bare Metal Install
---------------------------
+------------------------------
 
 While NVIDIA recommends using the docker image provided to run Modulus Sym, installation instructions for Ubuntu 20.04 are also provided. Currently the bare metal installation does not support the tesselated geometry module in Modulus Sym. If this is required please use the docker image provided. 
 Modulus Sym requires CUDA to be installed. 
@@ -171,7 +171,7 @@ Once all dependencies are installed, the Modulus Sym source code can be download
 
 
 Using the Modulus Sym examples
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. note::
    All examples can be found in the `Modulus Sym GitLab repository <https://gitlab.com/nvidia/modulus>`_. To get access to the GitLab repo, visit 
@@ -200,7 +200,7 @@ To verify the installation has been done correctly, run these commands:
 If you see ``outputs/`` directory created after the execution of the command (~5 min), the installation is successful. For some of the examples, we have trained checkpoints for reference contained here, ``https://gitlab.com/nvidia/modulus/checkpoints.git`` . We will continue to add checkpoints for more examples in the future.
 
 Modulus Sym on Public Cloud instances
----------------------------------
+-------------------------------------
 
 Modulus Sym can be used on public cloud instances like AWS and GCP. To install and run Modulus Sym, 
 

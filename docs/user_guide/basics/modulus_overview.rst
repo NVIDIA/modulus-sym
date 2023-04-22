@@ -1,8 +1,8 @@
 Modulus Sym Overview
-=================
+====================
 
 Modulus Sym Building Blocks
------------------------
+---------------------------
 
 * **Geometry and Data**
     Modulus Sym provides both physics-informed and data-driven machine learning solutions for physics simulation problems.
@@ -54,7 +54,7 @@ Modulus Sym Building Blocks
     ``Monitor`` results can also be exported to a text file in comma-separated values (CSV) format.
 
 Modulus Sym Development Workflow
-----------------------------
+--------------------------------
 
 The figure below illustrates a typical workflow when developing in Modulus Sym.
 Not all problems will call for exactly this workflow, but it serves as a general guide.
@@ -83,7 +83,7 @@ More details of each step can be found in the :ref:`ldc` chapter which provides 
 
 
 Modulus Sym Training Algorithm
---------------------------
+------------------------------
 
 .. _fig-modulus-training-loop:
 

@@ -1,12 +1,12 @@
 
 Post Processing in Modulus Sym
-==========================
+==============================
 
 
 .. _tensorboard:
 
 TensorBoard in Modulus Sym
-----------------------
+--------------------------
 
 Introduction
 ^^^^^^^^^^^^
@@ -143,7 +143,7 @@ Finally, run the example code. You should automatically see your plots being add
 .. _vtk:
 
 VTK Utilities in Modulus Sym
--------------------------
+----------------------------
 
 Introduction
 ^^^^^^^^^^^^

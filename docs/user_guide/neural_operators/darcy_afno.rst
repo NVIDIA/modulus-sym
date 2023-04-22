@@ -30,7 +30,7 @@ This is an extension of the :ref:`darcy_fno` chapter. The unique topics you will
 .. note::
 
    This tutorial assumes that you are familiar with the basic functionality of Modulus Sym and understand the AFNO architecture.
-   Please see the :ref:`ldc` and :ref:`afno` sections for additional information.
+   Please see the :ref:`Introductory Example` and :ref:`afno` sections for additional information.
    Additionally, this tutorial builds upon the :ref:`darcy_fno` which should be read prior to this one.
 
 .. warning::

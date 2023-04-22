@@ -14,7 +14,7 @@ Deep operator network (DeepONet) in Modulus Sym. In this tutorial, you will lear
 #. How to set up data-informed and physics-informed DeepONet for learning operators
 
 .. note::
-   This tutorial assumes that you have completed the tutorial :ref:`ldc` and are
+   This tutorial assumes that you have completed the tutorial :ref:`Introductory Example` and are
    familiar with Modulus Sym APIs.
 
 Problem 1: Anti-derivative (data-informed)

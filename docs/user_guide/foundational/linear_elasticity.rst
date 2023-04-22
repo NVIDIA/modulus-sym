@@ -24,7 +24,7 @@ will learn:
 -  How to nondimensionalize the elasticity equations.
 
 .. note::
-   This tutorial assumes that you have completed :ref:`ldc` tutorial
+   This tutorial assumes that you have completed :ref:`Introductory Example` tutorial
    and have familiarized yourself with the basics of
    the Modulus Sym APIs. See :ref:`weak-solutions-pinn` 
    for more details on weak solutions of PDEs. Some of the boundary

@@ -18,7 +18,7 @@ the Fourier Neural Operator (FNO) architecture inside of Modulus Sym. In this tu
 .. note::
 
    This tutorial assumes that you are familiar with the basic functionality of Modulus Sym and understand the FNO architecture.
-   Please see the :ref:`ldc` and :ref:`fno` sections for additional information.
+   Please see the :ref:`Introductory Example` and :ref:`fno` sections for additional information.
 
 .. warning::
 

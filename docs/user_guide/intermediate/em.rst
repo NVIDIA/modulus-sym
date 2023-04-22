@@ -27,7 +27,7 @@ Two electromagnetic problems are solved in this tutorial. All the
 simulations are appropriately nondimensionalized.
 
 .. note::
-   This tutorial assumes that you have completed the tutorial :ref:`ldc` and are
+   This tutorial assumes that you have completed the tutorial :ref:`Introductory Example` and are
    familiar with Modulus Sym APIs
 
    All the scripts referred in this tutorial can be found in ``examples/waveguide/``.

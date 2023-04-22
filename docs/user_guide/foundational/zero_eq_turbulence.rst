@@ -15,7 +15,7 @@ In this tutorial you will learn the following:
 #. How to create nodes in the graph for arbitrary variables.
 
 .. note::
-   This tutorial assumes that you have completed the :ref:`ldc`
+   This tutorial assumes that you have completed the :ref:`Introductory Example`
    tutorial on Lid Driven Cavity Flow and have familiarized yourself with the basics
    of the Modulus Sym APIs.
 
@@ -24,7 +24,7 @@ Problem Description
 
 In this tutorial you will add the zero equation turbulence for a Lid
 Driven Cavity flow. The problem setup is very similar to the one found in the
-:ref:`ldc`. The Reynolds number is increased to 1000. The velocity
+:ref:`Introductory Example`. The Reynolds number is increased to 1000. The velocity
 profile is kept the same as before. To increase the
 Reynolds Number, the viscosity is reduced to 1 × 10\ :sup:`−4`
 :math:`m^2/s`.
@@ -32,7 +32,7 @@ Reynolds Number, the viscosity is reduced to 1 × 10\ :sup:`−4`
 Case Setup
 ----------
 
-The case set up in this tutorial is very similar to the example in :ref:`ldc`. 
+The case set up in this tutorial is very similar to the example in :ref:`Introductory Example`. 
 It only describes the additions that are made to the previous code.
 
 .. note::

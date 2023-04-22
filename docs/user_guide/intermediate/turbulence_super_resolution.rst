@@ -22,7 +22,7 @@ In this example you will learn the following:
 
 .. note:: 
 
-   This tutorial assumes that you have completed the :ref:`ldc` tutorial on Lid Driven Cavity flow and have familiarized yourself with the basics of Modulus Sym. 
+   This tutorial assumes that you have completed the :ref:`Introductory Example` tutorial on Lid Driven Cavity flow and have familiarized yourself with the basics of Modulus Sym. 
    This also assumes that you have a basic understanding of the convolution models in Modulus Sym :ref:`pix2pix` and :ref:`super_res`.
 
 .. warning::

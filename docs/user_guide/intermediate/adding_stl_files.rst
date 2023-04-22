@@ -22,7 +22,7 @@ geometry. In this tutorial you will learn the following:
    Aneurysm STL file
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc`
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example`
    and have familiarized yourself with the basics
    of the Modulus Sym APIs. Additionally, to use the modules
    described in this tutorial, make sure your system satisfies the
@@ -73,7 +73,7 @@ You will need to specify the value of attribute ``airtight`` as ``False``
 for the open surfaces (eg. boundary STL files).
 
 Then these mesh objects can be used to create boundary or interior 
-constraints similar to tutorial :ref:`ldc` using the ``PointwiseBoundaryConstraint`` or
+constraints similar to tutorial :ref:`Introductory Example` using the ``PointwiseBoundaryConstraint`` or
 ``PointwiseInteriorConstraint``. 
 
 .. note::
@@ -93,7 +93,7 @@ Defining the Equations, Networks and Nodes
 This process is similar to other tutorials. In this problem you are only solving
 for laminar flow, so you can use only ``NavierStokes`` and
 ``NormalDotVec`` equations and define a network similar to
-tutorial :ref:`ldc`. The code to generate the Network and required nodes is shown below.
+tutorial :ref:`Introductory Example`. The code to generate the Network and required nodes is shown below.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
@@ -104,7 +104,7 @@ Setting up Domain and adding Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now that you have all the nodes and geometry elements defined, you can use the tesselated/mesh 
-objects to create boundary or interior constraints similar to tutorial :ref:`ldc` using 
+objects to create boundary or interior constraints similar to tutorial :ref:`Introductory Example` using 
 the ``PointwiseBoundaryConstraint`` or ``PointwiseInteriorConstraint``. 
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py

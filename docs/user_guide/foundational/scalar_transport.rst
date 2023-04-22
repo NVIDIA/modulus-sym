@@ -19,7 +19,7 @@ model the heat transfer in a 2D flow. In this tutorial you will learn:
    speed up convergence.
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc` and have 
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example` and have 
    familiarized yourself with the basics of the Modulus Sym APIs.
  
 Problem Description
@@ -141,7 +141,7 @@ You can use integral continuity planes to specify the targeted mass flow rate th
 For a parabolic velocity of 1.5
 :math:`m/s`, the integral mass flow is :math:`1` which is added as an
 additional constraint to speed up the convergence. Similar to tutorial
-:ref:`ldc` you can define keys for ``'normal_dot_vel'`` on
+:ref:`Introductory Example` you can define keys for ``'normal_dot_vel'`` on
 the plane boundaries and set its value to ``1`` to specify the targeted
 mass flow. Use the ``IntegralBoundaryConstraint`` constraint to define 
 these integral constraints. Here the ``integral_line`` 

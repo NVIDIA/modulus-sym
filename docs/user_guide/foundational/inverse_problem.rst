@@ -21,7 +21,7 @@ thermal diffusivity (:math:`\alpha`)). In this tutorial you will learn:
    quantities.
 
 .. note:: 
-   This tutorial assumes that you have completed tutorial :ref:`ldc` and have familiarized yourself with the basics of the Modulus Sym APIs. 
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example` and have familiarized yourself with the basics of the Modulus Sym APIs. 
 
 Problem Description
 -------------------

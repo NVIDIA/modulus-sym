@@ -29,7 +29,7 @@ In this tutorial you will learn:
 
 .. note::
    This tutorial assumes that you have completed tutorial
-   :ref:`ldc` on Lid Driven Cavity and have familiarized yourself
+   :ref:`Introductory Example` on Lid Driven Cavity and have familiarized yourself
    with the basics of the Modulus Sym APIs. Also, see Section :ref:`weak-solutions-pinn` from the
    Theory chapter for more details on weak solutions of PDEs.
 

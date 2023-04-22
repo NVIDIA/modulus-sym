@@ -18,7 +18,7 @@ In this tutorial, you will learn:
 .. note::
 
    This tutorial assumes that you are familiar with the basic functionality of Modulus Sym and understand the PINO architecture.
-   Please see the :ref:`ldc` and :ref:`pino` sections for additional information.
+   Please see the :ref:`Introductory Example` and :ref:`pino` sections for additional information.
    Additionally, this tutorial builds upon the :ref:`darcy_fno` which should be read prior to this one.
    
 .. warning::

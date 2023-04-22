@@ -24,7 +24,7 @@ will learn the following:
 
 .. note::
    This tutorial assumes that you have completed the 
-   :ref:`ldc` tutorial and have familiarized
+   :ref:`Introductory Example` tutorial and have familiarized
    yourself with the basics of Modulus Sym APIs.
 
 Problem Description
@@ -132,7 +132,7 @@ the file you just created.
 Creating Nodes and Domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This part of of the problem is similar to the tutorial :ref:`ldc`.
+This part of of the problem is similar to the tutorial :ref:`Introductory Example`.
 ``WaveEquation`` class is used to compute the wave equation and the
 wave speed is defined based on the problem statement. A neural network with ``x`` and ``t`` as input and ``u`` as output is also created. 
 

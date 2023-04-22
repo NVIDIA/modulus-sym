@@ -17,7 +17,7 @@ surveying. In this tutorial, you will learn the following:
 #. How to present a variable velocity model as an additional network
 
 .. note:: 
-   This tutorial assumes that you have completed the :ref:`ldc` tutorial
+   This tutorial assumes that you have completed the :ref:`Introductory Example` tutorial
    on Lid Driven Cavity flow and have familiarized yourself with the basics
    of Modulus Sym. Also, see the 
    :ref:`transient` tutorial for more information on defining new

@@ -12,7 +12,7 @@ have already been covered in a previous tutorial, only the
 problem description is discussed without going into the details of the code.
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc`
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example`
    and have familiarized yourself with the basics of the Modulus Sym APIs. 
    Also, refer to tutorial :ref:`transient` for information on defining new
    differential equations, and solving time dependent problems in Modulus Sym.

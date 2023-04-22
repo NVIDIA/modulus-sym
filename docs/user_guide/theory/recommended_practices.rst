@@ -124,7 +124,7 @@ convergence.
 
 A similar weighting is also applied to the intersection of boundaries where there are discontinuities.
 We will cover this in detail in the first tutorial on the Lid Driven
-Cavity flow (tutorial :ref:`ldc`).
+Cavity flow (tutorial :ref:`Introductory Example`).
 
 Increasing the Point Cloud Density
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

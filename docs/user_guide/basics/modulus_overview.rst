@@ -70,7 +70,7 @@ The key steps of this process include:
 * "Create Solver": Initialize a ``Solver`` with the populated training ``Domain``\.
 * "Run Solver": Run the ``Solver``\.  The resulting training process optimizes the neural network to solve the physics problem.
 
-More details of each step can be found in the :ref:`ldc` chapter which provides a hands-on introduction to Modulus Sym.
+More details of each step can be found in the :ref:`Introductory Example` chapter which provides a hands-on introduction to Modulus Sym.
 
 .. _fig-modulus-dev-loop:
 

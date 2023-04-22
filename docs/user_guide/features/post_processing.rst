@@ -14,7 +14,7 @@ Introduction
 This section shows you how to visualize the outputs of your model as it trains, by adding (custom) plots to TensorBoard. These visualizations provide an easy way to qualitatively assess the performance of your model.
 Plots can be made using Modulus Sym validators (i.e. plotting the output of your model compared to some ground truth dataset) or inferencers (i.e. just plotting the output of your model given a set of inputs).
 You can use the default plotter provided, or you can define your own custom plotter.
-An example custom TensorBoard plot for the lid driven cavity example :ref:`ldc` is shown here:
+An example custom TensorBoard plot for the lid driven cavity example :ref:`Introductory Example` is shown here:
 
 .. _fig-custom-plot:
 
@@ -47,7 +47,7 @@ To define a custom plotter, you can define your own ``Plotter`` class which inhe
 Lid Driven Cavity Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To show you how to use this workflow, an example of creating custom TensorBoard plots for the lid driven cavity  (:ref:`ldc`) example is provided below.
+To show you how to use this workflow, an example of creating custom TensorBoard plots for the lid driven cavity  (:ref:`Introductory Example`) example is provided below.
 First you define a custom ``ValidatorPlotter`` class, overriding its ``__call__`` methods with a custom plotting function:
 
 
@@ -281,7 +281,7 @@ Constructing VTK Objects from Scratch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The first use case of this is to define your own VTK object from scratch in Modulus Sym.
-Consider adding a new inferencer to the :ref:`ldc` example.
+Consider adding a new inferencer to the :ref:`Introductory Example` example.
 The example below defines a uniform mesh to conduct inference on:
 
 .. code-block:: python
@@ -307,7 +307,7 @@ The example below defines a uniform mesh to conduct inference on:
 
 ``VTKUniformGrid`` is a Modulus Sym wrapper for the ``vtkUniformGrid`` class and can be used to quickly define uniform domains.
 The above example defines a square domain of resolution :math:`128\times 128`.
-Adding this to your ``ldc_2d.py`` from :ref:`ldc` will add an addition inferencer with and output file ``vtk_inf.vti`` which is visualized as a mesh rather than a point cloud.
+Adding this to your ``ldc_2d.py`` from :ref:`Introductory Example` will add an addition inferencer with and output file ``vtk_inf.vti`` which is visualized as a mesh rather than a point cloud.
 
 .. figure:: /images/user_guide/vtk_ldc_grid_data.png
     :alt: `vtkUniformGridData` visualization LDC example
@@ -359,7 +359,7 @@ An example of reading in a OpenFOAM simulation file and using it for building a 
     ldc_domain.add_validator(openfoam_validator, "vtk_validator")
 
 Since ``cavity_openfoam.vtk`` is an unstructured grid, the output from this validator would be ``vtk_validator.vtu`` and contain the same mesh structure.
-Adding this code to your ``ldc_2d.py`` from :ref:`ldc` will now produce a meshed validation result in ParaView.
+Adding this code to your ``ldc_2d.py`` from :ref:`Introductory Example` will now produce a meshed validation result in ParaView.
 
 .. figure:: /images/user_guide/vtk_ldc_validation_data.png
     :alt: `vtkUnstructuredGridData` visualization LDC example

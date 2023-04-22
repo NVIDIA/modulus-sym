@@ -21,7 +21,7 @@ tutorial, you will learn:
    coupled problems.
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc`
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example`
    on and have familiarized yourself with the basics
    of the Modulus Sym APIs. Also, you should review the 
    :ref:`advection-diffusion` tutorial for additional details
@@ -150,7 +150,7 @@ Inlet, Outlet and Channel and Heat Sink walls
 
 For inlet boundary conditions, specify the velocity to be a
 constant velocity of 1.0 :math:`m/s` in x-direction. Like in tutorial
-:ref:`ldc`, weight the velocity by the SDF of the channel
+:ref:`Introductory Example`, weight the velocity by the SDF of the channel
 to avoid sharp discontinuity at the boundaries. For outlet, 
 specify the pressure to be 0. All the channel walls and heat sink walls
 are treated as no slip boundaries.

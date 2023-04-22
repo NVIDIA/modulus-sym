@@ -86,14 +86,14 @@ Loading both the training and validation datasets into memory follows a similar 
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 20-36
+   :lines: 33-49
 
 The inputs for AFNO need to be perfectly divisible by the specified patch size (in this example ``patch_size=16``), which is not
 the case for this dataset. Therefore, trim the input/output features such that they are an appropriate dimensionality ``241x241 -> 240x240``.
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 38-50
+   :lines: 51-67
 
 Initializing the Model
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -104,7 +104,7 @@ in the ``instantiate_arch`` call.
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 56-63
+   :lines: 69-76
 
 Adding Data Constraints and Validators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,7 +114,7 @@ For more information, see the :ref:`darcy_fno` chapter.
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 65-83
+   :lines: 78-96
 
 Training the Model
 ------------------
@@ -143,7 +143,7 @@ The second change is to set the ``MODEL_PARALLEL_SIZE`` environment variable to 
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO_MP.py
    :language: python
-   :lines: 20-21
+   :lines: 34-35
 
 This configures the distributed AFNO model to use 2 GPUs per model instance. The number of GPUs to use can be changed as long as the following conditions are satisfied:
 

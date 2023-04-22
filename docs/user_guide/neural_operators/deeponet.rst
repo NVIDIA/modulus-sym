@@ -61,7 +61,7 @@ Let us first import the necessary packages.
 
 .. literalinclude:: ../../../examples/anti_derivative/data_informed.py
    :language: python
-   :lines: 1-15
+   :lines: 15-31
 
 
 Initializing the Model

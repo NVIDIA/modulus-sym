@@ -136,7 +136,7 @@ Both dataloaders use a shared implementation which supports ERA5 data format and
 
 .. literalinclude:: ../../../examples/fourcastnet/src/dataset.py
    :language: python
-   :lines: 12-128
+   :lines: 26-142
 
 Given an example index, the dataset's ``__getitem__`` method returns a single Modulus Sym input variable, ``x_t0``,
 which is a tensor of shape (20, 720, 1440) which contains the 20 ERA5 variables at a starting time step,
@@ -144,13 +144,13 @@ and multiple output variables with the same shape, ``x_t1``, ``x_t2``, ..., one 
 
 .. literalinclude:: ../../../examples/fourcastnet/src/dataset.py
    :language: python
-   :lines: 134-180
+   :lines: 145-194
 
 Inside the training script, ``fourcastnet/era5_FCN.py``, the ERA5 datasets are initialized using the following:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 28-52
+   :lines: 50-72
 
 FourCastNet Model
 ~~~~~~~~~~~~~~~~~
@@ -162,13 +162,13 @@ This small wrapper allows AFNO to be executed for any ``n_tsteps`` of time steps
 
 .. literalinclude:: ../../../examples/fourcastnet/src/fourcastnet.py
    :language: python
-   :lines: 12-
+   :lines: 26-
 
 The FourCastNet model is initialized in the training script, ``fourcastnet/era5_FCN.py``:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 57-71
+   :lines: 81-91
 
 Adding Constraints
 ~~~~~~~~~~~~~~~~~~
@@ -179,13 +179,13 @@ A standard data-driven grid constraint is created:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 76-84
+   :lines: 93-104
 
 A validator is also added to the training script:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 86-94
+   :lines: 106-114
 
 
 Training the Model

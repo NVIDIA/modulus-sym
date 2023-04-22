@@ -118,7 +118,7 @@ here you create a class ``OpenBoundary`` that inherits from ``PDES``:
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 39-108
+   :lines: 63-133
 
 Variable Velocity Model
 ------------------------
@@ -134,7 +134,7 @@ form to represent the velocity :math:`c` as a function of :math:`x` and
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 166-175
+   :lines: 189-198
 
 Creating PDE and Neural Network Nodes
 --------------------------------------
@@ -143,7 +143,7 @@ First, define the Modulus Sym PDE and NN nodes for this problem:
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 135-153
+   :lines: 154-176
 
 The PDE nodes are created using both the ``OpenBoundary`` PDE defined above and the ``WaveEquation`` PDE defined within Modulus Sym. Since this is a time-dependent problem, use the ``time=True`` arguments.
 
@@ -156,7 +156,7 @@ The 2D geometry of the computational domain as well as the time range of the sol
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 155-164
+   :lines: 178-180
 
 Adding Constraints
 ------------------
@@ -165,7 +165,7 @@ A total of four different constraints is sufficient to define this problem. The 
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 177-242
+   :lines: 200-245
 
 The supervised constraints are added using the ``PointwiseConstraint.from_numpy(...)`` constructor.
 
@@ -176,7 +176,7 @@ Finally, you can validate your results using 13 later time steps from Devito, de
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 224-242
+   :lines: 247-265
 
 You can define a custom tensorboard plotter within ``examples/seismic_wave/wave_2d.py`` to add validation plots to TensorBoard, see :ref:`tensorboard` for more details on how to do this.
 
@@ -184,7 +184,7 @@ Now that you have defined the model, its constraints and validation data, you ca
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 244-246
+   :lines: 255
 
 Results
 -------

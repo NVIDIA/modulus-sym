@@ -67,7 +67,7 @@ First create a class ``WaveEquation1D`` that inherits from
 
 .. literalinclude:: ../../../examples/wave_equation/wave_equation.py
    :language: python
-   :lines: 9-24
+   :lines: 15-23
  
 Now create the initialization method for this class that defines
 the equation(s) of interest. You will define the wave equation using
@@ -85,7 +85,7 @@ in the class by adding it to the dictionary of equations.
 
 .. literalinclude:: ../../../examples/wave_equation/wave_equation.py
    :language: python
-   :lines: 25-47
+   :lines: 40-
 
 Note the rearrangement of the equation for ``'wave_equation'``. You will have
 to move all the terms of the PDE either to LHS or RHS and just have the
@@ -127,7 +127,7 @@ the file you just created.
 
 .. literalinclude:: ../../../examples/wave_equation/wave_1d.py
    :language: python
-   :lines: 1-17
+   :lines: 15-31
  
 Creating Nodes and Domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,7 +138,7 @@ wave speed is defined based on the problem statement. A neural network with ``x`
 
 .. literalinclude:: ../../../examples/wave_equation/wave_1d.py
    :language: python
-   :lines: 23-30
+   :lines: 34-43,52-53
  
 Creating Geometry and Adding Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -161,7 +161,7 @@ conditions and the equations.
 
 .. literalinclude:: ../../../examples/wave_equation/wave_1d.py
    :language: python
-   :lines: 32-71
+   :lines: 45-51,55-84
  
 Adding Validation data from analytical solutions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,7 +172,7 @@ the process define such a dataset:
 
 .. literalinclude:: ../../../examples/wave_equation/wave_1d.py
    :language: python
-   :lines: 73-87
+   :lines: 86-100
  
 Results
 -------

@@ -106,7 +106,7 @@ generate the nodes and relevant constraints is below:
 
 .. literalinclude:: ../../../examples/ode_spring_mass/spring_mass_solver.py
    :language: python
-   :lines: 1-71
+   :lines: 15-82
 
 Next, you can define the validation data for this problem. The solution
 of this problem can be obtained analytically and the expression can be
@@ -116,7 +116,7 @@ the tutorial :ref:`transient`.
 
 .. literalinclude:: ../../../examples/ode_spring_mass/spring_mass_solver.py
    :language: python
-   :lines: 73-92
+   :lines: 84-103
 
 Now that you have the definitions for the various constraints and domains complete, 
 you can form the solver and run the problem.
@@ -124,7 +124,7 @@ The code to do the same can be found below:
 
 .. literalinclude:: ../../../examples/ode_spring_mass/spring_mass_solver.py
    :language: python
-   :lines: 94-98
+   :lines: 105-110
 
 Once the python file is setup, you can solve the problem by executing the
 solver script ``spring_mass_solver.py`` as seen in other tutorials.

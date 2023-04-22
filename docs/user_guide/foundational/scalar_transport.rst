@@ -61,7 +61,7 @@ modules to generate the required boundary conditions.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 1-25 
+   :lines: 15-42
 
 
 Creating Geometry
@@ -83,7 +83,7 @@ The following code generates the geometry for the 2D heat sink problem.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 31-84
+   :lines: 47-100
 
 
 Defining the Equations, Networks and Nodes
@@ -111,7 +111,7 @@ the convergence behavior.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 86-114 
+   :lines: 102-129 
 
 
 Setting up the Domain and adding Constraints
@@ -158,7 +158,7 @@ by specifying the variable for sweep, the two intercepts and max height.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 115-199
+   :lines: 131-214
 
 
 Adding Monitors and Validators
@@ -169,7 +169,7 @@ to import it can be found below.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 200-268
+   :lines: 216-289
 
 
 Training the model 

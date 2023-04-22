@@ -92,7 +92,7 @@ The list of packages/modules to be imported are shown below.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 1-25
+   :lines: 15-43
 
 
 Defining the Equations, Networks and Nodes for a Inverse problem
@@ -123,7 +123,7 @@ The code to generate the nodes for the problem is shown here:
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 28-82
+   :lines: 48-101
 
 
 Assimilating data from CSV files/point clouds to create Training data
@@ -156,7 +156,7 @@ The code to generate such a boundary condition is shown here:
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 84-122
+   :lines:  103-147
 
 
 Adding Monitors
@@ -170,7 +170,7 @@ code to generate the ``PointwiseMonitor`` is shown here:
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 124-139 
+   :lines: 148-163
 
 
 Training the model 

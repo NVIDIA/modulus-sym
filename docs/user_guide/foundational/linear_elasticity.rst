@@ -179,7 +179,7 @@ linear elasticity equations by setting
 
 .. literalinclude:: ../../../examples/bracket/bracket.py
    :language: python
-   :lines: 27-38
+   :lines: 43-54
 
 In general, the characteristic length can be chosen in such a
 way to bound the largest dimension of the geometry to :math:`(-1,1)`.
@@ -201,7 +201,7 @@ The complete python script for this problem can be found at
 
 .. literalinclude:: ../../../examples/bracket/bracket.py
    :language: python
-   :lines: 40-63
+   :lines: 56-79
 
 The mixed form of the linear elasticity equations is used here in this
 example, and therefore, the training constraints are defined as shown below:
@@ -209,7 +209,7 @@ example, and therefore, the training constraints are defined as shown below:
 
 .. literalinclude:: ../../../examples/bracket/bracket.py
    :language: python
-   :lines: 65-233
+   :lines: 81-
 
 The training constraints consists of two different sets of interior
 points (i.e., ``interior_support`` and ``interior_bracket``). This is
@@ -268,7 +268,7 @@ the linear elasticity equations in Modulus Sym can be called by using the
 
 .. literalinclude:: ../../../examples/fuselage_panel/panel.py
    :language: python
-   :lines: 30-45
+   :lines: 44-56
 
 :numref:`fig-panel-results` shows
 the Modulus Sym results for panel displacements and stresses. For comparison,
@@ -361,7 +361,7 @@ python script for this problem can be found at
 
 .. literalinclude:: ../../../examples/plane_displacement/plane_displacement.py
    :language: python
-   :lines: 208-285
+   :lines: 205-
 
 
 The displacement boundary conditions have been included in
@@ -373,7 +373,7 @@ boundary points are read:
 
 .. literalinclude:: ../../../examples/plane_displacement/plane_displacement.py
    :language: python
-   :lines: 44-105
+   :lines: 58-117
 
 In the next step, the test functions are defined, and the test
 functions and their required gradients are computed at the interior and boundary
@@ -381,7 +381,7 @@ points:
 
 .. literalinclude:: ../../../examples/plane_displacement/plane_displacement.py
    :language: python
-   :lines: 106-110
+   :lines: 120-124
 
 Here, a set of test functions consisting of Legendre
 polynomials and trigonometric functions is constructed, and 2% of
@@ -398,7 +398,7 @@ terms:
 
 .. literalinclude:: ../../../examples/plane_displacement/plane_displacement.py
    :language: python
-   :lines: 111-159
+   :lines: 127-173
 
 Finally, following the Equation
 :eq:`eqn-elasticity_variational`, 
@@ -407,7 +407,7 @@ to the overall loss as follows:
 
 .. literalinclude:: ../../../examples/plane_displacement/plane_displacement.py
    :language: python
-   :lines: 160-188
+   :lines: 175-202
 
 :numref:`fig-plane_displacement-results` shows the Modulus Sym results for this
 plane displacement example. The results are in good agreement with the

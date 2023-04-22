@@ -47,7 +47,7 @@ Other import are very similar to previous LDC.
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d_zeroEq.py
    :language: python
-   :lines: 1-21
+   :lines: 15-37
 
 Defining the Equations, Networks and Nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,7 +92,7 @@ the required derivatives of the SDF like ``sdf__x``, ``sdf__y``, etc.
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d_zeroEq.py
    :language: python
-   :lines: 33-47 
+   :lines: 43-60
 
 Setting up domain, adding constraints and running the solver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +102,7 @@ the code and final results is presented here.
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d_zeroEq.py
    :language: python
-   :lines: 48-
+   :lines: 62-
 
 The results of the turbulent lid driven cavity flow are shown below. 
 

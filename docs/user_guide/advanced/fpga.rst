@@ -127,7 +127,7 @@ simulation for laminar case is shown below. The different architectures can be c
 appropriate keyword in the custom arguments defined in the config file. 
 
 .. literalinclude:: ../../../examples/fpga/laminar/fpga_flow.py
-   :lines: 43-92 
+   :lines: 64-108 
 
 Leveraging Symmetry of the Problem
 ----------------------------------
@@ -171,10 +171,10 @@ training domains are shown here. The rest of the training domain remains the sam
 (Full files can be accessed at ``examples/fpga/laminar_symmetry/``)
 
 .. literalinclude:: ../../../examples/fpga/laminar_symmetry/fpga_flow.py
-   :lines: 99-107 
+   :lines: 115-123
 
 .. literalinclude:: ../../../examples/fpga/laminar_symmetry/fpga_heat.py
-   :lines: 123-140 
+   :lines: 139-157 
 
 Imposing Exact Continuity
 -------------------------
@@ -191,7 +191,7 @@ as it is memory intensive and you might have to modify the batch sizes
 to fit the problem in GPU memory. 
 
 .. literalinclude:: ../../../examples/fpga/laminar/fpga_flow.py
-   :lines: 43-55 
+   :lines: 64-71
 
 Results, Comparisons, and Summary
 ---------------------------------

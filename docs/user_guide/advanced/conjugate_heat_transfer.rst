@@ -121,7 +121,7 @@ defined upfront, ex. dimensions and locations of source etc.
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_geometry.py
    :language: python
-   :lines: 46-
+   :lines: 29-
 
 Neural network, Nodes and Multi-Phase training
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,14 +130,14 @@ Let's have a look at the networks and nodes required to solve the flow and heat 
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 35-70
+   :lines: 51-86
 
 
 For the thermal nodes, start by adding nodes for relevant equations like ``AdvectionDiffusion``, ``Diffusion``, ``DiffusionInterface`` and ``GradNormal`` that will be used to define the various thermal boundary conditions relevant to this problem. Also, create 3 separate neural networks ``flow_net``, ``thermal_f_net`` and ``thermal_s_net``. The first one is the same flow network  defined in the flow scripts. This network architecture definition in heat script must exactly match to that of the flow script for successful initialization of the flow model during heat training. Set the ``optimize`` argument as ``False`` while making the nodes of flow network to avoid optimizing the flow network during the heat training. Finally, separate networks to predict the temperatures in fluid and solid are created. 
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_thermal.py
    :language: python
-   :lines: 35-79
+   :lines: 51-95
 
 
 Setting up Flow Domain and Constraints
@@ -172,7 +172,7 @@ The code for flow domain is shown below.
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 78-184
+   :lines: 87-200
 
 .. note::
    The addition of integral continuity planes and separate flow box for dense sampling are examples of adding more training data and user knowledge/bias of the problem to the training. This addition helps to improve the accuracy and convergence to a great extent and it is recommended wherever possible.
@@ -226,7 +226,7 @@ The code for heat domain is shown below.
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_thermal.py
    :language: python
-   :lines: 87-199
+   :lines: 96-215
 
 
 Adding Validators and Monitors
@@ -241,7 +241,7 @@ Monitors and validators in flow script:
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 185-249
+   :lines: 201-373
 
 
 Training the Model
@@ -261,11 +261,11 @@ from OpenFOAM solver.
 .. table:: Comparisons of Results with OpenFOAM
    :align: center
 
-   ===================================== ======= ========
+   ===================================== =========== ========
    \                                     Modulus Sym OpenFOAM
-   Pressure Drop :math:`(Pa)`            7.51    7.49
-   Peak Temperature :math:`(^{\circ} C)` 78.35   78.05
-   ===================================== ======= ========
+   Pressure Drop :math:`(Pa)`            7.51        7.49
+   Peak Temperature :math:`(^{\circ} C)` 78.35       78.05
+   ===================================== =========== ========
 
 
 .. figure:: /images/user_guide/CHTXSlice.png

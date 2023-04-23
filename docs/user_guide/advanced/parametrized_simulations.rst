@@ -111,14 +111,14 @@ Parameterized flow network:
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 35-76
+   :lines: 51-86
    :emphasize-lines: 12-23
 
 Parameterized heat network:
  
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_thermal.py
    :language: python
-   :lines: 35-78
+   :lines: 51-95
    :emphasize-lines: 9-20
 
 
@@ -134,12 +134,12 @@ Setting the parameter ranges (``three_fin_geometry.py``)
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_geometry.py
    :language: python
-   :lines: 19-44
+   :lines: 33-59
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_geometry.py
    :language: python
-   :lines: 63-91
-   :emphasize-lines: 17, 28
+   :lines: 75-96
+   :emphasize-lines: 4-10
 
 Setting the ``parameterization`` argument in the constraints. 
 Here, only a few BCs from the flow domain are shown for example purposes. 
@@ -147,13 +147,13 @@ But the same settings are applied to all the other BCs.
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 81-97
+   :lines: 97-113
    :emphasize-lines: 14
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 171-183
-   :emphasize-lines: 9
+   :lines: 182-200
+   :emphasize-lines: 14
 
 Training the Model
 ------------------

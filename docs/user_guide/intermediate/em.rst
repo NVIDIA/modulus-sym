@@ -69,7 +69,7 @@ libraries.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 1-19
+   :lines: 15-35
 
 Then, define the variables for ``sympy`` symbolic calculation and parameters for geometry.
 Also, before you define the main classes for Modulus Sym, you need to compute
@@ -81,7 +81,7 @@ directly by using ``sympy`` function. The code for the geometry and computing ei
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 27-38
+   :lines: 42-53
 
 
 For wave simulation, since the result is always periodic, Fourier
@@ -92,7 +92,7 @@ Also, define the normal gradient for the boundary conditions. Finally, make the 
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 39-59
+   :lines: 54-74
 
 Now, define the constraints for PDEs and boundary conditions. The BCs are defined based on the
 explanations provided above. In the interior domain,
@@ -103,20 +103,20 @@ weighting method you can eliminate this phenomenon.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 63-104
+   :lines: 76-117
 
 To validate the result, you can import the ``csv`` files for the validation
 domain below.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 106-125
+   :lines: 122-138
 
 Inferencer has been implemented to plot the results.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 127-135
+   :lines: 140-148
 
 Results
 ~~~~~~~
@@ -173,7 +173,7 @@ eigenfunctions on the left boundary.
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 27-42
+   :lines: 81-86
 
 For the geometry part, you will need to define the slab and corresponding
 permittivity function. There is a square root in ``eps_sympy`` because in the
@@ -184,7 +184,7 @@ waveguide port.
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 48-76
+   :lines: 61-80
 
 In the definition of the PDEs and neural network's structure,
 set the ``k`` in ``HelmholtzEquation`` as the product of wavenumber and
@@ -193,7 +193,7 @@ features to suit the problem.
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 78-97
+   :lines: 93-108
 
 
 Now, define the constraints. The only difference here is the
@@ -202,7 +202,7 @@ the modified BC is shown below:
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 112-119
+   :lines: 123-130
 
 Results
 ~~~~~~~
@@ -268,20 +268,20 @@ First import the necessary libraries.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 1-15
+   :lines: 15-31
 
 Define ``sympy`` variables, geometry and waveguide
 function.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 23-35
+   :lines: 38-50
 
 Define the PDE class and neural network structure.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 37-55
+   :lines: 51-70
 
 Then, define the constraints for PDEs and boundary conditions, and all boundary
 conditions. The 3D Maxwell's equations has been implemented in
@@ -292,7 +292,7 @@ the corresponding constraints.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 57-115
+   :lines: 72-130
 
 
 Note that this is done in 3D, so the PDEs, PEC and absorbing
@@ -302,7 +302,7 @@ Inferencer domain has been defined to check the result.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 117-128
+   :lines: 132-143
 
 
 Results
@@ -394,7 +394,7 @@ in Modulus Sym for the time being. The waveguide data can also be imported using
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 26-56
+   :lines: 42-79
 
 
 In ``validation/2Dwaveguideport.csv``, there are six eigenmodes. You may
@@ -404,21 +404,21 @@ Next, define the PDEs classes and neural network structure.
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 58-79
+   :lines: 80-102
 
 Then, define the constraints. Here imported
 data is used as the waveguide port boundary condition.
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 81-140
+   :lines: 104-162
 
 Finally, define the inferencer. These are
 same as the previous example except the ``bounds`` for the domain.
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 141-
+   :lines: 164-171
 
 Results
 ~~~~~~~

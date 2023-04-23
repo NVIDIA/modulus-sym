@@ -62,7 +62,7 @@ The list of required packages can be found below. Import Modulus Sym'
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 1-20
+   :lines: 15-37
 
 Using STL files to generate point clouds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,7 +85,7 @@ boundary conditions is shown below.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 26-90
+   :lines: 43-98
 
 Defining the Equations, Networks and Nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +97,7 @@ tutorial :ref:`Introductory Example`. The code to generate the Network and requi
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 96-108
+   :lines: 112-125
 
 
 Setting up Domain and adding Constraints
@@ -109,7 +109,7 @@ the ``PointwiseBoundaryConstraint`` or ``PointwiseInteriorConstraint``.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 93-94, 110-176 
+   :lines: 109-110, 126-192
 
 
 Adding Validators and Monitors
@@ -123,7 +123,7 @@ data. The code to generate the these domains is shown below.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 178-
+   :lines: 194-235
 
 Training the model 
 ------------------

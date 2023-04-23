@@ -77,7 +77,7 @@ Here, you will set up a constraint that can pose a loss between various measures
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 27-56
+   :lines: 42-75
 
 An important part to note is that you can control which losses you want to contribute using a ``loss_weighting`` dictionary which will be provided from the config file.
 Each one of these measures are calculated in ``examples/super_resolution/ops.py``, which can be referenced for more information.
@@ -85,13 +85,13 @@ However, as a general concept, finite difference methods are used to calculate g
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 57-129
+   :lines: 77-134
 
 Override the loss calculation with the custom method which calculates the relative MSE between predicted and target velocity fields using flow measures defined in the weight dictionary, ``self.loss_weighting``.
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 177-197
+   :lines: 197-211
 
 The resulting complete loss for this problem is the following:
 
@@ -112,7 +112,7 @@ You can easily extend this to write out the high-resolution outputs and low-reso
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 199-284
+   :lines: 214-297
 
 Here the ``grid_to_vtk`` function in Modulus Sym is used, which writes tensor data to VTK Image Datasets (Uniform grids), which can then be viewed in Paraview. 
 When your data is structured ``grid_to_vtk`` is preferred to ``var_to_polyvtk`` due to the lower memory footprint of a VTK Image Dataset vs VTK Poly Dataset.
@@ -164,7 +164,7 @@ To load the dataset into memory, you will use the following utilities:
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 289-309
+   :lines: 302-321
 
 This will download and cache the dataset locally, so you will not need to download it with every run.
 
@@ -176,21 +176,21 @@ Note that the input and output keys have a ``size=3``, which tells Modulus Sym t
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 310-316
+   :lines: 323-328
 
 Adding Data Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 320-330
+   :lines: 330-343
 
 Adding Data Validator
 ~~~~~~~~~~~~~~~~~~~~~~
 
 .. literalinclude:: ../../../examples/super_resolution/super_resolution.py
    :language: python
-   :lines: 332-340
+   :lines: 345-353
 
 
 Training the Model

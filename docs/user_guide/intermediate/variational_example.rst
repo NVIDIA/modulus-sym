@@ -154,7 +154,7 @@ First, import all the packages needed:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 1-30
+   :lines: 15-44
 
 
 Creating the Geometry
@@ -167,7 +167,7 @@ common to the two halves.
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 151-157
+   :lines: 164-176
 
 In this example, you will use the variational form in conjunction
 with traditional PINNs. The PINNs’ loss is essentially a point-wise
@@ -186,7 +186,7 @@ faster, but the computational graph is larger. The code segment below applies th
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 165-189
+   :lines: 178-290
 
 For variational constraints, in the ``run`` function, first collect the data needed to formulate the variational form. 
 For interior points, there are two options.
@@ -200,12 +200,6 @@ For this examples, you can use ``cfg.quad`` in Hydra configure file to choose th
 You can also use the radial basis test function. If so, use the additional data
 for the center of radial basis functions (RBFs).
 
-The following code collects all this data to form the variational constraint. .
-
-.. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
-   :language: python
-   :lines: 191-277
-
 
 Creating the Validator
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -214,7 +208,7 @@ Since the closed form solution is known, create a validator to compare the predi
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 279-296
+   :lines: 292-309
 
 
 Creating the Inferencer
@@ -224,7 +218,7 @@ To generate the solution at the desired domain, add an inferencer.
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 298-306
+   :lines: 311-319
 
 
 Creating the Variational Loss
@@ -256,14 +250,14 @@ The definition of test function will be put in initializer of the ``DGLoss`` cla
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 30-48
+   :lines: 47-63
 
 Then, it suffices to define the ``forward`` function of ``DGLoss``. In ``forward``, you need to form and return the variational
 loss. According to :eq:`var_cont-example`, the variational loss has been formed by the following code:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 50-136
+   :lines: 65-150
 
 ``list_invar`` includes all the inputs from the geometry while the ``list_outvar`` includes all requested outputs. The test
 function ``v`` can be evaluated by method ``v.eval_test``. The parameters are: the name of function you want, and the coordinates
@@ -376,7 +370,7 @@ geometry can be defined by:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/point_source/point_source.py
    :language: python
-   :lines: 95-99
+   :lines: 111-113
 
 
 Creating the Variational Loss and Solver
@@ -389,7 +383,7 @@ code. The whole code of the ``DGLoss`` is the following:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/point_source/point_source.py
    :language: python
-   :lines: 31-80
+   :lines: 114-171
 
 Results and Post-processing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -93,13 +93,13 @@ all needed nodes.
 
 .. literalinclude:: ../../../examples/taylor_green/taylor_green.py
    :language: python
-   :lines: 32-41
+   :lines: 58-68
 
 The architecture can be created as below.
 
 .. literalinclude:: ../../../examples/taylor_green/taylor_green.py
    :language: python
-   :lines: 57-68
+   :lines: 70-80
 
 
 Note that the periodicity is set when creating out network architecture.
@@ -109,7 +109,7 @@ and one to be used for all future time windows.
 
 .. literalinclude:: ../../../examples/taylor_green/taylor_green.py
    :language: python
-   :lines: 69-140
+   :lines: 82-152
 
 In the moving time window domain there is a new initial condition that will come from
 the previous time window. Now that the domain files have been constructed for the initial conditions and future time windows You can put it all together and make your sequential solver.
@@ -120,7 +120,7 @@ Sequence Solver
 
 .. literalinclude:: ../../../examples/taylor_green/taylor_green.py
    :language: python
-   :lines: 141-150
+   :lines: 154-162
 
 Instead of using the normal ``Solver`` class use the ``SequentialSolver`` class.
 This class expects a list where each element is a tuple of the number of times

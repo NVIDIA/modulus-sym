@@ -15,7 +15,7 @@ Minimal Example
 ----------------
 Generally speaking, Modulus Sym follows the same work flow as Hydra with just some minor differences.
 For each Modulus Sym program you should create a YAML configuration file that is then loaded into
-a Python ``Modulus SymConfig`` object which is used by Modulus Sym. Consider the following example:
+a Python ``ModulusConfig`` object which is used by Modulus Sym. Consider the following example:
 
 .. code-block:: yaml
    :caption: conf/config.yaml
@@ -33,10 +33,10 @@ a Python ``Modulus SymConfig`` object which is used by Modulus Sym. Consider the
 
     import modulus.sym
     from modulus.sym.hydra import to_yaml
-    from modulus.sym.hydra.config import Modulus SymConfig
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
         print(to_yaml(cfg))
 
     if __name__ == "__main__":
@@ -128,10 +128,10 @@ The following two examples initialize the same neural network.
     # Python code
     import modulus.sym
     from modulus.sym.hydra import instantiate_arch
-    from modulus.sym.hydra.config import Modulus SymConfig
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
         model = instantiate_arch(
             input_keys=[Key("x"), Key("y")],
             output_keys=[Key("u"), Key("v"), Key("p")],
@@ -148,11 +148,11 @@ The following two examples initialize the same neural network.
 
     # Python code
     import modulus.sym
-    from modulus.sym.hydra.config import Modulus SymConfig
+    from modulus.sym.hydra.config import ModulusConfig
     from modulus.sym.models.fully_connected import FullyConnectedArch
 
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
         model = FullyConnectedArch(
             input_keys=[Key("x"), Key("y")], 
             output_keys=[Key("u"), Key("v"), Key("p")],
@@ -204,10 +204,10 @@ Examples
     # Python code
     import modulus.sym
     from modulus.sym.hydra import instantiate_arch
-    from modulus.sym.hydra.config import Modulus SymConfig
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
         model = instantiate_arch(
             input_keys=[Key("x"), Key("y")],
             output_keys=[Key("u"), Key("v")],
@@ -231,10 +231,10 @@ Examples
     # Python code
     import modulus.sym
     from modulus.sym.hydra import instantiate_arch
-    from modulus.sym.hydra.config import Modulus SymConfig
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
         model_1 = instantiate_arch(
             input_keys=[Key("x"), Key("y")],
             output_keys=[Key("u"), Key("v")],
@@ -401,11 +401,11 @@ Changing a activation function is straight forward using the ``instantiate_arch`
     # Python code
     import modulus.sym
     from modulus.sym.hydra import instantiate_arch
-    from modulus.sym.hydra.config import Modulus SymConfig
+    from modulus.sym.hydra.config import ModulusConfig
     from modulus.sym.models.layers import Activation
 
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
         model_1 = instantiate_arch(
             input_keys=[Key("x"), Key("y")],
             output_keys=[Key("u"), Key("v")],
@@ -465,10 +465,10 @@ Here the ``arch_schema`` config group is used to access an architecture's struct
     # Python code
     import modulus.sym
     from modulus.sym.hydra import instantiate_arch
-    from modulus.sym.hydra.config import Modulus SymConfig
+    from modulus.sym.hydra.config import ModulusConfig
 
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
         model_1 = instantiate_arch(
             input_keys=[Key("x"), Key("y")],
             output_keys=[Key("u"), Key("v")],

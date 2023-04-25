@@ -55,7 +55,7 @@ Below, a simple boundary condition definition is shown. Here the problem is tryi
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, Modulus SymConfig
+    from modulus.sym.hydra import to_absolute_path, ModulusConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
     from modulus.sym.geometry.primitives_1d import Point1D, Line1D
@@ -67,7 +67,7 @@ Below, a simple boundary condition definition is shown. Here the problem is tryi
     from modulus.sym.models.fully_connected import FullyConnectedArch
     
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
     
         # make list of nodes to unroll graph on
         u_net = FullyConnectedArch(
@@ -132,7 +132,7 @@ Below, a simple interior constraint definition is shown.
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, Modulus SymConfig
+    from modulus.sym.hydra import to_absolute_path, ModulusConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
     from modulus.sym.geometry.primitives_1d import Point1D, Line1D
@@ -171,7 +171,7 @@ Below, a simple interior constraint definition is shown.
     
     
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
     
         # make list of nodes to unroll graph on
         eq = CustomPDE(f=1.0)
@@ -236,7 +236,7 @@ Below, a simple integral constraint definition is shown.
     from sympy import Symbol, Function, Number, pi, sin
     
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, Modulus SymConfig
+    from modulus.sym.hydra import to_absolute_path, ModulusConfig
     from modulus.sym.solver import Solver
     from modulus.sym.domain import Domain
     from modulus.sym.geometry.primitives_1d import Point1D, Line1D
@@ -251,7 +251,7 @@ Below, a simple integral constraint definition is shown.
     
     
     @modulus.main(config_path="conf", config_name="config")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
     
         # make list of nodes to unroll graph on
         u_net = FullyConnectedArch(
@@ -308,7 +308,7 @@ Below, a simple supervised grid constraint definition is shown.
     :caption: Supervised Grid Constraint from the Darcy flow example
 
     import modulus.sym
-    from modulus.sym.hydra import to_absolute_path, instantiate_arch, Modulus SymConfig
+    from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
     from modulus.sym.key import Key
     
     from modulus.sym.solver import Solver
@@ -322,7 +322,7 @@ Below, a simple supervised grid constraint definition is shown.
     
     
     @modulus.main(config_path="conf", config_name="config_FNO")
-    def run(cfg: Modulus SymConfig) -> None:
+    def run(cfg: ModulusConfig) -> None:
     
         # load training/ test data
         input_keys = [Key("coeff", scale=(7.48360e00, 4.49996e00))]

@@ -11,14 +11,14 @@ In this tutorial, you will learn:
 
 #. Differences between PINO and Fourier Neural Operators (FNO).
 
-#. How to set up and train PINO in Modulus.
+#. How to set up and train PINO in Modulus Sym.
 
 #. How to define a custom PDE constraint for grid data.
 
 .. note::
 
-   This tutorial assumes that you are familiar with the basic functionality of Modulus and understand the PINO architecture.
-   Please see the :ref:`ldc` and :ref:`pino` sections for additional information.
+   This tutorial assumes that you are familiar with the basic functionality of Modulus Sym and understand the PINO architecture.
+   Please see the :ref:`Introductory Example` and :ref:`pino` sections for additional information.
    Additionally, this tutorial builds upon the :ref:`darcy_fno` which should be read prior to this one.
    
 .. warning::
@@ -50,7 +50,7 @@ where :math:`\mathcal{G}_\theta(a)` is a FNO model with learnable parameters :ma
 where :math:`k(\textbf{x})` is the permeability field, :math:`f(\textbf{x})` is the forcing function equal to 1 in this case, and :math:`a=k` in this case.
 
 Note that the PDE loss involves computing various partial derivatives of the FNO ansatz, :math:`\mathcal{G}_\theta(a)`. 
-In general this is nontrivial; in Modulus, three different methods for computing these are provided. These are based on the original PINO paper:
+In general this is nontrivial; in Modulus Sym, three different methods for computing these are provided. These are based on the original PINO paper:
 
 #. Numerical differentiation computed via finite difference Method (FDM)
 #. Numerical differentiation computed via spectral derivative
@@ -114,8 +114,8 @@ The FNO model automatically outputs first and second order gradients when the ``
 Furthermore, note that the gradients of the permeability field are already included as tensors in the FNO input training data (with keys ``Kcoeff_x`` and ``Kcoeff_y``)
 and so these do not need to be computed.
 
-Next, incorporate this module into Modulus by wrapping it into a Modulus ``Node``. 
-This ensures the module is incorporated into Modulus' computational graph and can be used to optimise the FNO.
+Next, incorporate this module into Modulus Sym by wrapping it into a Modulus Sym ``Node``. 
+This ensures the module is incorporated into Modulus Sym' computational graph and can be used to optimise the FNO.
 
 .. code:: python
 

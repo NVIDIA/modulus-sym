@@ -1,4 +1,4 @@
-Modulus Models
+Modulus Sym Models
 ============================
 
 models.afno

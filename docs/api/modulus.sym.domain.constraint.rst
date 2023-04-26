@@ -1,5 +1,5 @@
-Modulus Constraints
-===================
+Modulus Sym Constraints
+=======================
 
 Continuous Constraints
 ------------------------------------------------

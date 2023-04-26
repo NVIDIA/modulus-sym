@@ -12,25 +12,25 @@ Introduction
 
 This tutorial demonstrates the process of solving a PDE
 using the variational formulation. It shows how to use the variational
-method to solve the interface PDE problem using Modulus. The use of
+method to solve the interface PDE problem using Modulus Sym. The use of
 variational method (weak formulation) also allows you to handle problems
 with point source with ease and this is covered in this tutorial too.
 In this tutorial you will learn:
 
 #. How to solve a PDE in its variational form (continuous and
-   discontinuous) in Modulus.
+   discontinuous) in Modulus Sym.
 
 #. How to generate test functions and their derivative data on desired
    point sets.
 
-#. How to use quadrature in the Modulus.
+#. How to use quadrature in the Modulus Sym.
 
 #. How to solve a problem with a point source (Dirac Delta function).
 
 .. note::
    This tutorial assumes that you have completed tutorial
-   :ref:`ldc` on Lid Driven Cavity and have familiarized yourself
-   with the basics of the Modulus APIs. Also, see Section :ref:`weak-solutions-pinn` from the
+   :ref:`Introductory Example` on Lid Driven Cavity and have familiarized yourself
+   with the basics of the Modulus Sym APIs. Also, see Section :ref:`weak-solutions-pinn` from the
    Theory chapter for more details on weak solutions of PDEs.
 
    All the scripts referred in this tutorial can be found in
@@ -140,13 +140,13 @@ Variational form for Discontinuous type formulation :
     \sum_{i=1}^2(\nabla u_i\cdot v_i - fv_i) dx - \sum_{i=1}^2\int_{\Gamma_D}\frac{\partial u_i}{\partial \mathbf{n}} v_i ds-\int_{\Gamma}(g_I\langle v \rangle+\langle \nabla u \rangle[\![ v ]\!]) ds =0
 
 The following subsections show how to implement these
-variational forms in the Modulus.
+variational forms in the Modulus Sym.
 
 Continuous type formulation
 ---------------------------
 
 This subsection shows how to implement the continuous type
-variational form :eq:`var_cont-example` in Modulus.
+variational form :eq:`var_cont-example` in Modulus Sym.
 The code for this example can be found in ``./dg/dg.py``.
 
 First, import all the packages needed:
@@ -154,7 +154,7 @@ First, import all the packages needed:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 1-30
+   :lines: 15-44
 
 
 Creating the Geometry
@@ -167,7 +167,7 @@ common to the two halves.
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 151-157
+   :lines: 164-176
 
 In this example, you will use the variational form in conjunction
 with traditional PINNs. The PINNs’ loss is essentially a point-wise
@@ -186,11 +186,11 @@ faster, but the computational graph is larger. The code segment below applies th
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 165-189
+   :lines: 178-290
 
 For variational constraints, in the ``run`` function, first collect the data needed to formulate the variational form. 
 For interior points, there are two options.
-The first option is quadrature rule. Modulus has the functionality to create the
+The first option is quadrature rule. Modulus Sym has the functionality to create the
 quadrature rule on some basic geometries and meshes based on `quadpy <https://github.com/nschloe/quadpy>`_ package.
 The quadrature rule has higher accuracy and efficiency, so use the quadrature rules when possible.
 The other option is using random points. You can use quasi-random points to increase the accuracy of the integral
@@ -200,12 +200,6 @@ For this examples, you can use ``cfg.quad`` in Hydra configure file to choose th
 You can also use the radial basis test function. If so, use the additional data
 for the center of radial basis functions (RBFs).
 
-The following code collects all this data to form the variational constraint. .
-
-.. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
-   :language: python
-   :lines: 191-277
-
 
 Creating the Validator
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -214,7 +208,7 @@ Since the closed form solution is known, create a validator to compare the predi
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 279-296
+   :lines: 292-309
 
 
 Creating the Inferencer
@@ -224,7 +218,7 @@ To generate the solution at the desired domain, add an inferencer.
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 298-306
+   :lines: 311-319
 
 
 Creating the Variational Loss
@@ -235,7 +229,7 @@ to the ``VariationalConstraint`` to form this loss.
 
 First, choose what test function to use.
 
-In Modulus, Legendre, 1st and 2nd kind of Chebyshev polynomials
+In Modulus Sym, Legendre, 1st and 2nd kind of Chebyshev polynomials
 and trigonometric functions are already implemented as the test
 functions and can be selected directly. You can also define your own
 test functions by providing its name, domain, and SymPy expression in
@@ -256,14 +250,14 @@ The definition of test function will be put in initializer of the ``DGLoss`` cla
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 30-48
+   :lines: 47-63
 
 Then, it suffices to define the ``forward`` function of ``DGLoss``. In ``forward``, you need to form and return the variational
 loss. According to :eq:`var_cont-example`, the variational loss has been formed by the following code:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/dg/dg.py
    :language: python
-   :lines: 50-136
+   :lines: 65-150
 
 ``list_invar`` includes all the inputs from the geometry while the ``list_outvar`` includes all requested outputs. The test
 function ``v`` can be evaluated by method ``v.eval_test``. The parameters are: the name of function you want, and the coordinates
@@ -274,7 +268,7 @@ Now, all the resulting variables of test function, like ``v_interior``, are :mat
 :math:`M` is the number of the test functions.
 
 To form the integration, you can use the ``tensor_int`` function in the
-Modulus. This function has three parameters ``w``, ``v``, and ``u``. The
+Modulus Sym. This function has three parameters ``w``, ``v``, and ``u``. The
 ``w`` is the quadrature weight for the integration. For uniform random
 points or quasi-random points, it is precisely the average area. The
 ``v`` is an :math:`N` by :math:`M` tensor, and ``u`` is a :math:`1` by
@@ -295,33 +289,33 @@ The results are shown in :numref:`fig-dg_pinn`.
 .. _fig-dg_pinn:
 
 .. figure:: /images/user_guide/dg_pinns.png
-   :alt: Left: Modulus. Center: Analytical. Right: Difference.
+   :alt: Left: Modulus Sym. Center: Analytical. Right: Difference.
    :name: fig:dg_pinn
    :align: center
 
-   Left: Modulus. Center: Analytical. Right: Difference.
+   Left: Modulus Sym. Center: Analytical. Right: Difference.
 
 By using quadrature rule, the results are shown in :numref:`fig-dg_quad`.
 
 .. _fig-dg_quad:
 
 .. figure:: /images/user_guide/dg_quad.png
-   :alt: Left: Modulus. Center: Analytical. Right: Difference.
+   :alt: Left: Modulus Sym. Center: Analytical. Right: Difference.
    :name: fig:dg_quad
    :align: center
 
-   Left: Modulus. Center: Analytical. Right: Difference.
+   Left: Modulus Sym. Center: Analytical. Right: Difference.
 
 By using quadrature rule and RBF test function, the results are shown in :numref:`fig-dg_rbf`.
 
 .. _fig-dg_rbf:
 
 .. figure:: /images/user_guide/dg_rbf.png
-   :alt: Left: Modulus. Center: Analytical. Right: Difference.
+   :alt: Left: Modulus Sym. Center: Analytical. Right: Difference.
    :name: fig:dg_rbf
    :align: center
 
-   Left: Modulus. Center: Analytical. Right: Difference.
+   Left: Modulus Sym. Center: Analytical. Right: Difference.
 
 
 Point source and Dirac Delta function
@@ -376,7 +370,7 @@ geometry can be defined by:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/point_source/point_source.py
    :language: python
-   :lines: 95-99
+   :lines: 111-113
 
 
 Creating the Variational Loss and Solver
@@ -389,7 +383,7 @@ code. The whole code of the ``DGLoss`` is the following:
 
 .. literalinclude:: ../../../examples/discontinuous_galerkin/point_source/point_source.py
    :language: python
-   :lines: 31-80
+   :lines: 114-171
 
 Results and Post-processing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -397,12 +391,12 @@ Results and Post-processing
 The results for the problem are shown in :numref:`fig:dg_point_source`.
 
 .. figure:: /images/user_guide/point_source.png
-   :alt: Modulus prediction.
+   :alt: Modulus Sym prediction.
    :name: fig:dg_point_source
    :align: center
    :width: 80.0%
 
-   Modulus prediction
+   Modulus Sym prediction
 
 Since the ground truth solution is unbounded at origin, it is not useful to compare it with the exact solution.
 

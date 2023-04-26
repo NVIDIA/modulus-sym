@@ -7,11 +7,11 @@ Introduction
 ------------
 
 In this tutorial, you will import an STL file for a complicated geometry
-and use Modulus' SDF library to sample points on the surface and the
+and use Modulus Sym' SDF library to sample points on the surface and the
 interior of the STL and train the PINNs to predict flow in this complex
 geometry. In this tutorial you will learn the following:
 
-#. How to import an STL file in Modulus and sample points in the interior
+#. How to import an STL file in Modulus Sym and sample points in the interior
    and on the surface of the geometry.
 
 .. figure:: /images/user_guide/aneurysm.png
@@ -22,9 +22,9 @@ geometry. In this tutorial you will learn the following:
    Aneurysm STL file
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc`
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example`
    and have familiarized yourself with the basics
-   of the Modulus APIs. Additionally, to use the modules
+   of the Modulus Sym APIs. Additionally, to use the modules
    described in this tutorial, make sure your system satisfies the
    requirements for SDF library (:ref:`system_requirements`).
    
@@ -47,8 +47,8 @@ constant :math:`1.0`.
 Case Setup
 ----------
 
-In this tutorial, you will use Modulus' ``Tessellation`` module to sample points
-using a STL geometry. The module works similar to Modulus' geometry
+In this tutorial, you will use Modulus Sym' ``Tessellation`` module to sample points
+using a STL geometry. The module works similar to Modulus Sym' geometry
 module. Which means you can use ``PointwiseInteriorConstraint`` and ``PointwiseBoundaryConstraint`` to sample points in the interior and the boundary of the geometry and define
 appropriate constraints. Separate STL files for each boundary of the 
 geometry and another watertight geometry for sampling points in the interior of the
@@ -57,12 +57,12 @@ geometry are required.
 Importing the required packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The list of required packages can be found below. Import Modulus'
+The list of required packages can be found below. Import Modulus Sym'
 ``Tessellation`` module to the sample points on the STL geometry.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 1-20
+   :lines: 15-37
 
 Using STL files to generate point clouds
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -73,7 +73,7 @@ You will need to specify the value of attribute ``airtight`` as ``False``
 for the open surfaces (eg. boundary STL files).
 
 Then these mesh objects can be used to create boundary or interior 
-constraints similar to tutorial :ref:`ldc` using the ``PointwiseBoundaryConstraint`` or
+constraints similar to tutorial :ref:`Introductory Example` using the ``PointwiseBoundaryConstraint`` or
 ``PointwiseInteriorConstraint``. 
 
 .. note::
@@ -85,7 +85,7 @@ boundary conditions is shown below.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 26-90
+   :lines: 43-98
 
 Defining the Equations, Networks and Nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,23 +93,23 @@ Defining the Equations, Networks and Nodes
 This process is similar to other tutorials. In this problem you are only solving
 for laminar flow, so you can use only ``NavierStokes`` and
 ``NormalDotVec`` equations and define a network similar to
-tutorial :ref:`ldc`. The code to generate the Network and required nodes is shown below.
+tutorial :ref:`Introductory Example`. The code to generate the Network and required nodes is shown below.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 96-108
+   :lines: 112-125
 
 
 Setting up Domain and adding Constraints
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Now that you have all the nodes and geometry elements defined, you can use the tesselated/mesh 
-objects to create boundary or interior constraints similar to tutorial :ref:`ldc` using 
+objects to create boundary or interior constraints similar to tutorial :ref:`Introductory Example` using 
 the ``PointwiseBoundaryConstraint`` or ``PointwiseInteriorConstraint``. 
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 93-94, 110-176 
+   :lines: 109-110, 126-192
 
 
 Adding Validators and Monitors
@@ -117,13 +117,13 @@ Adding Validators and Monitors
 
 The process of adding validation data and monitors is similar to previous tutorials. 
 This example uses the simulation from OpenFOAM for validating the
-Modulus results. Also, you can create a monitor for pressure drop across
+Modulus Sym results. Also, you can create a monitor for pressure drop across
 the aneurysm to monitor the convergence and compare against OpenFOAM
 data. The code to generate the these domains is shown below.
 
 .. literalinclude:: ../../../examples/aneurysm/aneurysm.py
    :language: python
-   :lines: 178-
+   :lines: 194-235
 
 Training the model 
 ------------------
@@ -161,38 +161,38 @@ aneurysm and the vein. A cross-sectional view in
 :numref:`fig-aneurysm-v` shows the distribution of velocity magnitude
 inside the aneurysm. One of the key challenges of this problem is
 getting the flow to develop inside the aneurysm sac and the streamline
-plot in :numref:`fig-aneurysm-stream` shows that Modulus
+plot in :numref:`fig-aneurysm-stream` shows that Modulus Sym
 successfully captures the flow field inside.
 
 
 .. _fig-aneurysm-v:
 
 .. figure:: /images/user_guide/aneurysm_v_mag_labelled.png
-   :alt: Cross-sectional view aneurysm showing velocity magnitude. Left: Modulus. Center: OpenFOAM. Right: Difference
+   :alt: Cross-sectional view aneurysm showing velocity magnitude. Left: Modulus Sym. Center: OpenFOAM. Right: Difference
    :width: 100.0%
    :align: center
 
-   Cross-sectional view aneurysm showing velocity magnitude. Left: Modulus. Center: OpenFOAM. Right: Difference
+   Cross-sectional view aneurysm showing velocity magnitude. Left: Modulus Sym. Center: OpenFOAM. Right: Difference
 
 
 .. _fig-aneurysm-p:
 
 .. figure:: /images/user_guide/aneurysm_p_labelled.png
-   :alt: Pressure across aneurysm. Left: Modulus. Center: OpenFOAM. Right: Difference
+   :alt: Pressure across aneurysm. Left: Modulus Sym. Center: OpenFOAM. Right: Difference
    :width: 100.0%
    :align: center
 
-   Pressure across aneurysm. Left: Modulus. Center: OpenFOAM. Right: Difference
+   Pressure across aneurysm. Left: Modulus Sym. Center: OpenFOAM. Right: Difference
 
 
 .. _fig-aneurysm-stream:
 
 .. figure:: /images/user_guide/aneurysm_streamlines3_crop.png
-   :alt: Flow streamlines inside the aneurysm generated from Modulus simulation.
+   :alt: Flow streamlines inside the aneurysm generated from Modulus Sym simulation.
    :width: 50.0%
    :align: center
 
-   Flow streamlines inside the aneurysm generated from Modulus simulation.
+   Flow streamlines inside the aneurysm generated from Modulus Sym simulation.
 
 
 Accelerating the Training of Neural Network Solvers via Transfer Learning
@@ -227,7 +227,7 @@ intracranial aneurysm models with different sac shapes.
 
    Transfer learning accelerates intracranial aneurysm simulations. Results are for two intracranial aneurysms with different sac shapes.
 
-To use transfer learning in Modulus, set ``'initialize_network_dir'`` in the configs
+To use transfer learning in Modulus Sym, set ``'initialize_network_dir'`` in the configs
 to the source model network checkpoint. Also, since in transfer learning
 you fine-tune the source model instead of training from scratch, use a
 relatively smaller learning rate compared to a full run, with smaller

@@ -6,7 +6,7 @@ Darcy Flow with Adaptive Fourier Neural Operator
 
 Introduction
 ------------
-This tutorial demonstrates the use of transformer networks based on the Adaptive Fourier Neural Operators (AFNO) in Modulus. 
+This tutorial demonstrates the use of transformer networks based on the Adaptive Fourier Neural Operators (AFNO) in Modulus Sym. 
 Note that in contrast with the :ref:`fno` which has a convolutional architecture, the AFNO leverages contemporary transformer architectures in the computer vision domain. 
 Vision transformers have delivered tremendous success in computer vision. 
 This is primarily due to effective self-attention mechanisms. 
@@ -19,18 +19,18 @@ This includes imposing a block diagonal structure on the channel mixing weights,
 
 This tutorial presents the use of the AFNO transformer for modeling a PDE system. 
 While AFNO has been designed for scaling to extremely high resolution inputs that the FNO cannot handle as well (see [#pathak2022fourcastnet]_), here only a simple example using Darcy flow is presented.
-This problem is intended as an illustrative starting point for data-driven training using AFNO in Modulus but should not be regarded as leveraging the full extent of AFNO's functionality.
+This problem is intended as an illustrative starting point for data-driven training using AFNO in Modulus Sym but should not be regarded as leveraging the full extent of AFNO's functionality.
 
 This is an extension of the :ref:`darcy_fno` chapter. The unique topics you will learn in this tutorial include:
 
-#. How to use the AFNO transformer architecture in Modulus
+#. How to use the AFNO transformer architecture in Modulus Sym
 
 #. Differences between AFNO transformer and the Fourier Neural Operator
 
 .. note::
 
-   This tutorial assumes that you are familiar with the basic functionality of Modulus and understand the AFNO architecture.
-   Please see the :ref:`ldc` and :ref:`afno` sections for additional information.
+   This tutorial assumes that you are familiar with the basic functionality of Modulus Sym and understand the AFNO architecture.
+   Please see the :ref:`Introductory Example` and :ref:`afno` sections for additional information.
    Additionally, this tutorial builds upon the :ref:`darcy_fno` which should be read prior to this one.
 
 .. warning::
@@ -86,14 +86,14 @@ Loading both the training and validation datasets into memory follows a similar 
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 20-36
+   :lines: 33-49
 
 The inputs for AFNO need to be perfectly divisible by the specified patch size (in this example ``patch_size=16``), which is not
 the case for this dataset. Therefore, trim the input/output features such that they are an appropriate dimensionality ``241x241 -> 240x240``.
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 38-50
+   :lines: 51-67
 
 Initializing the Model
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -104,7 +104,7 @@ in the ``instantiate_arch`` call.
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 56-63
+   :lines: 69-76
 
 Adding Data Constraints and Validators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,7 +114,7 @@ For more information, see the :ref:`darcy_fno` chapter.
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO.py
    :language: python
-   :lines: 65-83
+   :lines: 78-96
 
 Training the Model
 ------------------
@@ -143,7 +143,7 @@ The second change is to set the ``MODEL_PARALLEL_SIZE`` environment variable to 
 
 .. literalinclude:: ../../../examples/darcy/darcy_AFNO_MP.py
    :language: python
-   :lines: 20-21
+   :lines: 34-35
 
 This configures the distributed AFNO model to use 2 GPUs per model instance. The number of GPUs to use can be changed as long as the following conditions are satisfied:
 
@@ -193,7 +193,7 @@ validation predictions.
    AFNO validation prediction 3. (Left to right) Input permeability, true pressure, predicted pressure, error.
 
 It is important to recognize that AFNO's strengths lie in its ability to scale to a much larger model size and datasets than what is used in this chapter [#guibas2021adaptive]_ [#pathak2022fourcastnet]_. 
-While not illustrated here, this example demonstrates the fundamental implementation of data-driven training using the AFNO architecture in Modulus for users to extend to larger problems.
+While not illustrated here, this example demonstrates the fundamental implementation of data-driven training using the AFNO architecture in Modulus Sym for users to extend to larger problems.
 
 
 .. rubric:: References

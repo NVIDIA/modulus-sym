@@ -1,5 +1,5 @@
-Modulus Validators
-==================
+Modulus Sym Validators
+======================
 
 Continuous Validators
 ------------------------------------------------

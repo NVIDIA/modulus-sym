@@ -4,8 +4,8 @@ Electromagnetics: Frequency Domain Maxwell's Equation
 Introduction
 ------------
 
-This tutorial demonstrates how to use Modulus to do the
-electromagnetic (EM) simulation. Currently, Modulus offers the following
+This tutorial demonstrates how to use Modulus Sym to do the
+electromagnetic (EM) simulation. Currently, Modulus Sym offers the following
 features for frequency domain EM simulation:
 
 #. Frequency domain Maxwell's equation in scalar form. This is same to
@@ -27,8 +27,8 @@ Two electromagnetic problems are solved in this tutorial. All the
 simulations are appropriately nondimensionalized.
 
 .. note::
-   This tutorial assumes that you have completed the tutorial :ref:`ldc` and are
-   familiar with Modulus APIs
+   This tutorial assumes that you have completed the tutorial :ref:`Introductory Example` and are
+   familiar with Modulus Sym APIs
 
    All the scripts referred in this tutorial can be found in ``examples/waveguide/``.
 
@@ -63,16 +63,16 @@ ABC will be simplified in the following form, respectively:
 Case Setup
 ~~~~~~~~~~
 
-This subsection shows how to use Modulus to setup the EM
+This subsection shows how to use Modulus Sym to setup the EM
 solver. Similar to the previous tutorials, you will first import the necessary
 libraries.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 1-19
+   :lines: 15-35
 
 Then, define the variables for ``sympy`` symbolic calculation and parameters for geometry.
-Also, before you define the main classes for Modulus, you need to compute
+Also, before you define the main classes for Modulus Sym, you need to compute
 the eigenmode for waveguide solver. Since the material is uniform
 (vacuum), the closed form of the eigenmode is of the form
 :math:`\sin(\frac{k\pi y}{L})`, where :math:`L` is the length of the
@@ -81,7 +81,7 @@ directly by using ``sympy`` function. The code for the geometry and computing ei
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 27-38
+   :lines: 42-53
 
 
 For wave simulation, since the result is always periodic, Fourier
@@ -92,7 +92,7 @@ Also, define the normal gradient for the boundary conditions. Finally, make the 
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 39-59
+   :lines: 54-74
 
 Now, define the constraints for PDEs and boundary conditions. The BCs are defined based on the
 explanations provided above. In the interior domain,
@@ -103,36 +103,36 @@ weighting method you can eliminate this phenomenon.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 63-104
+   :lines: 76-117
 
 To validate the result, you can import the ``csv`` files for the validation
 domain below.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 106-125
+   :lines: 122-138
 
 Inferencer has been implemented to plot the results.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_2D/waveguide2D_TMz.py
    :language: python
-   :lines: 127-135
+   :lines: 140-148
 
 Results
 ~~~~~~~
 
 The full code of this example can be found in
 ``examples/waveguide/cavity_2D/waveguide2D_TMz.py``. The
-simulation with wavenumber equals :math:`32`. The solution from comercial solver, Modulus prediction, and their difference
+simulation with wavenumber equals :math:`32`. The solution from comercial solver, Modulus Sym prediction, and their difference
 are shown below.
 
 .. figure:: /images/user_guide/2Dwaveguide_modulus.png
-   :alt: Modulus, wavenumber=\ :math:`32`
+   :alt: Modulus Sym, wavenumber=\ :math:`32`
    :name: fig:2Dwaveguide_modulus
    :width: 100.0%
    :align: center
 
-   Modulus, wavenumber=\ :math:`32`
+   Modulus Sym, wavenumber=\ :math:`32`
 
 Problem 2: 2D Dielectric slab waveguide
 ---------------------------------------
@@ -173,7 +173,7 @@ eigenfunctions on the left boundary.
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 27-42
+   :lines: 81-86
 
 For the geometry part, you will need to define the slab and corresponding
 permittivity function. There is a square root in ``eps_sympy`` because in the
@@ -184,7 +184,7 @@ waveguide port.
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 48-76
+   :lines: 61-80
 
 In the definition of the PDEs and neural network's structure,
 set the ``k`` in ``HelmholtzEquation`` as the product of wavenumber and
@@ -193,7 +193,7 @@ features to suit the problem.
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 78-97
+   :lines: 93-108
 
 
 Now, define the constraints. The only difference here is the
@@ -202,7 +202,7 @@ the modified BC is shown below:
 
 .. literalinclude:: ../../../examples/waveguide/slab_2D/slab_2D.py
    :language: python
-   :lines: 112-119
+   :lines: 123-130
 
 Results
 ~~~~~~~
@@ -213,19 +213,19 @@ simulation with wavenumber equals :math:`16` and :math:`32`,
 respectively. The results are shown in figure below
 
 .. figure:: /images/user_guide/2Dslab_16.png
-   :alt: Modulus, wavenumber=\ :math:`16`
+   :alt: Modulus Sym, wavenumber=\ :math:`16`
    :name: fig:2Dslab
    :width: 50.0%
    :align: center
 
-   Modulus, wavenumber=\ :math:`16`
+   Modulus Sym, wavenumber=\ :math:`16`
 
 
 Problem 3: 3D waveguide cavity
 ------------------------------
 
 This example, shows how to setup a 3D waveguide simulation in
-Modulus. Unlike the previous examples, the features in Modulus
+Modulus Sym. Unlike the previous examples, the features in Modulus Sym
 to define the boundary condition are used. The geometry is
 :math:`\Omega = [0,2]^3`, as shown below.
 
@@ -246,7 +246,7 @@ field :math:`\mathbf{E}=(E_x, E_y, E_z)`:
 .. math:: \nabla\times \nabla\times \mathbf{E}+\epsilon_rk^2\mathbf{E} = 0,
 
 where :math:`\epsilon_r` is the permittivity, and the :math:`k` is the
-wavenumber. Note that, currently Modulus only support real permittivity
+wavenumber. Note that, currently Modulus Sym only support real permittivity
 and wavenumber. For the sake of simplicity, assume the permeability
 :math:`\mu_r=1`. As before, waveguide port has been applied on the left.
 We apply absorbing boundary condition on the right side and PEC for the
@@ -261,27 +261,27 @@ while the PEC is
 Case setup
 ~~~~~~~~~~
 
-This section shows how to use Modulus to setup the 3D
+This section shows how to use Modulus Sym to setup the 3D
 frequency EM solver, especially for the boundary conditions.
 
 First import the necessary libraries.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 1-15
+   :lines: 15-31
 
 Define ``sympy`` variables, geometry and waveguide
 function.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 23-35
+   :lines: 38-50
 
 Define the PDE class and neural network structure.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 37-55
+   :lines: 51-70
 
 Then, define the constraints for PDEs and boundary conditions, and all boundary
 conditions. The 3D Maxwell's equations has been implemented in
@@ -292,7 +292,7 @@ the corresponding constraints.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 57-115
+   :lines: 72-130
 
 
 Note that this is done in 3D, so the PDEs, PEC and absorbing
@@ -302,7 +302,7 @@ Inferencer domain has been defined to check the result.
 
 .. literalinclude:: ../../../examples/waveguide/cavity_3D/waveguide3D.py
    :language: python
-   :lines: 117-128
+   :lines: 132-143
 
 
 Results
@@ -389,12 +389,12 @@ that as the waveguide port boundary condition.
 First define the geometry and the ``sympy`` permittivity
 function. To define the piecewise ``sympy`` functions, use
 ``Heaviside`` instead of ``Piecewise`` as the later cannot be complied
-in Modulus for the time being. The waveguide data can also be imported using the ``csv_to_dict()`` function.
+in Modulus Sym for the time being. The waveguide data can also be imported using the ``csv_to_dict()`` function.
 
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 26-56
+   :lines: 42-79
 
 
 In ``validation/2Dwaveguideport.csv``, there are six eigenmodes. You may
@@ -404,21 +404,21 @@ Next, define the PDEs classes and neural network structure.
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 58-79
+   :lines: 80-102
 
 Then, define the constraints. Here imported
 data is used as the waveguide port boundary condition.
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 81-140
+   :lines: 104-162
 
 Finally, define the inferencer. These are
 same as the previous example except the ``bounds`` for the domain.
 
 .. literalinclude:: ../../../examples/waveguide/slab_3D/slab_3D.py
    :language: python
-   :lines: 141-
+   :lines: 164-171
 
 Results
 ~~~~~~~

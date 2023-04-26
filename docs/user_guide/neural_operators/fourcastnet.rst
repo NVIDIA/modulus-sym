@@ -6,7 +6,7 @@ FourCastNet
 Introduction
 ------------
 
-This example reproduces FourCastNet [#pathak2022fourcastnet]_ using Modulus.
+This example reproduces FourCastNet [#pathak2022fourcastnet]_ using Modulus Sym.
 FourCastNet, short for **Four**\ier Fore\ **\Cast**\ing Neural **Net**\work, is a global data-driven weather forecasting model that provides accurate short to medium range global predictions at 0.25◦ resolution.
 FourCastNet generates a week long forecast in less than 2 seconds, orders of magnitude faster than the ECMWF Integrated Forecasting System (IFS), a state-of-the-art Numerical Weather Prediction (NWP) model, with comparable or better accuracy.
 It is trained on a small subset of the ERA5 reanalysis dataset [#hersbach2020era5]_ from the ECMWF, which consists of hourly estimates of several atmospheric variables at a latitude and longitude resolution of :math:`0.25^{\circ}`.
@@ -33,12 +33,12 @@ In the current iteration, FourCastNet forecasts 20 atmospheric variables. These 
      - TCWV
 
 
-In this tutorial, we will show you how to define, train and evaluate FourCastNet in Modulus.
+In this tutorial, we will show you how to define, train and evaluate FourCastNet in Modulus Sym.
 The topics covered here are:
 
-#. How to load the ERA5 dataset into Modulus
+#. How to load the ERA5 dataset into Modulus Sym
 
-#. How to define the FourCastNet architecture in Modulus
+#. How to define the FourCastNet architecture in Modulus Sym
 
 #. How to train FourCastNet
 
@@ -124,7 +124,7 @@ In addition, we have added the ``custom.tstep`` and ``custom.n_tsteps`` paramete
 Loading Data
 ~~~~~~~~~~~~~
 
-Modulus FourCastNet currently has two options for loading the data:
+Modulus Sym FourCastNet currently has two options for loading the data:
 
 #. DALI-based dataloader which uses `NVIDIA Data Loading Library (DALI) <https://developer.nvidia.com/dali>`_ for accelerated data loading and processing.
 
@@ -136,56 +136,56 @@ Both dataloaders use a shared implementation which supports ERA5 data format and
 
 .. literalinclude:: ../../../examples/fourcastnet/src/dataset.py
    :language: python
-   :lines: 12-128
+   :lines: 26-142
 
-Given an example index, the dataset's ``__getitem__`` method returns a single Modulus input variable, ``x_t0``,
+Given an example index, the dataset's ``__getitem__`` method returns a single Modulus Sym input variable, ``x_t0``,
 which is a tensor of shape (20, 720, 1440) which contains the 20 ERA5 variables at a starting time step,
 and multiple output variables with the same shape, ``x_t1``, ``x_t2``, ..., one for each predicted time step FourCastNet is unrolled over:
 
 .. literalinclude:: ../../../examples/fourcastnet/src/dataset.py
    :language: python
-   :lines: 134-180
+   :lines: 145-194
 
 Inside the training script, ``fourcastnet/era5_FCN.py``, the ERA5 datasets are initialized using the following:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 28-52
+   :lines: 50-72
 
 FourCastNet Model
 ~~~~~~~~~~~~~~~~~
 
-Next, we need to define FourCastNet as a custom Modulus architecture.
-This model is found inside ``fourcastnet/src/fourcastnet.py`` which is a wrapper class of Modulus' AFNO model.
+Next, we need to define FourCastNet as a custom Modulus Sym architecture.
+This model is found inside ``fourcastnet/src/fourcastnet.py`` which is a wrapper class of Modulus Sym' AFNO model.
 FourCastNet has two training phases: the first is single step prediction and the second is two step predictions.
 This small wrapper allows AFNO to be executed for any ``n_tsteps`` of time steps using autoregressive forward passes.
 
 .. literalinclude:: ../../../examples/fourcastnet/src/fourcastnet.py
    :language: python
-   :lines: 12-
+   :lines: 26-
 
 The FourCastNet model is initialized in the training script, ``fourcastnet/era5_FCN.py``:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 57-71
+   :lines: 81-91
 
 Adding Constraints
 ~~~~~~~~~~~~~~~~~~
 
-With the custom dataset for loading the ERA5 data and the FourCastNet model created, the next step is setting up the Modulus training domain.
-The main training script is ``fourcastnet/era5_FCN.py`` and constraints the standard steps needed for training a model in Modulus.
+With the custom dataset for loading the ERA5 data and the FourCastNet model created, the next step is setting up the Modulus Sym training domain.
+The main training script is ``fourcastnet/era5_FCN.py`` and constraints the standard steps needed for training a model in Modulus Sym.
 A standard data-driven grid constraint is created:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 76-84
+   :lines: 93-104
 
 A validator is also added to the training script:
 
 .. literalinclude:: ../../../examples/fourcastnet/fcn_era5.py
    :language: python
-   :lines: 86-94
+   :lines: 106-114
 
 
 Training the Model
@@ -202,8 +202,8 @@ Results and Post-processing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 With the trained model ``fourcastnet/inferencer.py`` is used  to calculate the latitude weighted Root Mean Squared Error (RMSE) and the latitude weighted Anomaly Correlation Coefficient (ACC) values.
 The inferencer script uses runs the trained model on multiple initial conditions provided in the test dataset.
-Below the ACC and RMSE values of the model trained in Modulus is compared to the results of the original work with excellent comparison to the original work [#pathak2022fourcastnet]_.
-Additionally, a 24 hour forecast is also illustrated comparing the integrated vertical column of atmospheric water vapor predicted by Modulus and the target ERA5 dataset.
+Below the ACC and RMSE values of the model trained in Modulus Sym is compared to the results of the original work with excellent comparison to the original work [#pathak2022fourcastnet]_.
+Additionally, a 24 hour forecast is also illustrated comparing the integrated vertical column of atmospheric water vapor predicted by Modulus Sym and the target ERA5 dataset.
 
 .. note::
 
@@ -211,26 +211,26 @@ Additionally, a 24 hour forecast is also illustrated comparing the integrated ve
    Multiple dataset statistics are needed to properly calculate the metrics of interest.
 
 .. figure:: /images/user_guide/fourcastnet_acc.png
-   :alt: Modulus FourCastNet ACC
+   :alt: Modulus Sym FourCastNet ACC
    :width: 90.0%
    :align: center
 
    Comparison of the anomaly correlation coefficient (ACC) of the predicted 10 meter `u` component wind
-   speed (`u10`) and geopotential height (`z500`) using the original FourCastNet model (Original) and the version trained in Modulus.
+   speed (`u10`) and geopotential height (`z500`) using the original FourCastNet model (Original) and the version trained in Modulus Sym.
 
 .. figure:: /images/user_guide/fourcastnet_rmse.png
-   :alt: Modulus FourCastNet RMSE
+   :alt: Modulus Sym FourCastNet RMSE
    :width: 90.0%
    :align: center
 
-   Comparison of the predictive root mean square error (RMSE) of each variable between the original FourCastNet model (Original) and the version trained in Modulus.
+   Comparison of the predictive root mean square error (RMSE) of each variable between the original FourCastNet model (Original) and the version trained in Modulus Sym.
 
 .. figure:: /images/user_guide/fourcastnet_tcwv.png
-   :alt: Modulus FourCastNet TCWV
+   :alt: Modulus Sym FourCastNet TCWV
    :width: 50.0%
    :align: center
 
-   24 hour prediction of the integrated vertical column of atmospheric water vapor predicted by Modulus compared to the ground truth ERA5 dataset from ECMWF.
+   24 hour prediction of the integrated vertical column of atmospheric water vapor predicted by Modulus Sym compared to the ground truth ERA5 dataset from ECMWF.
 
 
 .. rubric:: References

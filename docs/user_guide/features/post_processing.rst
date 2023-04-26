@@ -1,20 +1,20 @@
 
-Post Processing in Modulus
-==========================
+Post Processing in Modulus Sym
+==============================
 
 
 .. _tensorboard:
 
-TensorBoard in Modulus
-----------------------
+TensorBoard in Modulus Sym
+--------------------------
 
 Introduction
 ^^^^^^^^^^^^
 
 This section shows you how to visualize the outputs of your model as it trains, by adding (custom) plots to TensorBoard. These visualizations provide an easy way to qualitatively assess the performance of your model.
-Plots can be made using Modulus validators (i.e. plotting the output of your model compared to some ground truth dataset) or inferencers (i.e. just plotting the output of your model given a set of inputs).
+Plots can be made using Modulus Sym validators (i.e. plotting the output of your model compared to some ground truth dataset) or inferencers (i.e. just plotting the output of your model given a set of inputs).
 You can use the default plotter provided, or you can define your own custom plotter.
-An example custom TensorBoard plot for the lid driven cavity example :ref:`ldc` is shown here:
+An example custom TensorBoard plot for the lid driven cavity example :ref:`Introductory Example` is shown here:
 
 .. _fig-custom-plot:
 
@@ -36,7 +36,7 @@ Here is the overall workflow for adding plots to TensorBoard:
 
 #. Add this validator or inferencer object to your domain / solver as you normally would.
 
-Modulus handles the rest and at a certain number of training iterations, the plotter adds plots of the validator's or inferencer's inputs and outputs to TensorBoard.
+Modulus Sym handles the rest and at a certain number of training iterations, the plotter adds plots of the validator's or inferencer's inputs and outputs to TensorBoard.
 To define a custom plotter, you can define your own ``Plotter`` class which inherits from either ``ValidatorPlotter`` or ``InferencerPlotter`` and overrides it's ``__call__`` method. More details are given in the lid driven cavity example below.
 
 .. note:: 
@@ -47,7 +47,7 @@ To define a custom plotter, you can define your own ``Plotter`` class which inhe
 Lid Driven Cavity Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To show you how to use this workflow, an example of creating custom TensorBoard plots for the lid driven cavity  (:ref:`ldc`) example is provided below.
+To show you how to use this workflow, an example of creating custom TensorBoard plots for the lid driven cavity  (:ref:`Introductory Example`) example is provided below.
 First you define a custom ``ValidatorPlotter`` class, overriding its ``__call__`` methods with a custom plotting function:
 
 
@@ -142,26 +142,26 @@ Finally, run the example code. You should automatically see your plots being add
 
 .. _vtk:
 
-VTK Utilities in Modulus
--------------------------
+VTK Utilities in Modulus Sym
+----------------------------
 
 Introduction
 ^^^^^^^^^^^^
 
-The primary output file format supported by Modulus are `Visualization Toolkit (VTK) <https://vtk.org/>`_ files which are widely used across multiple scientific domains.
+The primary output file format supported by Modulus Sym are `Visualization Toolkit (VTK) <https://vtk.org/>`_ files which are widely used across multiple scientific domains.
 A key benefit of VTK files is VTK's large library of filters one can use on the data as well as support from industry standard visualization software support such as `ParaView <https://www.paraview.org/>`_.
 If you are unfamiliar with VTK and ParaView, you are encouraged to look over the `ParaView documentation <https://docs.paraview.org/en/latest/>`_ to help get started.
-Modulus supports several VTK utilities to help make importing and exporting data effortless.
+Modulus Sym supports several VTK utilities to help make importing and exporting data effortless.
 
-VTK outputs are selected by default in Modulus, which can be controlled using the ``save_filetypes`` parameter in the Hydra config.
-Modulus supports several VTK data formats (legacy and XML versions) including:
+VTK outputs are selected by default in Modulus Sym, which can be controlled using the ``save_filetypes`` parameter in the Hydra config.
+Modulus Sym supports several VTK data formats (legacy and XML versions) including:
 
-.. list-table:: Modulus VTK Data Types
+.. list-table:: Modulus Sym VTK Data Types
    :widths: 15 15 60 10
    :header-rows: 1
 
    * - VTK Class
-     - Modulus Wrapper
+     - Modulus Sym Wrapper
      - Description
      - File extension
    * - ``vtkUniformGrid``
@@ -186,17 +186,17 @@ Modulus supports several VTK data formats (legacy and XML versions) including:
      - ``.vtp``
 
 Generally speaking, these file types are listed most to least restrictive.
-Modulus primarily will use ``vtkPolyData`` to output data given its flexibility, but other formats can offer significant memory savings if applicable.
+Modulus Sym primarily will use ``vtkPolyData`` to output data given its flexibility, but other formats can offer significant memory savings if applicable.
 
 .. warning::
 
-    Modulus currently does not support multi-block VTK files.
+    Modulus Sym currently does not support multi-block VTK files.
 
 
 Converting Variables to VTK Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The workhorses of Modulus' post-processing are the two functions ``var_to_polyvtk`` and  ``grid_to_vtk``, which are used for unstructured point data and grid data, respectively.
+The workhorses of Modulus Sym' post-processing are the two functions ``var_to_polyvtk`` and  ``grid_to_vtk``, which are used for unstructured point data and grid data, respectively.
 Both of these functions take dictionaries of numpy arrays and write them to VTK files.
 When writing a custom constraint, inferencer or validator, using one of these functions will likely be needed to record your results.
 
@@ -223,7 +223,7 @@ To better understand the conversion, consider the following minimal example for 
         "p": np.random.randn(n_points, 1), 
         "x": np.random.uniform(0, 1 ,size=(n_points, 1)),  # x coordinates
         "y": np.random.uniform(0, 1 ,size=(n_points, 1)), # y coordinates
-        # Modulus will fill in z locations with zero
+        # Modulus Sym will fill in z locations with zero
     }
     var_to_polyvtk(save_var, "./test_file")
 
@@ -272,16 +272,16 @@ The following minimal example will demonstrate this function for a 3D grid:
 VTK Validator and Inferencer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Modulus also has a validator and inferencer node that builds from a VTK object directly called ``PointVTKValidator`` and ``PointVTKInferencer``.
-These objects take one of Modulus built in VTK classes as an input and automatically queries the model at the point locations.
+Modulus Sym also has a validator and inferencer node that builds from a VTK object directly called ``PointVTKValidator`` and ``PointVTKInferencer``.
+These objects take one of Modulus Sym built in VTK classes as an input and automatically queries the model at the point locations.
 The advantage of these is that mesh data is kept in the validator/inferencer which is added into the output file.
 
 
 Constructing VTK Objects from Scratch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The first use case of this is to define your own VTK object from scratch in Modulus.
-Consider adding a new inferencer to the :ref:`ldc` example.
+The first use case of this is to define your own VTK object from scratch in Modulus Sym.
+Consider adding a new inferencer to the :ref:`Introductory Example` example.
 The example below defines a uniform mesh to conduct inference on:
 
 .. code-block:: python
@@ -305,9 +305,9 @@ The example below defines a uniform mesh to conduct inference on:
     ldc_domain.add_inferencer(grid_inference, "vtk_inf")
 
 
-``VTKUniformGrid`` is a Modulus wrapper for the ``vtkUniformGrid`` class and can be used to quickly define uniform domains.
+``VTKUniformGrid`` is a Modulus Sym wrapper for the ``vtkUniformGrid`` class and can be used to quickly define uniform domains.
 The above example defines a square domain of resolution :math:`128\times 128`.
-Adding this to your ``ldc_2d.py`` from :ref:`ldc` will add an addition inferencer with and output file ``vtk_inf.vti`` which is visualized as a mesh rather than a point cloud.
+Adding this to your ``ldc_2d.py`` from :ref:`Introductory Example` will add an addition inferencer with and output file ``vtk_inf.vti`` which is visualized as a mesh rather than a point cloud.
 
 .. figure:: /images/user_guide/vtk_ldc_grid_data.png
     :alt: `vtkUniformGridData` visualization LDC example
@@ -319,7 +319,7 @@ Adding this to your ``ldc_2d.py`` from :ref:`ldc` will add an addition inference
 .. note::
 
     The ``export_map``, which is a dictionary, ``Dict[str, List[str]]`` used to map between VTK variable names and modulus variable names.
-    In this example the ``U`` field in the VTK file will contain Modulus variables ``u`` and ``v`` in the first and second dimension with zeros in the third.
+    In this example the ``U`` field in the VTK file will contain Modulus Sym variables ``u`` and ``v`` in the first and second dimension with zeros in the third.
  
 .. note::
 
@@ -359,7 +359,7 @@ An example of reading in a OpenFOAM simulation file and using it for building a 
     ldc_domain.add_validator(openfoam_validator, "vtk_validator")
 
 Since ``cavity_openfoam.vtk`` is an unstructured grid, the output from this validator would be ``vtk_validator.vtu`` and contain the same mesh structure.
-Adding this code to your ``ldc_2d.py`` from :ref:`ldc` will now produce a meshed validation result in ParaView.
+Adding this code to your ``ldc_2d.py`` from :ref:`Introductory Example` will now produce a meshed validation result in ParaView.
 
 .. figure:: /images/user_guide/vtk_ldc_validation_data.png
     :alt: `vtkUnstructuredGridData` visualization LDC example
@@ -370,12 +370,12 @@ Adding this code to your ``ldc_2d.py`` from :ref:`ldc` will now produce a meshed
 
 .. note::
 
-    The ``true_vtk_map`` tells Modulus what point fields to use as target values. 
+    The ``true_vtk_map`` tells Modulus Sym what point fields to use as target values. 
     Here we are defining two target variables ``u`` and ``v`` which use the data in the first and second component of the field ``U`` in the VTK file.
 
 .. warning::
 
-    Modulus only supports the use of point data arrays in VTK objects.
+    Modulus Sym only supports the use of point data arrays in VTK objects.
 
 This includes building validators/inferencers from more complex meshes as well. 
 Even the results from a 2D system can be projected onto a 3D object using a VTK point inferencer. 
@@ -417,7 +417,7 @@ Voxel Inferencer
 ^^^^^^^^^^^^^^^^
 
 The ``VoxelInferencer`` is a unique class that can be particularly useful when you do not have a volume mesh of your geometry.
-This includes cases when Modulus' geometry module is being used or you just have a mesh of the boundary.
+This includes cases when Modulus Sym' geometry module is being used or you just have a mesh of the boundary.
 
 The ``VoxelInferencer`` works by defining a uniform grid over a square domain.
 A masking function, such as a SDF (Signed Distance Function), is provided which then flags which points lie inside the inference domain.

@@ -6,24 +6,24 @@ Conjugate Heat Transfer
 Introduction
 ------------
 
-This tutorial uses Modulus to study the conjugate heat
+This tutorial uses Modulus Sym to study the conjugate heat
 transfer between the heat sink and the surrounding fluid. The
 temperature variations inside solid and fluid would be solved in a
 coupled manner with appropriate interface boundary conditions. In this
 tutorial, you will learn:
 
-#. How to generate a 3D geometry using the geometry module in Modulus.
+#. How to generate a 3D geometry using the geometry module in Modulus Sym.
 
 #. How to set up a conjugate heat transfer problem using the interface
-   boundary conditions in Modulus.
+   boundary conditions in Modulus Sym.
 
-#. How to use the Multi-Phase training approach in Modulus for one way
+#. How to use the Multi-Phase training approach in Modulus Sym for one way
    coupled problems.
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc`
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example`
    on and have familiarized yourself with the basics
-   of the Modulus APIs. Also, you should review the 
+   of the Modulus Sym APIs. Also, you should review the 
    :ref:`advection-diffusion` tutorial for additional details
    on writing some of the thermal boundary conditions.
 
@@ -121,7 +121,7 @@ defined upfront, ex. dimensions and locations of source etc.
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_geometry.py
    :language: python
-   :lines: 46-
+   :lines: 29-
 
 Neural network, Nodes and Multi-Phase training
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,14 +130,14 @@ Let's have a look at the networks and nodes required to solve the flow and heat 
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 35-70
+   :lines: 51-86
 
 
 For the thermal nodes, start by adding nodes for relevant equations like ``AdvectionDiffusion``, ``Diffusion``, ``DiffusionInterface`` and ``GradNormal`` that will be used to define the various thermal boundary conditions relevant to this problem. Also, create 3 separate neural networks ``flow_net``, ``thermal_f_net`` and ``thermal_s_net``. The first one is the same flow network  defined in the flow scripts. This network architecture definition in heat script must exactly match to that of the flow script for successful initialization of the flow model during heat training. Set the ``optimize`` argument as ``False`` while making the nodes of flow network to avoid optimizing the flow network during the heat training. Finally, separate networks to predict the temperatures in fluid and solid are created. 
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_thermal.py
    :language: python
-   :lines: 35-79
+   :lines: 51-95
 
 
 Setting up Flow Domain and Constraints
@@ -150,7 +150,7 @@ Inlet, Outlet and Channel and Heat Sink walls
 
 For inlet boundary conditions, specify the velocity to be a
 constant velocity of 1.0 :math:`m/s` in x-direction. Like in tutorial
-:ref:`ldc`, weight the velocity by the SDF of the channel
+:ref:`Introductory Example`, weight the velocity by the SDF of the channel
 to avoid sharp discontinuity at the boundaries. For outlet, 
 specify the pressure to be 0. All the channel walls and heat sink walls
 are treated as no slip boundaries.
@@ -172,7 +172,7 @@ The code for flow domain is shown below.
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 78-184
+   :lines: 87-200
 
 .. note::
    The addition of integral continuity planes and separate flow box for dense sampling are examples of adding more training data and user knowledge/bias of the problem to the training. This addition helps to improve the accuracy and convergence to a great extent and it is recommended wherever possible.
@@ -226,7 +226,7 @@ The code for heat domain is shown below.
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_thermal.py
    :language: python
-   :lines: 87-199
+   :lines: 96-215
 
 
 Adding Validators and Monitors
@@ -241,7 +241,7 @@ Monitors and validators in flow script:
 
 .. literalinclude:: ../../../examples/three_fin_3d/three_fin_flow.py
    :language: python
-   :lines: 185-249
+   :lines: 201-373
 
 
 Training the Model
@@ -255,35 +255,35 @@ Results and Post-processing
 ---------------------------
 
 The table and figures below show the results of Pressure drop and Peak
-temperatures obtained from the Modulus and compare it with the results
+temperatures obtained from the Modulus Sym and compare it with the results
 from OpenFOAM solver.
 
 .. table:: Comparisons of Results with OpenFOAM
    :align: center
 
-   ===================================== ======= ========
-   \                                     Modulus OpenFOAM
-   Pressure Drop :math:`(Pa)`            7.51    7.49
-   Peak Temperature :math:`(^{\circ} C)` 78.35   78.05
-   ===================================== ======= ========
+   ===================================== =========== ========
+   \                                     Modulus Sym OpenFOAM
+   Pressure Drop :math:`(Pa)`            7.51        7.49
+   Peak Temperature :math:`(^{\circ} C)` 78.35       78.05
+   ===================================== =========== ========
 
 
 .. figure:: /images/user_guide/CHTXSlice.png
-   :alt: Left: Modulus. Center: OpenFOAM. Right: Difference. Top: Temperature distribution in Fluid. Bottom: Temperature distribution in Solid (*Temperature scales in C*)
+   :alt: Left: Modulus Sym. Center: OpenFOAM. Right: Difference. Top: Temperature distribution in Fluid. Bottom: Temperature distribution in Solid (*Temperature scales in C*)
    :name: fig:3d_heat_sink_xslice_heat
    :width: 100.0%
    :align: center
 
-   Left: Modulus. Center: OpenFOAM. Right: Difference. Top: Temperature
+   Left: Modulus Sym. Center: OpenFOAM. Right: Difference. Top: Temperature
    distribution in Fluid. Bottom: Temperature distribution in Solid (*Temperature scales in C*)
 
 .. figure:: /images/user_guide/CHTZSlice.png
-   :alt: Left: Modulus. Center: OpenFOAM. Right: Difference. (*Temperature scales in C*)
+   :alt: Left: Modulus Sym. Center: OpenFOAM. Right: Difference. (*Temperature scales in C*)
    :name: fig:3d_heat_sink_zslice_heat
    :width: 100.0%
    :align: center
 
-   Left: Modulus. Center: OpenFOAM. Right: Difference. (*Temperature scales in C*)
+   Left: Modulus Sym. Center: OpenFOAM. Right: Difference. (*Temperature scales in C*)
 
 Plotting gradient quantities: Wall Velocity Gradients
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -292,7 +292,7 @@ In a variety of applications, it is desirable to plot the gradients of
 some quantities inside the domain. One such example relevant to fluid
 flows is the wall velocity gradients and wall shear stresses. These
 quantities are often plotted to compute frictional forces, etc. You can
-visualize such quantities in Modulus by outputting the :math:`x`,
+visualize such quantities in Modulus Sym by outputting the :math:`x`,
 :math:`y` and :math:`z` derivatives of the desired variables using an 
 ``PointwiseInferencer``.
  
@@ -313,15 +313,15 @@ visualize such quantities in Modulus by outputting the :math:`x`,
 You can then post-process these quantities based on your choice to
 visualize the desired variables. `Paraview’s Calculator Filter
 <https://kitware.github.io/paraview-docs/latest/python/paraview.simple.Calculator.html>`_ was used for the 
-plot shown below. The wall velocity gradients comparison between OpenFOAM and Modulus is
+plot shown below. The wall velocity gradients comparison between OpenFOAM and Modulus Sym is
 shown in :numref:`fig-3d_heat_sink_wall_velGrad`.
 
 .. _fig-3d_heat_sink_wall_velGrad:
 
 .. figure:: /images/user_guide/wall_shear_stress_3Fin.png
-   :alt: Comparison of magnitude of wall velocity gradients. Left: Modulus. Right: OpenFOAM
+   :alt: Comparison of magnitude of wall velocity gradients. Left: Modulus Sym. Right: OpenFOAM
    :width: 80.0%
    :align: center
 
-   Comparison of magnitude of wall velocity gradients. Left: Modulus.
+   Comparison of magnitude of wall velocity gradients. Left: Modulus Sym.
    Right: OpenFOAM

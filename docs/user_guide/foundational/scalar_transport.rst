@@ -19,8 +19,8 @@ model the heat transfer in a 2D flow. In this tutorial you will learn:
    speed up convergence.
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc` and have 
-   familiarized yourself with the basics of the Modulus APIs.
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example` and have 
+   familiarized yourself with the basics of the Modulus Sym APIs.
  
 Problem Description
 -------------------
@@ -61,7 +61,7 @@ modules to generate the required boundary conditions.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 1-25 
+   :lines: 15-42
 
 
 Creating Geometry
@@ -83,7 +83,7 @@ The following code generates the geometry for the 2D heat sink problem.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 31-84
+   :lines: 47-100
 
 
 Defining the Equations, Networks and Nodes
@@ -111,7 +111,7 @@ the convergence behavior.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 86-114 
+   :lines: 102-129 
 
 
 Setting up the Domain and adding Constraints
@@ -141,7 +141,7 @@ You can use integral continuity planes to specify the targeted mass flow rate th
 For a parabolic velocity of 1.5
 :math:`m/s`, the integral mass flow is :math:`1` which is added as an
 additional constraint to speed up the convergence. Similar to tutorial
-:ref:`ldc` you can define keys for ``'normal_dot_vel'`` on
+:ref:`Introductory Example` you can define keys for ``'normal_dot_vel'`` on
 the plane boundaries and set its value to ``1`` to specify the targeted
 mass flow. Use the ``IntegralBoundaryConstraint`` constraint to define 
 these integral constraints. Here the ``integral_line`` 
@@ -158,7 +158,7 @@ by specifying the variable for sweep, the two intercepts and max height.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 115-199
+   :lines: 131-214
 
 
 Adding Monitors and Validators
@@ -169,7 +169,7 @@ to import it can be found below.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink.py
    :language: python
-   :lines: 200-268
+   :lines: 216-289
 
 
 Training the model 
@@ -184,15 +184,15 @@ Once the python file is setup, the training can be started by executing the pyth
 Results and Post-processing
 ---------------------------
 
-The results for the Modulus simulation are compared against the OpenFOAM
+The results for the Modulus Sym simulation are compared against the OpenFOAM
 data in :numref:`fig-2d_heat_sink_results`.
 
 .. _fig-2d_heat_sink_results:
 
 .. figure:: /images/user_guide/heatSink_try4.png
-   :alt: Left: Modulus. Center: OpenFOAM. Right: Difference
+   :alt: Left: Modulus Sym. Center: OpenFOAM. Right: Difference
    :name: fig:2d_heat_sink_results
    :width: 100.0%
    :align: center
 
-   Left: Modulus. Center: OpenFOAM. Right: Difference
+   Left: Modulus Sym. Center: OpenFOAM. Right: Difference

@@ -1,5 +1,5 @@
-Modulus Inferencers
-===================
+Modulus Sym Inferencers
+=======================
 
 
 Pointwise Inferencer

@@ -7,24 +7,24 @@ Introduction
 ------------
 
 This tutorial walks you through the process of adding a
-algebraic (zero equation) turbulence model to the Modulus simulations. 
+algebraic (zero equation) turbulence model to the Modulus Sym simulations. 
 In this tutorial you will learn the following:
 
-#. How to use the Zero equation turbulence model in Modulus.
+#. How to use the Zero equation turbulence model in Modulus Sym.
 
 #. How to create nodes in the graph for arbitrary variables.
 
 .. note::
-   This tutorial assumes that you have completed the :ref:`ldc`
+   This tutorial assumes that you have completed the :ref:`Introductory Example`
    tutorial on Lid Driven Cavity Flow and have familiarized yourself with the basics
-   of the Modulus APIs.
+   of the Modulus Sym APIs.
 
 Problem Description
 -------------------
 
 In this tutorial you will add the zero equation turbulence for a Lid
 Driven Cavity flow. The problem setup is very similar to the one found in the
-:ref:`ldc`. The Reynolds number is increased to 1000. The velocity
+:ref:`Introductory Example`. The Reynolds number is increased to 1000. The velocity
 profile is kept the same as before. To increase the
 Reynolds Number, the viscosity is reduced to 1 × 10\ :sup:`−4`
 :math:`m^2/s`.
@@ -32,7 +32,7 @@ Reynolds Number, the viscosity is reduced to 1 × 10\ :sup:`−4`
 Case Setup
 ----------
 
-The case set up in this tutorial is very similar to the example in :ref:`ldc`. 
+The case set up in this tutorial is very similar to the example in :ref:`Introductory Example`. 
 It only describes the additions that are made to the previous code.
 
 .. note::
@@ -42,12 +42,12 @@ It only describes the additions that are made to the previous code.
 Importing the required packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Import Modulus' ``ZeroEquation`` to help setup the problem. 
+Import Modulus Sym' ``ZeroEquation`` to help setup the problem. 
 Other import are very similar to previous LDC. 
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d_zeroEq.py
    :language: python
-   :lines: 1-21
+   :lines: 15-37
 
 Defining the Equations, Networks and Nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -83,7 +83,7 @@ distance from wall, :math:`d_{max}` is maximum normal distance and
 The zero equation turbulence model requires normal distance
 from no slip walls to compute the turbulent viscosity. For most examples, 
 signed distance field (SDF) can act as a normal distance. When the geometry is generated 
-using either the Modulus' geometry module/tesselation module you have access to the ``sdf``
+using either the Modulus Sym' geometry module/tesselation module you have access to the ``sdf``
 variable similar to the other coordinate variables when used in interior sampling. Since 
 zero equation also computes the derivatives of the viscosity, when using the ``PointwiseInteriorConstraint``, 
 you can pass an argument that says ``compute_sdf_derivatives=True``. This will compute 
@@ -92,7 +92,7 @@ the required derivatives of the SDF like ``sdf__x``, ``sdf__y``, etc.
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d_zeroEq.py
    :language: python
-   :lines: 33-47 
+   :lines: 43-60
 
 Setting up domain, adding constraints and running the solver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +102,7 @@ the code and final results is presented here.
 
 .. literalinclude:: ../../../examples/ldc/ldc_2d_zeroEq.py
    :language: python
-   :lines: 48-
+   :lines: 62-
 
 The results of the turbulent lid driven cavity flow are shown below. 
 
@@ -115,10 +115,10 @@ The results of the turbulent lid driven cavity flow are shown below.
    Visualizing variables from Inference domain
 
 .. figure:: /images/user_guide/try_decoupled.png
-   :alt: Comparison with OpenFOAM data. Left: Modulus Prediction. Center: OpenFOAM, Right: Difference
+   :alt: Comparison with OpenFOAM data. Left: Modulus Sym Prediction. Center: OpenFOAM, Right: Difference
    :name: fig:zeroValidation
    :width: 80.0%
    :align: center
 
-   Comparison with OpenFOAM data. Left: Modulus Prediction. Center:
+   Comparison with OpenFOAM data. Left: Modulus Sym Prediction. Center:
    OpenFOAM, Right: Difference

@@ -6,7 +6,7 @@ Industrial Heat Sink
 Introduction
 ------------
 
-This tutorial uses Modulus to conduct a thermal simulation of
+This tutorial uses Modulus Sym to conduct a thermal simulation of
 NVIDIA’s NVSwitch heatsink. You will learn:
 
 #. How to use hFTB algorithm to solve conjugate heat transfer problems
@@ -39,7 +39,7 @@ material. Unlike :ref:`2d_heat`, a hFTB algorithm will be used to handle the lar
 Using real heat properties causes an issue on the interface between the
 solid and fluid because the conductivity is around 4 orders of magnitude
 different (Air: 0.0261 :math:`W/m.K` and Copper: 385 :math:`W/m.K`). 
-To remedy this, Modulus has a static
+To remedy this, Modulus Sym has a static
 conjugate heat transfer approached referred to as heat transfer
 coefficient forward temperature backward or hFTB
 [#school2018stability]_. This method works by
@@ -133,16 +133,16 @@ show good accuracy achieved by the hFTB method. :numref:`table-limerock2`
 demonstrates the impact of mesh refinement on
 the solution of the commercial solver where with increasing mesh density
 and mesh quality, the commercial solver results show convergence towards
-the Modulus results. A visualization of the heat sink temperature
+the Modulus Sym results. A visualization of the heat sink temperature
 profile is shown in :numref:`fig-limerock_thermal`.
 
 .. _table-limerock1:
 
-.. table:: A comparison for the solver and Modulus results for NVSwitch pressure drop and peak temperature.
+.. table:: A comparison for the solver and Modulus Sym results for NVSwitch pressure drop and peak temperature.
    :align: center
 
    +----------------------+---------------+---------------+---------------+
-   | Property             | OpenFOAM      | Commercial    | Modulus       |
+   | Property             | OpenFOAM      | Commercial    | Modulus Sym   |
    |                      |               | Solver        |               |
    +----------------------+---------------+---------------+---------------+
    | Pressure Drop        |               |               |               |
@@ -159,21 +159,21 @@ profile is shown in :numref:`fig-limerock_thermal`.
 .. table:: Commercial solver mesh refinement results for NVSwitch pressure drop and peak temperature.
    :align: center
    
-   +--------------------+--------------------------------------+--------------------------------------+
-   | Number of elements | Pressure drop (Pa)                   | Peak temperature :math:`(^{\circ} C)`|
-   |                    +-------------------+---------+--------+-------------------+---------+--------+
-   |                    | Commercial solver | Modulus | % diff | Commercial solver | Modulus | % diff |
-   +--------------------+-------------------+---------+--------+-------------------+---------+--------+
-   | 22.4 M             | 81.27             | 150.25  | 84.88  | 97.40             | 97.35   | 0.05   |
-   +--------------------+-------------------+---------+--------+-------------------+---------+--------+
-   | 24.7 M             | 111.76            | 150.25  | 34.44  | 95.50             | 97.35   | 1.94   |
-   +--------------------+-------------------+---------+--------+-------------------+---------+--------+
-   | 26.9 M             | 122.90            | 150.25  | 22.25  | 95.10             | 97.35   | 2.36   |
-   +--------------------+-------------------+---------+--------+-------------------+---------+--------+
-   | 30.0 M             | 132.80            | 150.25  | 13.14  | -                 | -       | -      |
-   +--------------------+-------------------+---------+--------+-------------------+---------+--------+
-   | 32.0 M             | 137.50            | 150.25  | 9.27   | -                 | -       | -      |
-   +--------------------+-------------------+---------+--------+-------------------+---------+--------+
+   +--------------------+------------------------------------------+------------------------------------------+
+   | Number of elements | Pressure drop (Pa)                       | Peak temperature :math:`(^{\circ} C)`    |
+   |                    +-------------------+-------------+--------+-------------------+-------------+--------+
+   |                    | Commercial solver | Modulus Sym | % diff | Commercial solver | Modulus Sym | % diff |
+   +--------------------+-------------------+-------------+--------+-------------------+-------------+--------+
+   | 22.4 M             | 81.27             | 150.25      | 84.88  | 97.40             | 97.35       | 0.05   |
+   +--------------------+-------------------+-------------+--------+-------------------+-------------+--------+
+   | 24.7 M             | 111.76            | 150.25      | 34.44  | 95.50             | 97.35       | 1.94   |
+   +--------------------+-------------------+-------------+--------+-------------------+-------------+--------+
+   | 26.9 M             | 122.90            | 150.25      | 22.25  | 95.10             | 97.35       | 2.36   |
+   +--------------------+-------------------+-------------+--------+-------------------+-------------+--------+
+   | 30.0 M             | 132.80            | 150.25      | 13.14  | -                 | -           | -      |
+   +--------------------+-------------------+-------------+--------+-------------------+-------------+--------+
+   | 32.0 M             | 137.50            | 150.25      | 9.27   | -                 | -           | -      |
+   +--------------------+-------------------+-------------+--------+-------------------+-------------+--------+
 
 
 .. _fig-limerock_thermal:

@@ -1,5 +1,5 @@
-Modulus Monitors
-================
+Modulus Sym Monitors
+====================
 
 
 Pointwise Monitor

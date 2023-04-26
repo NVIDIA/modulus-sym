@@ -6,11 +6,11 @@ Geometry Modules
 Constructive Solid Geometry
 ---------------------------
 
-Modulus provides several 1D, 2D and 3D primitives that can be used for sampling point clouds required for the physics-informed training. 
+Modulus Sym provides several 1D, 2D and 3D primitives that can be used for sampling point clouds required for the physics-informed training. 
 These primitives support the standard boolean operations* like Union (``+`` ), Intersection (``&`` ) and Subtraction (``-`` ). The boolean
 operations work on the signed distance fields of the differnt primitives. 
 
-Below example shows a simple CSG primitive being built using Modulus. 
+Below example shows a simple CSG primitive being built using Modulus Sym. 
 
 .. code-block:: python
     :caption: Constructive solid geometry
@@ -45,11 +45,11 @@ Below example shows a simple CSG primitive being built using Modulus.
         
 
 .. figure:: /images/user_guide/csg_demo.png
-   :alt: Constructive Solid Geometry using Modulus primitives
+   :alt: Constructive Solid Geometry using Modulus Sym primitives
    :width: 80.0%
    :align: center
 
-   Constructive Solid Geometry using Modulus primitives
+   Constructive Solid Geometry using Modulus Sym primitives
 
 A complete list of primitives can be referred in ``modulus.geometry.primitives_*`` 
 
@@ -120,14 +120,14 @@ The CSG objects can be easily parameterized using sympy. An example of this is u
     
 
 .. figure:: /images/user_guide/csg_parameterized_demo.png
-   :alt: Parameterized Constructive Solid Geometry using Modulus primitives
+   :alt: Parameterized Constructive Solid Geometry using Modulus Sym primitives
    :width: 80.0%
    :align: center
 
-   Parameterized Constructive Solid Geometry using Modulus primitives
+   Parameterized Constructive Solid Geometry using Modulus Sym primitives
 
 
-Some interesting shapes generated using Modulus' geometry module are presented below
+Some interesting shapes generated using Modulus Sym' geometry module are presented below
 
 .. figure:: /images/user_guide/naca_demo.png
    :alt: NACA airfoil using ``Polygon`` primitive
@@ -154,7 +154,7 @@ Some interesting shapes generated using Modulus' geometry module are presented b
 Defining Custom Primitives
 --------------------------
 
-If you don't find a primitive defined for your application, it is easy to setup using the base classes from Modulus. All you need to do is come up with and appropriate
+If you don't find a primitive defined for your application, it is easy to setup using the base classes from Modulus Sym. All you need to do is come up with and appropriate
 expression for the signed distance field and the surfaces of the geometry. An example is shown below. 
 
 .. code-block:: python
@@ -250,17 +250,17 @@ expression for the signed distance field and the surfaces of the geometry. An ex
         
 
 .. figure:: /images/user_guide/custom_primitive_demo.png
-   :alt: Custom primitive in Modulus. The cylinders are sliced to visualize the interior SDF
+   :alt: Custom primitive in Modulus Sym. The cylinders are sliced to visualize the interior SDF
    :width: 80.0%
    :align: center
 
-   Custom primitive in Modulus. The cylinders are sliced to visualize the interior SDF
+   Custom primitive in Modulus Sym. The cylinders are sliced to visualize the interior SDF
 
    
 Tesselated Geometry
 -------------------
 
-For more complicated shapes, Modulus allows geometries to be imported in the STL format. The module uses ray tracing to compute SDF and its derivatives.
+For more complicated shapes, Modulus Sym allows geometries to be imported in the STL format. The module uses ray tracing to compute SDF and its derivatives.
 The module also gives surface normals of the geometry for surface sampling. Once the geometry is imported, the point cloud can be used for training. An
 example of this can be found in :ref:`stl`.
 
@@ -294,18 +294,18 @@ Tesselated geometries can also be combined with the primitives
         
 
 .. figure:: /images/user_guide/stl_demo_1.png
-   :alt: Tesselated Geometry sampling using Modulus 
+   :alt: Tesselated Geometry sampling using Modulus Sym 
    :width: 80.0%
    :align: center
 
-   Tesselated Geometry sampling using Modulus
+   Tesselated Geometry sampling using Modulus Sym
 
 .. figure:: /images/user_guide/stl_demo_2.png
-   :alt: Tesselated Geometry sampling using Modulus: Stanford bunny
+   :alt: Tesselated Geometry sampling using Modulus Sym: Stanford bunny
    :width: 80.0%
    :align: center
 
-   Tesselated Geometry sampling using Modulus: Stanford bunny
+   Tesselated Geometry sampling using Modulus Sym: Stanford bunny
 
 
 

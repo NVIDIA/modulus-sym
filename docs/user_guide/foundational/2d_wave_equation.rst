@@ -10,18 +10,18 @@ This tutorial extends the previous 1D wave equation example and
 solve a 2D seismic wave propagation problem commonly used in seismic
 surveying. In this tutorial, you will learn the following:
 
-#. How to solve a 2D time-dependent problem in Modulus
+#. How to solve a 2D time-dependent problem in Modulus Sym
 
 #. How to define an open boundary condition using custom equations
 
 #. How to present a variable velocity model as an additional network
 
 .. note:: 
-   This tutorial assumes that you have completed the :ref:`ldc` tutorial
+   This tutorial assumes that you have completed the :ref:`Introductory Example` tutorial
    on Lid Driven Cavity flow and have familiarized yourself with the basics
-   of Modulus. Also, see the 
+   of Modulus Sym. Also, see the 
    :ref:`transient` tutorial for more information on defining new
-   differential equations, and solving time-dependent problems in Modulus.
+   differential equations, and solving time-dependent problems in Modulus Sym.
 
 Problem Description
 -------------------
@@ -77,7 +77,7 @@ peak wavelet frequency of :math:`f_0=15 Hz`.
 
 The problem uses wavefield data at time steps (150 :math:`ms` - 300
 :math:`ms`) generated from finite difference simulations, using `Devito <https://github.com/devitocodes/devito/tree/master../../../examples/seismic/tutorials>`_, as constraints for the temporal boundary conditions, and train
-Modulus to produce wavefields at later time steps (300 :math:`ms` – 1000
+Modulus Sym to produce wavefields at later time steps (300 :math:`ms` – 1000
 :math:`ms`).
 
 Problem Setup
@@ -118,7 +118,7 @@ here you create a class ``OpenBoundary`` that inherits from ``PDES``:
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 39-108
+   :lines: 63-133
 
 Variable Velocity Model
 ------------------------
@@ -134,18 +134,18 @@ form to represent the velocity :math:`c` as a function of :math:`x` and
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 166-175
+   :lines: 189-198
 
 Creating PDE and Neural Network Nodes
 --------------------------------------
 
-First, define the Modulus PDE and NN nodes for this problem:
+First, define the Modulus Sym PDE and NN nodes for this problem:
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 135-153
+   :lines: 154-176
 
-The PDE nodes are created using both the ``OpenBoundary`` PDE defined above and the ``WaveEquation`` PDE defined within Modulus. Since this is a time-dependent problem, use the ``time=True`` arguments.
+The PDE nodes are created using both the ``OpenBoundary`` PDE defined above and the ``WaveEquation`` PDE defined within Modulus Sym. Since this is a time-dependent problem, use the ``time=True`` arguments.
 
 Here two neural network nodes are defined where ``wave_net`` is used to learn the solution to the wave equation and ``speed_net`` is used to learn the velocity model given the training data (``wave_speed_invar`` and ``wave_speed_outvar``) defined above.
 
@@ -156,7 +156,7 @@ The 2D geometry of the computational domain as well as the time range of the sol
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 155-164
+   :lines: 178-180
 
 Adding Constraints
 ------------------
@@ -165,18 +165,18 @@ A total of four different constraints is sufficient to define this problem. The 
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 177-242
+   :lines: 200-245
 
 The supervised constraints are added using the ``PointwiseConstraint.from_numpy(...)`` constructor.
 
 Validation
 ----------
 
-Finally, you can validate your results using 13 later time steps from Devito, defined within a Modulus validator as shown below. 
+Finally, you can validate your results using 13 later time steps from Devito, defined within a Modulus Sym validator as shown below. 
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 224-242
+   :lines: 247-265
 
 You can define a custom tensorboard plotter within ``examples/seismic_wave/wave_2d.py`` to add validation plots to TensorBoard, see :ref:`tensorboard` for more details on how to do this.
 
@@ -184,20 +184,20 @@ Now that you have defined the model, its constraints and validation data, you ca
 
 .. literalinclude:: ../../../examples/seismic_wave/wave_2d.py
    :language: python
-   :lines: 244-246
+   :lines: 255
 
 Results
 -------
 
-The training results can be viewed in TensorBoard. It can be seen that the Modulus
+The training results can be viewed in TensorBoard. It can be seen that the Modulus Sym
 results are noticeably better than Devito, predicting the wavefield with
 much less boundary reflections, especially at later time steps.
 
 .. figure:: /images/user_guide/simnet_vs_devito_combined.PNG
-   :alt: Comparison of Modulus results with Devito solution
+   :alt: Comparison of Modulus Sym results with Devito solution
    :width: 65.0%
    :align: center
 
-   Comparison of Modulus results with Devito solution
+   Comparison of Modulus Sym results with Devito solution
 
 

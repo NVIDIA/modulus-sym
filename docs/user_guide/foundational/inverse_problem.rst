@@ -6,22 +6,22 @@ Inverse Problem: Finding Unknown Coefficients of a PDE
 Introduction
 ------------
 
-In this tutorial, you will use Modulus to solve an inverse problem by
+In this tutorial, you will use Modulus Sym to solve an inverse problem by
 assimilating data from observations. You will use the flow field computed
 by OpenFOAM as an input to the PINNs whose job is to predict the
 parameters characterizing the flow (eg. viscosity (:math:`\nu`) and
 thermal diffusivity (:math:`\alpha`)). In this tutorial you will learn:
 
-#. How to assimilate analytical/experimental/simulation data in Modulus.
+#. How to assimilate analytical/experimental/simulation data in Modulus Sym.
 
-#. How to use the ``PointwiseConstraint`` in Modulus to create constraints from 
+#. How to use the ``PointwiseConstraint`` in Modulus Sym to create constraints from 
    data that can be loaded in form of .csv files/numpy arrays.
 
 #. How to use the assimilated data to make predictions of unknown
    quantities.
 
 .. note:: 
-   This tutorial assumes that you have completed tutorial :ref:`ldc` and have familiarized yourself with the basics of the Modulus APIs. 
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example` and have familiarized yourself with the basics of the Modulus Sym APIs. 
 
 Problem Description
 -------------------
@@ -92,7 +92,7 @@ The list of packages/modules to be imported are shown below.
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 1-25
+   :lines: 15-43
 
 
 Defining the Equations, Networks and Nodes for a Inverse problem
@@ -123,7 +123,7 @@ The code to generate the nodes for the problem is shown here:
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 28-82
+   :lines: 48-101
 
 
 Assimilating data from CSV files/point clouds to create Training data
@@ -156,7 +156,7 @@ The code to generate such a boundary condition is shown here:
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 84-122
+   :lines:  103-147
 
 
 Adding Monitors
@@ -170,7 +170,7 @@ code to generate the ``PointwiseMonitor`` is shown here:
 
 .. literalinclude:: ../../../examples/three_fin_2d/heat_sink_inverse.py
    :language: python
-   :lines: 124-139 
+   :lines: 148-163
 
 
 Training the model 
@@ -194,15 +194,15 @@ in :numref:`fig-inverse-point-result`.
 .. table:: Comparison of the inverted coefficients with the actual values
    :align: center
 
-   +----------------------+----------------------+----------------------+
-   | Property             | OpenFOAM (True)      | Modulus (Predicted)  |
-   +----------------------+----------------------+----------------------+
-   | Kinematic Viscosity  | 1.00 × 10\ :sup:`−2` | 9.87 × 10\ :sup:`−3` |
-   | :math:`(m^2/s)`      |                      |                      |
-   +----------------------+----------------------+----------------------+
-   | Thermal Diffusivity  | 2.00 × 10\ :sup:`−3` | 2.53 × 10\ :sup:`−3` |
-   | :math:`(m^2/s)`      |                      |                      |
-   +----------------------+----------------------+----------------------+
+   +----------------------+----------------------+--------------------------+
+   | Property             | OpenFOAM (True)      | Modulus Sym (Predicted)  |
+   +----------------------+----------------------+--------------------------+
+   | Kinematic Viscosity  | 1.00 × 10\ :sup:`−2` | 9.87 × 10\ :sup:`−3`     |
+   | :math:`(m^2/s)`      |                      |                          |
+   +----------------------+----------------------+--------------------------+
+   | Thermal Diffusivity  | 2.00 × 10\ :sup:`−3` | 2.53 × 10\ :sup:`−3`     |
+   | :math:`(m^2/s)`      |                      |                          |
+   +----------------------+----------------------+--------------------------+
 
 
 .. _fig-inverse-point-result:

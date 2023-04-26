@@ -6,16 +6,16 @@ Coupled Spring Mass ODE System
 Introduction
 ------------
 
-In this tutorial Modulus is used to solve a system of coupled
+In this tutorial Modulus Sym is used to solve a system of coupled
 ordinary differential equations. Since the APIs used for this problem
 have already been covered in a previous tutorial, only the
 problem description is discussed without going into the details of the code.
 
 .. note::
-   This tutorial assumes that you have completed tutorial :ref:`ldc`
-   and have familiarized yourself with the basics of the Modulus APIs. 
+   This tutorial assumes that you have completed tutorial :ref:`Introductory Example`
+   and have familiarized yourself with the basics of the Modulus Sym APIs. 
    Also, refer to tutorial :ref:`transient` for information on defining new
-   differential equations, and solving time dependent problems in Modulus.
+   differential equations, and solving time dependent problems in Modulus Sym.
    
 Problem Description
 -------------------
@@ -106,7 +106,7 @@ generate the nodes and relevant constraints is below:
 
 .. literalinclude:: ../../../examples/ode_spring_mass/spring_mass_solver.py
    :language: python
-   :lines: 1-71
+   :lines: 15-82
 
 Next, you can define the validation data for this problem. The solution
 of this problem can be obtained analytically and the expression can be
@@ -116,7 +116,7 @@ the tutorial :ref:`transient`.
 
 .. literalinclude:: ../../../examples/ode_spring_mass/spring_mass_solver.py
    :language: python
-   :lines: 73-92
+   :lines: 84-103
 
 Now that you have the definitions for the various constraints and domains complete, 
 you can form the solver and run the problem.
@@ -124,7 +124,7 @@ The code to do the same can be found below:
 
 .. literalinclude:: ../../../examples/ode_spring_mass/spring_mass_solver.py
    :language: python
-   :lines: 94-98
+   :lines: 105-110
 
 Once the python file is setup, you can solve the problem by executing the
 solver script ``spring_mass_solver.py`` as seen in other tutorials.
@@ -132,15 +132,15 @@ solver script ``spring_mass_solver.py`` as seen in other tutorials.
 Results and Post-processing
 ---------------------------
 
-The results for the Modulus simulation are compared against the
+The results for the Modulus Sym simulation are compared against the
 analytical validation data. You can see that the solution converges to
 the analytical result very quickly. The plots can be created
 using the ``.npz`` files that are created in the ``validator/`` directory
 in the network checkpoint.
 
 .. figure:: /images/user_guide/comparison_ode.png
-   :alt: Comparison of Modulus results with an analytical solution
+   :alt: Comparison of Modulus Sym results with an analytical solution
    :width: 70.0%
    :align: center
 
-   Comparison of Modulus results with an analytical solution.
+   Comparison of Modulus Sym results with an analytical solution.

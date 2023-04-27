@@ -53,7 +53,7 @@ Check out the following tutorials to get started.
    :hidden:
 
    Overview <user_guide/basics/modulus_overview.rst>
-   Introductory Example <user_guide/basics/lid_driven_cavity_flow.ipynb>
+   Introductory Example <user_guide/basics/lid_driven_cavity_flow.rst>
    Jupyter Notebook <user_guide/notebook/notebook.ipynb>
 
 .. toctree::

@@ -17,7 +17,7 @@ Modulus-Sym is a repo with an abstracted workflow comparable to existing numeric
 
 ### PyPi
 
-The recommend method for installing the latest version of Modulus is using PyPi:
+The recommended method for installing the latest version of Modulus is using PyPi:
 ```Bash
 pip install nvidia-modulus.sym
 ```

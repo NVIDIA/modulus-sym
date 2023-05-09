@@ -4,8 +4,8 @@
 [![GitHub](https://img.shields.io/github/license/NVIDIA/modulus-sym)](https://github.com/NVIDIA/modulus-sym/blob/master/LICENSE.txt)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Modulus-Sym is a repo with an abstracted workflow comparable to existing numerical solvers for training data-free and data-driven neural models. Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
-
+Modulus-Sym provides an abstraction layer for using PDE-based symbolic loss functions. Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
+Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html) for updating to the latest version.
 
 ## Modulus Packages
 

@@ -31,6 +31,7 @@ docker pull nvcr.io/nvidia/modulus/modulus:23.05
 
 ## From Source
 
+### Package
 For a local build of the Modulus Symbolic Python package from source use:
 
 ```Bash

@@ -1,12 +1,11 @@
 # Modulus Sym (Beta)
 
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![GitHub](https://img.shields.io/github/license/NVIDIA/modulus-sym)](https://github.com/NVIDIA/modulus-sym/blob/master/LICENSE.txt)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-Modulus-Sym is a repo with an abstracted workflow comparable to existing numerical solvers for training data-free and data-driven neural models.
+Modulus-Sym is a repo with an abstracted workflow comparable to existing numerical solvers for training data-free and data-driven neural models. Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
 
-**This is an early-access alpha release**
 
 ## Modulus Packages
 
@@ -14,19 +13,34 @@ Modulus-Sym is a repo with an abstracted workflow comparable to existing numeric
 - [Modulus Launch (Beta)](https://github.com/NVIDIA/modulus-launch)
 - [Modulus Symbolic (Beta)](https://github.com/NVIDIA/modulus-sym)
 
-## Installing 
+## Installation 
 
-Modulus is coming to PyPi soon! In the mean time the best way is to install from source:
+### PyPi
+
+The recommend method for installing the latest version of Modulus is using PyPi:
+```Bash
+pip install nvidia-modulus.sym
+```
+
+### Container
+
+The recommended Modulus docker image can be pulled from the [NVIDIA Container Registry](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/containers/modulus):
+```Bash
+docker pull nvcr.io/nvidia/modulus/modulus:23.05
+```
+
+## From Source
+
+For a local build of the Modulus Symbolic Python package from source use:
 
 ```Bash
 git clone git@github.com:NVIDIA/modulus-sym.git && cd modulus-sym
-```
 
-```Bash
+pip install --upgrade pip
 pip install .
 ```
 
-## Docker
+### Container
 
 To build release image, you will need to do the below preliminary steps:
 

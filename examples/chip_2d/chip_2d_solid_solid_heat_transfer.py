@@ -303,7 +303,7 @@ def run(cfg: ModulusConfig) -> None:
         domain.add_validator(openfoam_validator_solid_I)
     else:
         warnings.warn(
-            f"Directory {file_path} does not exist. Will skip adding validators. Please download the additional files from NGC <TODO: Add link here>"
+            f"Directory {file_path} does not exist. Will skip adding validators. Please download the additional files from NGC https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/resources/modulus_sym_examples_supplemental_materials"
         )
 
     file_path = "openfoam/2d_solid_solid_D2.csv"
@@ -327,7 +327,7 @@ def run(cfg: ModulusConfig) -> None:
         domain.add_validator(openfoam_validator_solid_II)
     else:
         warnings.warn(
-            f"Directory {file_path} does not exist. Will skip adding validators. Please download the additional files from NGC <TODO: Add link here>"
+            f"Directory {file_path} does not exist. Will skip adding validators. Please download the additional files from NGC https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/resources/modulus_sym_examples_supplemental_materials"
         )
 
     # make solver

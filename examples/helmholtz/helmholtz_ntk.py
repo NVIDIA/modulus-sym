@@ -107,7 +107,7 @@ def run(cfg: ModulusConfig) -> None:
         domain.add_validator(openfoam_validator)
     else:
         warnings.warn(
-            f"Directory {file_path} does not exist. Will skip adding validators. Please download the additional files from NGC <TODO: Add link here>"
+            f"Directory {file_path} does not exist. Will skip adding validators. Please download the additional files from NGC https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/resources/modulus_sym_examples_supplemental_materials"
         )
 
     # make solver

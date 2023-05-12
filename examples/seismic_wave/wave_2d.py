@@ -41,7 +41,7 @@ def read_wf_data(time, dLen):
     file_path = "Training_data"
     if not os.path.exists(to_absolute_path(file_path)):
         warnings.warn(
-            f"Directory {file_path} does not exist. Cannot continue. Please download the additional files from NGC <TODO: Add link here>"
+            f"Directory {file_path} does not exist. Cannot continue. Please download the additional files from NGC https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/resources/modulus_sym_examples_supplemental_materials"
         )
         sys.exit()
     wf_filename = to_absolute_path(f"Training_data/wf_{int(time):04d}ms.npz")

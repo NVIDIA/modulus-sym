@@ -69,7 +69,7 @@ docker build -t modulus-sym:deploy -f Dockerfile --target no-pysdf .
 
 ## Contributing
 
-For guidance on making a contribution to Modulus, see the [contributing guidelines](https://github.com/NVIDIA/modulus-sym/blob/main/CONTRIBUTING.md).)
+For guidance on making a contribution to Modulus, see the [contributing guidelines](https://github.com/NVIDIA/modulus-sym/blob/main/CONTRIBUTING.md).
 
 ## Communication
 * Github Discussions: Discuss new architectures, implementations, Physics-ML research, etc. 

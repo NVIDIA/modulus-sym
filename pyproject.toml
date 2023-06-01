@@ -32,7 +32,6 @@ dependencies = [
     "mistune==2.0.3",
     "pint==0.19.2",
     "tensorboard>=2.8.0",
-    "pandas>=1.4.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

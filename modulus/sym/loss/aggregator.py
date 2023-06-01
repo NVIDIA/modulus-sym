@@ -16,7 +16,6 @@
 import torch
 import logging
 import numpy as np
-import pandas as pd
 from torch import nn
 from typing import Dict, List, Optional, Callable, Union
 
@@ -581,6 +580,8 @@ class NTK(nn.Module):
         return ntk_value
 
     def save_ntk(self, ntk_dict, step):
+        import pandas as pd  # TODO: Remove
+
         output_dict = {}
         for key, value in ntk_dict.items():
             output_dict[key] = value.cpu().numpy()

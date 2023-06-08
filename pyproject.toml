@@ -30,7 +30,8 @@ dependencies = [
     "pillow==9.3.0",
     "notebook==6.4.12",
     "mistune==2.0.3",
-    "pint==0.19.2"
+    "pint==0.19.2",
+    "tensorboard>=2.8.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

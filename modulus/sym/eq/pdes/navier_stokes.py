@@ -129,6 +129,9 @@ class NavierStokes(PDE):
                 - (mu * u.diff(y)).diff(y)
                 - (mu * u.diff(z)).diff(z)
                 - (mu * (curl).diff(x))
+                - mu.diff(x) * u.diff(x)
+                - mu.diff(y) * v.diff(x)
+                - mu.diff(z) * w.diff(x)
             )
             self.equations["momentum_y"] = (
                 (rho * v).diff(t)
@@ -144,6 +147,9 @@ class NavierStokes(PDE):
                 - (mu * v.diff(y)).diff(y)
                 - (mu * v.diff(z)).diff(z)
                 - (mu * (curl).diff(y))
+                - mu.diff(x) * u.diff(y)
+                - mu.diff(y) * v.diff(y)
+                - mu.diff(z) * w.diff(y)
             )
             self.equations["momentum_z"] = (
                 (rho * w).diff(t)
@@ -159,6 +165,9 @@ class NavierStokes(PDE):
                 - (mu * w.diff(y)).diff(y)
                 - (mu * w.diff(z)).diff(z)
                 - (mu * (curl).diff(z))
+                - mu.diff(x) * u.diff(z)
+                - mu.diff(y) * v.diff(z)
+                - mu.diff(z) * w.diff(z)
             )
 
             if self.dim == 2:
@@ -198,6 +207,9 @@ class NavierStokes(PDE):
                 - (mu * u_y).diff(y)
                 - (mu * u_z).diff(z)
                 - (mu * (curl).diff(x))
+                - mu.diff(x) * u.diff(x)
+                - mu.diff(y) * v.diff(x)
+                - mu.diff(z) * w.diff(x)
             )
             self.equations["momentum_y"] = (
                 (rho * v).diff(t)
@@ -213,6 +225,9 @@ class NavierStokes(PDE):
                 - (mu * v_y).diff(y)
                 - (mu * v_z).diff(z)
                 - (mu * (curl).diff(y))
+                - mu.diff(x) * u.diff(y)
+                - mu.diff(y) * v.diff(y)
+                - mu.diff(z) * w.diff(y)
             )
             self.equations["momentum_z"] = (
                 (rho * w).diff(t)
@@ -228,6 +243,9 @@ class NavierStokes(PDE):
                 - (mu * w_y).diff(y)
                 - (mu * w_z).diff(z)
                 - (mu * (curl).diff(z))
+                - mu.diff(x) * u.diff(z)
+                - mu.diff(y) * v.diff(z)
+                - mu.diff(z) * w.diff(z)
             )
             self.equations["compatibility_u_x"] = u.diff(x) - u_x
             self.equations["compatibility_u_y"] = u.diff(y) - u_y

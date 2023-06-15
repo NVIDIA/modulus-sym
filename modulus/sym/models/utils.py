@@ -106,7 +106,7 @@ class ModulusModels(object):
         key = key.lower()
         assert (
             not key in cls._model_classes
-        ), f"Model type name {type_name} already registered! Must be unique."
+        ), f"Model type name {key} already registered! Must be unique."
 
         cls._registered_archs[key] = value
 

@@ -24,7 +24,10 @@ from modulus.sym.node import Node
 class NavierStokes(PDE):
     """
     Compressible Navier Stokes equations
-
+    Reference:
+    https://turbmodels.larc.nasa.gov/implementrans.html
+    (You can derive the implemented equations by ignoring the Raynolds stress terms.)
+    
     Parameters
     ==========
     nu : float, Sympy Symbol/Expr, str

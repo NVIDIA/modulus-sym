@@ -24,7 +24,9 @@ from modulus.sym.node import Node
 class NavierStokes(PDE):
     """
     Compressible Navier Stokes equations
-
+    Reference:
+    https://turbmodels.larc.nasa.gov/implementrans.html
+    
     Parameters
     ==========
     nu : float, Sympy Symbol/Expr, str
@@ -56,8 +58,8 @@ class NavierStokes(PDE):
     >>> ns = NavierStokes(nu='nu', rho=1, dim=2, time=False)
     >>> ns.pprint()
       continuity: u__x + v__y
-      momentum_x: -nu*u__x__x - nu*u__y__y + u*u__x + v*u__y - nu__x*u__x - nu__y*u__y + p__x
-      momentum_y: -nu*v__x__x - nu*v__y__y + u*v__x + v*v__y - nu__x*v__x - nu__y*v__y + p__y
+      momentum_x: -nu*u__x__x - nu*u__y__y + u*u__x + v*u__y - 2*nu__x*u__x - nu__y*u__y - nu__y*v__x + p__x
+      momentum_y: -nu*v__x__x - nu*v__y__y + u*v__x + v*v__y - nu__x*u__y - nu__x*v__x - 2*nu__y*v__y + p__y
     """
 
     name = "NavierStokes"
@@ -129,6 +131,9 @@ class NavierStokes(PDE):
                 - (mu * u.diff(y)).diff(y)
                 - (mu * u.diff(z)).diff(z)
                 - (mu * (curl).diff(x))
+                - mu.diff(x) * u.diff(x)
+                - mu.diff(y) * v.diff(x)
+                - mu.diff(z) * w.diff(x)
             )
             self.equations["momentum_y"] = (
                 (rho * v).diff(t)
@@ -144,6 +149,9 @@ class NavierStokes(PDE):
                 - (mu * v.diff(y)).diff(y)
                 - (mu * v.diff(z)).diff(z)
                 - (mu * (curl).diff(y))
+                - mu.diff(x) * u.diff(y)
+                - mu.diff(y) * v.diff(y)
+                - mu.diff(z) * w.diff(y)
             )
             self.equations["momentum_z"] = (
                 (rho * w).diff(t)
@@ -159,6 +167,9 @@ class NavierStokes(PDE):
                 - (mu * w.diff(y)).diff(y)
                 - (mu * w.diff(z)).diff(z)
                 - (mu * (curl).diff(z))
+                - mu.diff(x) * u.diff(z)
+                - mu.diff(y) * v.diff(z)
+                - mu.diff(z) * w.diff(z)
             )
 
             if self.dim == 2:
@@ -198,6 +209,9 @@ class NavierStokes(PDE):
                 - (mu * u_y).diff(y)
                 - (mu * u_z).diff(z)
                 - (mu * (curl).diff(x))
+                - mu.diff(x) * u.diff(x)
+                - mu.diff(y) * v.diff(x)
+                - mu.diff(z) * w.diff(x)
             )
             self.equations["momentum_y"] = (
                 (rho * v).diff(t)
@@ -213,6 +227,9 @@ class NavierStokes(PDE):
                 - (mu * v_y).diff(y)
                 - (mu * v_z).diff(z)
                 - (mu * (curl).diff(y))
+                - mu.diff(x) * u.diff(y)
+                - mu.diff(y) * v.diff(y)
+                - mu.diff(z) * w.diff(y)
             )
             self.equations["momentum_z"] = (
                 (rho * w).diff(t)
@@ -228,6 +245,9 @@ class NavierStokes(PDE):
                 - (mu * w_y).diff(y)
                 - (mu * w_z).diff(z)
                 - (mu * (curl).diff(z))
+                - mu.diff(x) * u.diff(z)
+                - mu.diff(y) * v.diff(z)
+                - mu.diff(z) * w.diff(z)
             )
             self.equations["compatibility_u_x"] = u.diff(x) - u_x
             self.equations["compatibility_u_y"] = u.diff(y) - u_y

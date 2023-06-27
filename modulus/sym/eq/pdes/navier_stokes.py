@@ -26,7 +26,6 @@ class NavierStokes(PDE):
     Compressible Navier Stokes equations
     Reference:
     https://turbmodels.larc.nasa.gov/implementrans.html
-    (You can derive the implemented equations by ignoring the Raynolds stress terms.)
     
     Parameters
     ==========
@@ -59,8 +58,8 @@ class NavierStokes(PDE):
     >>> ns = NavierStokes(nu='nu', rho=1, dim=2, time=False)
     >>> ns.pprint()
       continuity: u__x + v__y
-      momentum_x: -nu*u__x__x - nu*u__y__y + u*u__x + v*u__y - nu__x*u__x - nu__y*u__y + p__x
-      momentum_y: -nu*v__x__x - nu*v__y__y + u*v__x + v*v__y - nu__x*v__x - nu__y*v__y + p__y
+      momentum_x: -nu*u__x__x - nu*u__y__y + u*u__x + v*u__y - 2*nu__x*u__x - nu__y*u__y - nu__y*v__x + p__x
+      momentum_y: -nu*v__x__x - nu*v__y__y + u*v__x + v*v__y - nu__x*u__y - nu__x*v__x - 2*nu__y*v__y + p__y
     """
 
     name = "NavierStokes"

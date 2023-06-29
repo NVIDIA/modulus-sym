@@ -18,10 +18,12 @@ from modulus.sym.models.multiplicative_filter_net import (
 )
 import torch
 import numpy as np
+from pathlib import Path
 from modulus.sym.key import Key
 import pytest
 from .model_test_utils import validate_func_arch_net
 
+dir_path = Path(__file__).parent
 
 def make_dict(nr_layers):
     _dict = dict()
@@ -44,7 +46,7 @@ def make_dict(nr_layers):
 
 
 def test_multiplicative_filter():
-    filename = "./test_models/data/test_multiplicative_filter.npz"
+    filename = dir_path / "data/test_multiplicative_filter.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]

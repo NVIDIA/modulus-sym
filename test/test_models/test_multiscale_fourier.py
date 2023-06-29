@@ -15,10 +15,12 @@
 from modulus.sym.models.multiscale_fourier_net import MultiscaleFourierNetArch
 import torch
 import numpy as np
+from pathlib import Path
 from modulus.sym.key import Key
 import pytest
 from .model_test_utils import validate_func_arch_net
 
+dir_path = Path(__file__).parent
 
 def make_dict(nr_layers):
     _dict = dict()
@@ -34,7 +36,7 @@ def make_dict(nr_layers):
 
 
 def test_multiscale_fourier_net():
-    filename = "./test_models/data/test_multiscale_fourier.npz"
+    filename = dir_path / "data/test_multiscale_fourier.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]

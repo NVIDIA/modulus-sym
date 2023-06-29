@@ -15,9 +15,12 @@
 from modulus.sym.models.fourier_net import FourierNetArch
 import torch
 import numpy as np
+from pathlib import Path
 from modulus.sym.key import Key
 import pytest
 from .model_test_utils import validate_func_arch_net
+
+dir_path = Path(__file__).parent
 
 
 def make_dict(nr_layers):
@@ -34,7 +37,7 @@ def make_dict(nr_layers):
 
 
 def test_fourier_net():
-    filename = "./test_models/data/test_fourier.npz"
+    filename = dir_path / "data/test_fourier.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]

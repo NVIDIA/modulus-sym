@@ -15,9 +15,12 @@
 from modulus.sym.models.fully_connected import FullyConnectedArch
 import torch
 import numpy as np
+from pathlib import Path
 from modulus.sym.key import Key
 import pytest
 from .model_test_utils import validate_func_arch_net
+
+dir_path = Path(__file__).parent
 
 
 def make_dict(nr_layers):
@@ -35,7 +38,7 @@ def make_dict(nr_layers):
 
 @pytest.mark.parametrize("jit", [True, False])
 def test_fully_connected(jit):
-    filename = "./test_models/data/test_fully_connected.npz"
+    filename = dir_path / "data/test_fully_connected.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]

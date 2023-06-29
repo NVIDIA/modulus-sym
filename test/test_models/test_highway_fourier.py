@@ -13,11 +13,14 @@
 # limitations under the License.
 
 from modulus.sym.models.highway_fourier_net import HighwayFourierNetArch
+from pathlib import Path
 import torch
 import numpy as np
 from modulus.sym.key import Key
 import pytest
 from .model_test_utils import validate_func_arch_net
+
+dir_path = Path(__file__).parent
 
 
 def make_dict(nr_layers):
@@ -37,7 +40,7 @@ def make_dict(nr_layers):
 
 
 def test_highway_fourier_net():
-    filename = "./test_models/data/test_highway_fourier.npz"
+    filename = dir_path / "data/test_highway_fourier.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+from pathlib import Path
 from modulus.sym.geometry import Parameterization, Parameter, Bounds
 from modulus.sym.geometry.primitives_1d import Point1D, Line1D
 from modulus.sym.geometry.primitives_2d import (
@@ -39,6 +40,8 @@ from modulus.sym.geometry.primitives_3d import (
 )
 from modulus.sym.geometry.tessellation import Tessellation
 from modulus.sym.utils.io.vtk import var_to_polyvtk
+
+dir_path = Path(__file__).parent
 
 
 def check_geometry(
@@ -200,17 +203,17 @@ def test_primitives():
     )
 
     # tessellated geometry
-    g = Tessellation.from_stl("stls/cube.stl")
+    g = Tessellation.from_stl(dir_path / "stls/cube.stl")
     check_geometry(g, boundary_area=6, interior_area=1.0, max_sdf=0.5)
 
     # tessellated with primitives geometry
-    g = Tessellation.from_stl("stls/cube.stl") - Box(
+    g = Tessellation.from_stl(dir_path / "stls/cube.stl") - Box(
         (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)
     )
     check_geometry(g, boundary_area=6, interior_area=0.875)
 
     # Integral plane
-    sdf_fn = Tessellation.from_stl("stls/cube.stl") - Box(
+    sdf_fn = Tessellation.from_stl(dir_path / "stls/cube.stl") - Box(
         (-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)
     )
 

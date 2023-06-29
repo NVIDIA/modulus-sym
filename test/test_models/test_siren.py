@@ -15,9 +15,12 @@
 from modulus.sym.models.siren import SirenArch
 import torch
 import numpy as np
+from pathlib import Path
 from modulus.sym.key import Key
 import pytest
 from .model_test_utils import validate_func_arch_net
+
+dir_path = Path(__file__).parent
 
 
 def make_dict(nr_layers):
@@ -32,7 +35,7 @@ def make_dict(nr_layers):
 
 
 def test_siren():
-    filename = "./test_models/data/test_siren.npz"
+    filename = dir_path / "data/test_siren.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]

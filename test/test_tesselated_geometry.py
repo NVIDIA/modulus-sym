@@ -14,14 +14,17 @@
 
 from sympy import Symbol
 import numpy as np
+from pathlib import Path
 
 from modulus.sym.geometry.tessellation import Tessellation
 from modulus.sym.geometry import Parameterization
 
+dir_path = Path(__file__).parent
+
 
 def test_tesselated_geometry():
     # read in cube file
-    cube = Tessellation.from_stl("stls/cube.stl")
+    cube = Tessellation.from_stl(dir_path / "stls/cube.stl")
 
     # sample boundary
     boundary = cube.sample_boundary(

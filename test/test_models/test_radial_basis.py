@@ -15,9 +15,12 @@
 from modulus.sym.models.radial_basis import RadialBasisArch
 import torch
 import numpy as np
+from pathlib import Path
 from modulus.sym.key import Key
 import pytest
 from .model_test_utils import validate_func_arch_net
+
+dir_path = Path(__file__).parent
 
 
 def make_dict():
@@ -28,7 +31,7 @@ def make_dict():
 
 
 def test_radial_basis():
-    filename = "./test_models/data/test_radial_basis.npz"
+    filename = dir_path / "data/test_radial_basis.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]

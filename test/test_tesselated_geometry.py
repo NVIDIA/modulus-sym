@@ -21,6 +21,7 @@ from modulus.sym.geometry import Parameterization
 
 dir_path = Path(__file__).parent
 
+
 def test_tesselated_geometry():
     # read in cube file
     cube = Tessellation.from_stl(dir_path / "stls/cube.stl")

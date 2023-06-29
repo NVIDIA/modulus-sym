@@ -22,6 +22,7 @@ from .model_test_utils import validate_func_arch_net
 
 dir_path = Path(__file__).parent
 
+
 def make_dict():
     _dict = dict()
     _dict["fc_layer.linear.weight"] = "fc_final/weights:0"

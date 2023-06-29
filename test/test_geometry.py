@@ -43,6 +43,7 @@ from modulus.sym.utils.io.vtk import var_to_polyvtk
 
 dir_path = Path(__file__).parent
 
+
 def check_geometry(
     geo,
     criteria=None,

@@ -152,8 +152,16 @@ def run(cfg: ModulusConfig) -> None:
         )
         + dirichlet.make_nodes(detach_names=["theta_s"])
         + [flow_net.make_node(name="flow_network", optimize=False, jit=cfg.jit)]
-        + [thermal_f_net.make_node(name="thermal_fluid_network", optimize=True, jit=cfg.jit)]
-        + [thermal_s_net.make_node(name="thermal_solid_network", optimize=True, jit=cfg.jit)]
+        + [
+            thermal_f_net.make_node(
+                name="thermal_fluid_network", optimize=True, jit=cfg.jit
+            )
+        ]
+        + [
+            thermal_s_net.make_node(
+                name="thermal_solid_network", optimize=True, jit=cfg.jit
+            )
+        ]
         + [flux_s_net.make_node(name="flux_solid_network", optimize=True, jit=cfg.jit)]
     )
 

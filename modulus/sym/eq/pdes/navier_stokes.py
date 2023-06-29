@@ -26,7 +26,7 @@ class NavierStokes(PDE):
     Compressible Navier Stokes equations
     Reference:
     https://turbmodels.larc.nasa.gov/implementrans.html
-    
+
     Parameters
     ==========
     nu : float, Sympy Symbol/Expr, str

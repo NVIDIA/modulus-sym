@@ -25,6 +25,7 @@ from .model_test_utils import validate_func_arch_net
 
 dir_path = Path(__file__).parent
 
+
 def make_dict(nr_layers):
     _dict = dict()
     names = [("weight", "weights"), ("bias", "biases"), ("weight_g", "alphas")]

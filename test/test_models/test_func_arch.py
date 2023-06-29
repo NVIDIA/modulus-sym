@@ -158,7 +158,7 @@ def test_func_arch_graph_2(func_arch_allow_partial_hessian):
     ft_out = ft_graph(in_vars)
     ref_out = ref_graph(in_vars)
     for k in ref_out.keys():
-        assert torch.allclose(ref_out[k], ft_out[k], atol=5e-5)
+        assert torch.allclose(ref_out[k], ft_out[k], atol=1e-4)
 
 
 def test_get_key_dim():

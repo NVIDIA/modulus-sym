@@ -50,8 +50,9 @@ ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
 
 # CI Image
 FROM pysdf-install as ci
+RUN pip install black==22.10.0 interrogate==1.5.0 coverage==6.5.0
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip -e install . && rm -rf /modulus-sym/
+RUN cd /modulus-sym/ && pip install -e . && rm -rf /modulus-sym/
 
 # Image without pysdf
 FROM builder as no-pysdf

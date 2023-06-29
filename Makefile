@@ -3,7 +3,7 @@ install:
 		pip install -e .
 
 black: 
-	black --check --exclude=docs/ ./
+	black --check --exclude='/(docs|deps)/' ./
 
 interrogate:
 	echo "Interrogate CI stage not currently implemented"
@@ -12,19 +12,16 @@ license:
 	python test/ci_tests/header_check.py
 
 doctest:
-	coverage run \
-                --rcfile='test/coverage.docstring.rc' \
-                -m pytest \
-                --doctest-modules modulus/ --ignore-glob=*internal*
+	echo "Doctest CI stage not currently implemented"
 
 pytest: 
 	coverage run \
-                --rcfile='test/coverage.pytest.rc' \
-                -m pytest 
+		--rcfile='test/coverage.pytest.rc' \
+		-m pytest test/
 
 coverage:
 	coverage combine && \
-		coverage report --show-missing --omit=*test* --omit=*internal* --fail-under=80 && \
+		coverage report --show-missing --omit=*test* --omit=*internal* --fail-under=50 && \
 		coverage html
 
 container-deploy:

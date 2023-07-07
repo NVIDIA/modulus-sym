@@ -20,6 +20,12 @@ import numpy as np
 import csv
 from stl import mesh as np_mesh
 from sympy import Symbol
+import trimesh
+
+from mesh_to_sdf import mesh_to_sdf
+
+#from pysdf import SDF
+from copy import copy
 
 try:
     import pysdf.sdf as pysdf
@@ -121,36 +127,55 @@ class Tessellation(Geometry):
 
         # make sdf function
         def _sdf(triangles, airtight):
-            def sdf(invar, params, compute_sdf_derivatives=False):
+            def sdf(invar, params, compute_sdf_derivatives=False, normalize=False):
                 # gather points
                 points = np.stack([invar["x"], invar["y"], invar["z"]], axis=1)
 
                 # normalize triangles and points
-                minx, maxx, miny, maxy, minz, maxz = _find_mins_maxs(points)
-                max_dis = max(max((maxx - minx), (maxy - miny)), (maxz - minz))
                 store_triangles = np.array(triangles, dtype=np.float64)
-                store_triangles[:, :, 0] -= minx
-                store_triangles[:, :, 1] -= miny
-                store_triangles[:, :, 2] -= minz
-                store_triangles *= 1 / max_dis
-                store_triangles = store_triangles.flatten()
-                points[:, 0] -= minx
-                points[:, 1] -= miny
-                points[:, 2] -= minz
-                points *= 1 / max_dis
-                points = points.astype(np.float64).flatten()
+                if normalize:
+                    minx, maxx, miny, maxy, minz, maxz = _find_mins_maxs(points)
+                    max_dis = max(max((maxx - minx), (maxy - miny)), (maxz - minz))
+                    store_triangles = np.array(triangles, dtype=np.float64)
+                    store_triangles[:, :, 0] -= minx
+                    store_triangles[:, :, 1] -= miny
+                    store_triangles[:, :, 2] -= minz
+                    store_triangles *= 1 / max_dis
+                    
+
+                    points[:, 0] -= minx
+                    points[:, 1] -= miny
+                    points[:, 2] -= minz
+                    points *= 1 / max_dis
+
+
 
                 # compute sdf values
                 outputs = {}
+
+                mesh_new = copy(mesh)
+                mesh_new.vectors = store_triangles
+                #exit()
                 if airtight:
-                    sdf_field, sdf_derivative = pysdf.signed_distance_field(
-                        store_triangles, points, include_hit_points=True
-                    )
+                    # sdf_field, sdf_derivative = pysdf.signed_distance_field(
+                    #     store_triangles, points, include_hit_points=True
+                    # )
+                    # print(points.shape)
+                    # print(store_triangles.shape)
+                    #points_reshaped = points.reshape(int(points.shape[0] / 3), 3)
+                    mesh_new.save('new_stl_file.stl')
+                    trimesh_new = trimesh.load_mesh('new_stl_file.stl')
+                    #trimesh_new.export('stuff.stl')
+                    #sdf_field = mesh_to_sdf(trimesh_new, np.squeeze(points),surface_point_method='sample', scan_count=50,  scan_resolution=300, sample_point_count=700000)
+                    sdf_field = mesh_to_sdf(trimesh_new, np.squeeze(points),surface_point_method='sample')
+                    #print(sdf_field.shape)
                     sdf_field = -np.expand_dims(max_dis * sdf_field, axis=1)
+                    #sdf_field = -np.expand_dims( sdf_field, axis=1)
+                    #print(sdf_field.shape)
                 else:
                     sdf_field = np.zeros_like(invar["x"])
                 outputs["sdf"] = sdf_field
-
+                print('finished testelation', compute_sdf_derivatives)
                 # get sdf derivatives
                 if compute_sdf_derivatives:
                     sdf_derivative = -(sdf_derivative - points)

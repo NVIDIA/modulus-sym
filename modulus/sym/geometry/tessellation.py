@@ -169,8 +169,8 @@ class Tessellation(Geometry):
                     #sdf_field = mesh_to_sdf(trimesh_new, np.squeeze(points),surface_point_method='sample', scan_count=50,  scan_resolution=300, sample_point_count=700000)
                     sdf_field = mesh_to_sdf(trimesh_new, np.squeeze(points),surface_point_method='sample')
                     #print(sdf_field.shape)
-                    sdf_field = -np.expand_dims(max_dis * sdf_field, axis=1)
-                    #sdf_field = -np.expand_dims( sdf_field, axis=1)
+                    #sdf_field = -np.expand_dims(max_dis * sdf_field, axis=1)
+                    sdf_field = -np.expand_dims( sdf_field, axis=1)
                     #print(sdf_field.shape)
                 else:
                     sdf_field = np.zeros_like(invar["x"])

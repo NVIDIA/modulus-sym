@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:22.12-py3
+ARG BASE_CONTAINER=nvcr.io/nvidian/pytorch:23.07-py3
 FROM $BASE_CONTAINER as builder
 
 # Update pip and setuptools
@@ -24,6 +24,7 @@ RUN apt-get update && \
     git lfs install
 
 # Install tiny-cuda-nn
+ENV TCNN_CUDA_ARCHITECTURES="60 70 80 90"
 RUN pip install git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch
 
 FROM builder as pysdf-install

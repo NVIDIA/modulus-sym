@@ -24,7 +24,7 @@ RUN apt-get update && \
     git lfs install
 
 # Install tiny-cuda-nn
-ENV TCNN_CUDA_ARCHITECTURES="60 70 80 90"
+ENV TCNN_CUDA_ARCHITECTURES="60;70;80;90"
 RUN pip install git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch
 
 FROM builder as pysdf-install

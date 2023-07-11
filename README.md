@@ -67,6 +67,22 @@ Alternatively, if you want to skip pysdf installation, you can run the following
 docker build -t modulus-sym:deploy -f Dockerfile --target no-pysdf .
 ```
 
+
+### Windows Container
+For building windows just use 
+```
+docker build -t modulus  - <  Windows.Dockerfile
+```
+
+### Additional notes 
+
+New modification suppose to work with pip to (you'll just need to install two additional libralies)
+```
+pip install trimesh
+pip install mesh_to_sdf
+```
+Tesselation will work because insted of using pysdf I used mesh_to_sdf (I have not yet implemented sdf derivatives yet, so some function will not work on windows (It's only a few functions for visualisation difference with real data (as far as I know)))
+
 ## Contributing
 
 For guidance on making a contribution to Modulus, see the [contributing guidelines](https://github.com/NVIDIA/modulus-sym/blob/main/CONTRIBUTING.md).

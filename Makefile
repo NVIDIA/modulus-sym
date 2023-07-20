@@ -2,26 +2,49 @@ install:
 	pip install --upgrade pip && \
 		pip install -e .
 
-black: 
-	black --check --exclude='/(docs|deps)/' ./
+get-data:
+	mkdir -p /data && \
+		mkdir -p /data/nfs/ && \
+		git -C /data/nfs/modulus-data pull || \
+		git clone https://gitlab-master.nvidia.com/modulus/modulus-data.git /data/nfs/modulus-data
+
+setup-ci:
+	pip install pre-commit && \
+	pre-commit install
+
+black:
+	pre-commit run black -a
 
 interrogate:
+	# pre-commit run interrogate -a
 	echo "Interrogate CI stage not currently implemented"
 
+lint:
+	pre-commit run markdownlint -a
+
 license: 
-	python test/ci_tests/header_check.py
+	pre-commit run license -a
 
 doctest:
+	# coverage run \
+	# 	--rcfile='test/coverage.docstring.rc' \
+	# 	-m pytest \
+	# 	--doctest-modules modulus/ --ignore-glob=*internal*
 	echo "Doctest CI stage not currently implemented"
 
 pytest: 
 	coverage run \
 		--rcfile='test/coverage.pytest.rc' \
-		-m pytest test/
+		-m pytest 
+
+pytest-internal:
+	cd test/internal && \
+		pytest && \
+		cd ../../
 
 coverage:
 	coverage combine && \
-		coverage report --show-missing --omit=*test* --omit=*internal* --fail-under=50 && \
+		coverage report --show-missing --omit=*test* --omit=*internal* --fail-under=80 && \
 		coverage html
 
 container-deploy:
@@ -32,3 +55,4 @@ container-ci:
 
 container-docs:
 	docker build -t modulus-sym:docs --target docs -f Dockerfile .
+

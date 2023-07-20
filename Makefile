@@ -2,12 +2,6 @@ install:
 	pip install --upgrade pip && \
 		pip install -e .
 
-get-data:
-	mkdir -p /data && \
-		mkdir -p /data/nfs/ && \
-		git -C /data/nfs/modulus-data pull || \
-		git clone https://gitlab-master.nvidia.com/modulus/modulus-data.git /data/nfs/modulus-data
-
 setup-ci:
 	pip install pre-commit && \
 	pre-commit install
@@ -35,12 +29,7 @@ doctest:
 pytest: 
 	coverage run \
 		--rcfile='test/coverage.pytest.rc' \
-		-m pytest 
-
-pytest-internal:
-	cd test/internal && \
-		pytest && \
-		cd ../../
+		-m pytest test/
 
 coverage:
 	coverage combine && \

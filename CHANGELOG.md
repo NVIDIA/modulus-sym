@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
+- Updated the base container to latest PyTorch base container which is based on torch 2.0
+- Container now supports CUDA 12, Python 3.10
+- Updated symengine to >=0.10.0 and vtk to >=9.2.6
+
 ## [1.0.0] - 2023-05-08
 
 ### Added

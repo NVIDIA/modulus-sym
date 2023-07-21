@@ -2,16 +2,28 @@ install:
 	pip install --upgrade pip && \
 		pip install -e .
 
-black: 
-	black --check --exclude='/(docs|deps)/' ./
+setup-ci:
+	pip install pre-commit && \
+	pre-commit install
+
+black:
+	pre-commit run black -a
 
 interrogate:
+	# pre-commit run interrogate -a
 	echo "Interrogate CI stage not currently implemented"
 
+lint:
+	pre-commit run markdownlint -a
+
 license: 
-	python test/ci_tests/header_check.py
+	pre-commit run license -a
 
 doctest:
+	# coverage run \
+	# 	--rcfile='test/coverage.docstring.rc' \
+	# 	-m pytest \
+	# 	--doctest-modules modulus/ --ignore-glob=*internal*
 	echo "Doctest CI stage not currently implemented"
 
 pytest: 
@@ -32,3 +44,4 @@ container-ci:
 
 container-docs:
 	docker build -t modulus-sym:docs --target docs -f Dockerfile .
+

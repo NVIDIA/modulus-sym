@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
-- Accompanying licenses (will provide in the Modulus docker image)
+
+- Accompanying licenses (will provide in the Modulus docker image).
 
 ### Fixed
 

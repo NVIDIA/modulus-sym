@@ -18,7 +18,7 @@ from torch import Tensor
 import numpy as np
 import logging
 import functorch
-import asl
+import ast
 
 from termcolor import colored
 from inspect import signature, _empty

@@ -18,9 +18,9 @@ from torch import Tensor
 import numpy as np
 import logging
 import functorch
+import asl
 
 from termcolor import colored
-from ast import literal_eval
 from inspect import signature, _empty
 from typing import Optional, Callable, List, Dict, Union, Tuple
 from modulus.sym.constants import NO_OP_SCALE
@@ -522,7 +522,7 @@ class Arch(nn.Module):
                 ):
                     try:
                         # Attempt literal conversion from string
-                        param_literal = literal_eval(cfg[parameter.name])
+                        param_literal = eval(cfg[parameter.name])
                     except:
                         try:
                             # Try eval for python code that needs to run

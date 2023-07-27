@@ -521,16 +521,12 @@ class Arch(nn.Module):
                     parameter.kind, str
                 ):
                     try:
-                        # Attempt literal conversion from string
-                        param_literal = eval(cfg[parameter.name])
+                        # Try eval for python code that needs to run
+                        # Such as list compression
+                        param_literal = ast.literal_eval(cfg[parameter.name])
                     except:
-                        try:
-                            # Try eval for python code that needs to run
-                            # Such as list compression
-                            param_literal = ast.literal_eval(cfg[parameter.name])
-                        except:
-                            # Fall back... hope a string works
-                            param_literal = cfg[parameter.name]
+                        # Fall back... hope a string works
+                        param_literal = cfg[parameter.name]
                     params[parameter.name] = param_literal
                 else:
                     params[parameter.name] = cfg[parameter.name]

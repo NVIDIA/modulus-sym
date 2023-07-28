@@ -78,8 +78,8 @@ class FNOConf(ModelConf):
 @dataclass
 class FourierConf(ModelConf):
     arch_type: str = "fourier"
-    frequencies: Any = "('axis', [i for i in range(10)])"
-    frequencies_params: Any = "('axis', [i for i in range(10)])"
+    frequencies: Any = "('axis', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
+    frequencies_params: Any = "('axis', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
     activation_fn: str = "silu"
     layer_size: int = 512
     nr_layers: int = 6
@@ -163,8 +163,8 @@ class MultiresolutionHashNetConf(ModelConf):
 @dataclass
 class HighwayFourierConf(ModelConf):
     arch_type: str = "highway_fourier"
-    frequencies: Any = "('axis', [i for i in range(10)])"
-    frequencies_params: Any = "('axis', [i for i in range(10)])"
+    frequencies: Any = "('axis', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
+    frequencies_params: Any = "('axis', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
     activation_fn: str = "silu"
     layer_size: int = 512
     nr_layers: int = 6
@@ -178,8 +178,8 @@ class HighwayFourierConf(ModelConf):
 @dataclass
 class ModifiedFourierConf(ModelConf):
     arch_type: str = "modified_fourier"
-    frequencies: Any = "('axis', [i for i in range(10)])"
-    frequencies_params: Any = "('axis', [i for i in range(10)])"
+    frequencies: Any = "('axis', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
+    frequencies_params: Any = "('axis', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
     activation_fn: str = "silu"
     layer_size: int = 512
     nr_layers: int = 6

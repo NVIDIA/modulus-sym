@@ -108,7 +108,7 @@ def test_activation_fused_silu():
     timeit(run, silu_scripted, 3, x, label="silu_scripted_3rd", verbose=True)
 
     # profile and get the number of kernels
-    verbose = True  # set to True to debug
+    verbose = False  # set to True to debug
 
     _, events = profile(
         run, silu_scripted, 1, x, label="silu_scripted_1st", verbose=verbose

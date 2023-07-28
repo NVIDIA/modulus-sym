@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Arch `from_config` bug for literal params.
-- Update `np.bool` to `np.bool_`
+- Fixed fused SiLU activation test.
+- Update `np.bool` to `np.bool_`.
 
 ### Security
 

@@ -92,7 +92,7 @@ def test_activation_fused_silu():
             torch.cuda.nvtx.range_pop()
 
     def cleanup_events(event_keys):
-        keys = ["cudaLaunchKernel", "cudaDeviceSynchronize"]
+        keys = ["cuLaunchKernel", "cudaLaunchKernel", "cudaDeviceSynchronize"]
         for evt in keys:
             if evt in event_keys:
                 event_keys.remove(evt)

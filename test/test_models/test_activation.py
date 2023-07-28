@@ -92,7 +92,7 @@ def test_activation_fused_silu():
             torch.cuda.nvtx.range_pop()
 
     def cleanup_events(event_keys):
-        keys = ["cudaLaunchKernel", "cudaDeviceSynchronize"]
+        keys = ["cuLaunchKernel", "cudaLaunchKernel", "cudaDeviceSynchronize"]
         for evt in keys:
             if evt in event_keys:
                 event_keys.remove(evt)
@@ -108,7 +108,7 @@ def test_activation_fused_silu():
     timeit(run, silu_scripted, 3, x, label="silu_scripted_3rd", verbose=True)
 
     # profile and get the number of kernels
-    verbose = False  # set to True to debug
+    verbose = True  # set to True to debug
 
     _, events = profile(
         run, silu_scripted, 1, x, label="silu_scripted_1st", verbose=verbose

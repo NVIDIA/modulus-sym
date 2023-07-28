@@ -95,7 +95,7 @@ class PointVTKInferencer(PointwiseInferencer):
             if len(args) == 0:
                 args = list(invar.keys())  # Hope your inputs all go into the mask
             mask_input = {key: invar[key] for key in args if key in invar}
-            mask = np.squeeze(mask_fn(**mask_input).astype(np.bool))
+            mask = np.squeeze(mask_fn(**mask_input).astype(np.bool_))
             # True points get masked while False get kept, flip for index
             self.mask_index = np.logical_not(mask)
             # Mask out to only masked points (only inference here)

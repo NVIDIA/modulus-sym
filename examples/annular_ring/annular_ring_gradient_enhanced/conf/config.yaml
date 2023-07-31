@@ -34,5 +34,5 @@ batch_size:
   inlet: 64
   outlet: 64
   no_slip: 1024
-  interior: 4096
+  interior: 2048
   integral_continuity: 256

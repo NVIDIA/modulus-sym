@@ -737,6 +737,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
             self.g = torch.cuda.CUDAGraph()
             self.global_optimizer_model.zero_grad(set_to_none=True)
+            time.sleep(30)
             with torch.cuda.graph(self.g):
                 # compute gradients
                 self.loss_static, self.losses_static = self.compute_gradients(

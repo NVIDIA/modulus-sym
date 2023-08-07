@@ -737,6 +737,10 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
             self.g = torch.cuda.CUDAGraph()
             self.global_optimizer_model.zero_grad(set_to_none=True)
+            # TODO: temporary workaround till this issue is fixed:
+            # https://github.com/pytorch/pytorch/pull/104487#issuecomment-1638665876
+            delay = os.environ.get("MODULUS_CUDA_GRAPH_CAPTURE_DELAY", "10")
+            time.sleep(int(delay))
             with torch.cuda.graph(self.g):
                 # compute gradients
                 self.loss_static, self.losses_static = self.compute_gradients(

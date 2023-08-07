@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arch `from_config` bug for literal params.
 - Fixed fused SiLU activation test.
 - Update `np.bool` to `np.bool_`.
+- Added a workaround fix for the CUDA graphs error in multi-node runs
 
 ### Security
 

@@ -1,0 +1,86 @@
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: custom-aggregator-FNO
+  - _self_
+
+cuda_graphs: false
+jit: false
+
+custom:
+  gradient_method: fdm
+  ntrain: 1998
+  nval: 1
+  ntest: 1
+  NVRS:
+  NVRS:
+    nx: 33
+    ny: 33
+    nz: 1
+    BO: 1.1
+    BW: 1
+    UW: 1.
+    UO: 2.5
+    DX: 50.0 
+    DY: 50.0 
+    DZ: 20.0 
+    SWI: 0.1
+    SWR : 0.1
+    CFO: 1e-5  
+    IWSw : 0.2 
+    pini_alt: 1e3
+
+    mpor: 0.05 
+    hpor: 0.5 
+
+    PATM: 14.6959
+ 
+    # training
+    LUB: 1e-1 
+    HUB: 1 
+    aay: 50 
+    bby: 500 
+   
+    batch_size: 1000 
+    timmee: 100.
+    max_t: 3000.
+    MAXZ: 6000 
+    factorr: 0.1 
+    LIR: 200 
+    UIR: 2000 
+    input_channel: 7 
+    
+  WELLSPECS:
+    water_injector_wells: 
+    - [1, 24,'I1']
+    - [3, 3,'I2']
+    - [31, 1,'I3']
+    - [31, 31,'I4']
+
+    producer_wells:
+    - [7, 9,'P1']
+    - [14, 12,'P2']
+    - [28, 19,'P3']
+    - [14, 27,'P4']
+
+ 
+network_dir : "ResSim"
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+  
+optimizer:
+    weight_decay: 0.0
+
+
+training:
+  rec_results_freq : 100000
+  max_steps : 200000
+  rec_constraint_freq: 100000
+  
+
+batch_size:
+  grid: 1
+  validation: 1
+  test: 1

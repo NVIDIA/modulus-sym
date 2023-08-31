@@ -138,7 +138,7 @@ pip install -r requirements.txt
 - Navigate to the example directory via terminal.
 
 ```bash
-cd /examples/reservoir_simulation/2D/
+cd /examples/modulus-sym/examples/reservoir_simulation/2D/
 ```
 - Run the Forward Problem surrogation with PINO/FNO/PINO2/PINO3 via the **src** folder.
 

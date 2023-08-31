@@ -113,66 +113,39 @@ Loss_{cfd} =V(F,u;T)_{pressure} + V(u,S_w;t)_{saturation}
 ``` 
 
 
-## Important Dependencies & Prerequisites:
-- Nvidia's in-house GPU based black oil reservoir simulator - **NVRS**
-- Nvidia's Modulus v22.09 :[link](https://docs.nvidia.com/deeplearning/modulus/user_guide/getting_started/installation.html)
-- CUDA 11.8 : [link](https://developer.nvidia.com/cuda-11-8-0-download-archive)
-- CuPy : [link](https://github.com/cupy/cupy.git)
-- Python 3.8 upwards
-
 ## Getting Started:
 - These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
 - The code is developed in a Linux enviroment.
 
-## Installation 
-
-- From terminal create a new conda enviroment named **MDLO** (check if conda is installed) .
+To run the example, launch the Modulus container using below:
 ```bash
-conda create --name MDLO python=3.8
+docker run --rm --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --runtime nvidia -v ${PWD}:/examples -it nvcr.io/nvidia/modulus/modulus:23.08
 ```
-
-Clone this code base repository in a dedicated **work folder**.
+Next, clone the repo to get this example using:
 ```bash
-cd **work folder**
-conda activate MDLO
+cd /examples
 git lfs install
-git lfs clone https://gitlab-master.nvidia.com/GlobalEnergyTeam/simulation/modulus_reservoir_simulation_examples.git
+git lfs clone https://github.com/NVIDIA/modulus-sym.git
 ```
-### Bare-metal
-- From terminal do these sequence of operations to install Modulus v22.09: [link](https://docs.nvidia.com/deeplearning/modulus/user_guide/getting_started/installation.html)
-```bash
-pip3 install matplotlib transforms3d future typing numpy quadpy\
-             numpy-stl==2.16.3 h5py sympy==1.5.1 termcolor psutil\
-             symengine==0.6.1 numba Cython chaospy torch_optimizer\
-             vtk chaospy termcolor omegaconf hydra-core==1.1.1 einops\
-             timm tensorboard pandas orthopy ndim functorch pint kneed\
-             scikit-mps kneed pyDOE FyeldGenerator py-cpuinfo gdown\
-             gstools scikit-image ema-pytorch accelerate tensorflow==2.9.1\
-             joblib pyvista
-             
-
-git clone git@gitlab.com:nvidia/modulus/modulus.git
-cd ./Modulus/
-python setup.py install
+Install the additional dependencies using the provided `requirements.txt` using:
+```
+cd /examples/modulus-sym/reservoir_simulation/2D/
+pip install -r requirements.txt
 ```
 
 #### Forward problem
 
-
-- Navigate to the code base root directory - **work folder** via terminal.
+- Navigate to the example directory via terminal.
 
 ```bash
-cd **work folder**
+cd /examples/reservoir_simulation/2D/
 ```
-- where **work folder** is the location you downloaded the code base to.
-
 - Run the Forward Problem surrogation with PINO/FNO/PINO2/PINO3 via the **src** folder.
 
 - **PINO 2 & PINO3 are the original implemenation from the paper [link](https://arxiv.org/pdf/2111.03794.pdf) where PINO3 has an added output of the overall Flux ( x & y direction) and water Flux (x & y direction) as added outputs**
 
 ##### RUN
 ```bash
-conda activate MDLO 
 cd src
 python Forward_problem_PINO.py
 or
@@ -182,10 +155,7 @@ python Forward_problem_PINO2.py
 or
 python Forward_problem_PINO3.py
 cd ..
-conda deactivate
 ```
-
-
 
 - Forward problem solution results are found in the root directory folder **outputs**
 
@@ -195,11 +165,9 @@ conda deactivate
 
 ##### RUN
 ```bash
-conda activate MDLO
 cd src
 python Compare_FVM_Surrogate.py
 cd ..
-conda deactivate
 ```
 
 
@@ -224,7 +192,6 @@ Tensorboard is a great tool for visualization of machine learning experiments. T
 
 ##### RUN
 ```bash
-conda activate MDLO
 cd src
 tensorboard --logdir=./ --port=7007
 ```
@@ -305,17 +272,6 @@ The result for the Psurrogate is shown in Fig.2(a-d), 500 training samples was u
 
 **23.01**
 * First release 
-
-## End User License Agreement (EULA)
-Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agreement.pdf** for guidance.
-
-## Author:
-- Clement Etienam- Solution Architect-Energy @Nvidia  Email: cetienam@nvidia.com
-
-## Contributors:
-- Oleg Ovcharenko- Nvidia
-- Issam Said- Nvidia
-
 
 ## References:
 [1] J.-Y. Zhu, R. Zhang, D. Pathak, T. Darrell, A. A. Efros, O. Wang, E. Shechtman, Toward multimodal image-to-image translation, in Advances in Neural Information Processing Systems, 2017, pp. 465–476.

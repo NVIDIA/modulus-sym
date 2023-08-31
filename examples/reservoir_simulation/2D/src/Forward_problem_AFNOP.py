@@ -23,25 +23,25 @@ import torch
 import torch.nn.functional as F
 import os
 import modulus
-from modulus.hydra import  ModulusConfig
-from modulus.hydra import to_absolute_path
-from modulus.key import Key
-from modulus.node import Node
-from modulus.solver import Solver
-from modulus.domain import Domain
-from modulus.domain.constraint import SupervisedGridConstraint
-from modulus.domain.validator import GridValidator
-from modulus.dataset import DictGridDataset
-from modulus.utils.io.plotter import GridValidatorPlotter
+from modulus.sym.hydra import  ModulusConfig
+from modulus.sym.hydra import to_absolute_path
+from modulus.sym.key import Key
+from modulus.sym.node import Node
+from modulus.sym.solver import Solver
+from modulus.sym.domain import Domain
+from modulus.sym.domain.constraint import SupervisedGridConstraint
+from modulus.sym.domain.validator import GridValidator
+from modulus.sym.dataset import DictGridDataset
+from modulus.sym.utils.io.plotter import GridValidatorPlotter
 from NVRS import *
 from utilities import load_FNO_dataset2,preprocess_FNO_mat
 from ops import dx, ddx
-from modulus.models.afno.afno import *
+from modulus.sym.models.afno.afno import *
 import shutil
 import cupy as cp
 import scipy.io as sio
 import requests
-from modulus.utils.io.plotter import ValidatorPlotter
+from modulus.sym.utils.io.plotter import ValidatorPlotter
 
 torch.set_default_dtype(torch.float32)
 def download_file_from_google_drive(id, destination):
@@ -707,7 +707,7 @@ class Black_oil(torch.nn.Module):
         output_var = {"pressured": p_loss,"saturationd": s_loss}
         return output_var
 # [pde-loss]
-@modulus.main(config_path="conf", config_name="config_PINO")
+@modulus.sym.main(config_path="conf", config_name="config_PINO")
 def run(cfg: ModulusConfig) -> None:
     print('')
     print('------------------------------------------------------------------')    

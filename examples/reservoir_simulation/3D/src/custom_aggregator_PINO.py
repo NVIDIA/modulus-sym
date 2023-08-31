@@ -21,7 +21,7 @@ import torch
 from typing import Dict
 
 # Import from Modulus
-from modulus.loss.aggregator import Aggregator
+from modulus.sym.loss.aggregator import Aggregator
 
 class CustomSum(Aggregator):
     """

@@ -273,6 +273,13 @@ The result for the Psurrogate is shown in Fig.2(a-d), 500 training samples was u
 **23.01**
 * First release 
 
+## Author:
+- Clement Etienam- Solution Architect-Energy @Nvidia  Email: cetienam@nvidia.com
+
+## Contributors:
+- Oleg Ovcharenko- Nvidia
+- Issam Said- Nvidia
+
 ## References:
 [1] J.-Y. Zhu, R. Zhang, D. Pathak, T. Darrell, A. A. Efros, O. Wang, E. Shechtman, Toward multimodal image-to-image translation, in Advances in Neural Information Processing Systems, 2017, pp. 465–476.
 

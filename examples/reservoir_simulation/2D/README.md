@@ -129,7 +129,7 @@ git lfs clone https://github.com/NVIDIA/modulus-sym.git
 ```
 Install the additional dependencies using the provided `requirements.txt` using:
 ```
-cd /examples/modulus-sym/reservoir_simulation/2D/
+cd /examples/modulus-sym/examples/reservoir_simulation/2D/
 pip install -r requirements.txt
 ```
 

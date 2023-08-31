@@ -1,0 +1,14 @@
+numba
+kneed
+scikit-mps
+pyDOE
+FyeldGenerator
+py-cpuinfo
+gdown
+gstools
+scikit-image
+ema-pytorch
+accelerate
+tensorflow==2.9.1
+joblib
+pyvista

@@ -81,6 +81,7 @@ def load_FNO_dataset(path, input_keys, output_keys, n_examples=None):
 
     return (invar, outvar)
 
+
 def load_FNO_dataset2(path, input_keys, output_keys, output_keys2, n_examples=None):
     "Loads a FNO dataset"
 
@@ -97,7 +98,11 @@ def load_FNO_dataset2(path, input_keys, output_keys, output_keys2, n_examples=No
 
     # parse data
     invar, outvar, outvar2 = dict(), dict(), dict()
-    for d, keys in [(invar, input_keys), (outvar, output_keys),(outvar2, output_keys2) ]:
+    for d, keys in [
+        (invar, input_keys),
+        (outvar, output_keys),
+        (outvar2, output_keys2),
+    ]:
         for k in keys:
 
             # get data
@@ -113,8 +118,7 @@ def load_FNO_dataset2(path, input_keys, output_keys, output_keys2, n_examples=No
             d[k] = x
     del data
 
-    return (invar, outvar,outvar2)
-
+    return (invar, outvar, outvar2)
 
 
 def load_FNO_dataset4(path, input_keys, n_examples=None):
@@ -149,7 +153,9 @@ def load_FNO_dataset4(path, input_keys, n_examples=None):
             d[k] = x
     del data
 
-    return (invar)
+    return invar
+
+
 def load_deeponet_dataset(
     path, input_keys, output_keys, n_examples=None, filter_size=8
 ):
@@ -164,7 +170,7 @@ def load_deeponet_dataset(
     for key, value in outvar.items():
         outvar[key] = value[:, :, ::filter_size, ::filter_size]
     res = next(iter(invar.values())).shape[-1]
-    nr_points_per_sample = res ** 2
+    nr_points_per_sample = res**2
 
     # tile invar
     tiled_invar = {
@@ -251,7 +257,7 @@ def preprocess_FNO_mat(path):
     ks = [k for k in data.keys() if not k.startswith("__")]
     with h5py.File(path[:-4] + ".hdf5", "w") as f:
         for k in ks:
-            #x = np.expand_dims(data[k], axis=1)  # N, C, H, W
+            # x = np.expand_dims(data[k], axis=1)  # N, C, H, W
             x = data[k]
             f.create_dataset(
                 k, data=x, dtype="float32"

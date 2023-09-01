@@ -93,7 +93,7 @@ def ddx(inpt, dx, channel, dim, order=1, padding="zeros"):
     elif padding == "replication":
         var = F.pad(var, 4 * [(ddx1D.shape[0] - 1) // 2], "replicate")
     output = F.conv2d(var, ddx3D, padding="valid")
-    output = (1.0 / dx ** 2) * output
+    output = (1.0 / dx**2) * output
     if dim == 0:
         output = output[:, :, :, (ddx1D.shape[0] - 1) // 2 : -(ddx1D.shape[0] - 1) // 2]
     elif dim == 1:

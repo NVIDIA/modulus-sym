@@ -72,14 +72,18 @@ git clone <internal pysdf repo>
 Then to build the image, insert next tag and run below:
 
 ```bash
-docker build -t modulus-sym:deploy -f Dockerfile --target deploy .
+docker build -t modulus-sym:deploy \
+    --build-arg TARGETPLATFORM=linux/amd64 --target deploy -f Dockerfile .
 ```
 
 Alternatively, if you want to skip pysdf installation, you can run the following:
 
 ```bash
-docker build -t modulus-sym:deploy -f Dockerfile --target no-pysdf .
+docker build -t modulus-sym:deploy \
+    --build-arg TARGETPLATFORM=linux/amd64 --target no-pysdf -f Dockerfile .
 ```
+
+Currently only `linux/amd64` and `linux/arm64` platforms are supported.
 
 ## Contributing
 

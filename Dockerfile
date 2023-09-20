@@ -27,11 +27,22 @@ RUN apt-get update && \
 
 # install vtk
 COPY . /modulus-sym/
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-	pip install /modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl; \ 
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl" ]; then \
+	echo "VTK wheel for $TARGETPLATFORM exists, installing!" && \
+	pip install /modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl; \
     elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+	echo "Installing vtk for: $TARGETPLATFORM" && \
 	pip install "vtk>=9.2.6"; \ 
+    else \
+	echo "Installing vtk for: $TARGETPLATFORM from source" && \
+	apt-get update && apt-get install -y libgl1-mesa-dev && \
+	git clone https://gitlab.kitware.com/vtk/vtk.git && cd vtk && git checkout tags/v9.2.6 && git submodule update --init --recursive && \
+	mkdir build && cd build && cmake -GNinja -DVTK_WHEEL_BUILD=ON -DVTK_WRAP_PYTHON=ON /workspace/vtk/ && ninja && \
+	python setup.py bdist_wheel && \
+	pip install dist/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl && \
+	cd ../../ && rm -r vtk; \
     fi
+
 
 # Install tiny-cuda-nn
 ENV TCNN_CUDA_ARCHITECTURES="60;70;75;80;86;90"

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Example for reservoir modeling using PINO and FNO
+- Added instructions for docker build on ARM architecture.
 
 ### Changed
 

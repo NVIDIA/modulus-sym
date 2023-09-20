@@ -15,13 +15,13 @@
 import enum
 from typing import Optional, List, Dict, Tuple, Union
 
-import torch
 import torch.nn as nn
 from torch import Tensor
 
 import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer
+from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
-from modulus.sym.models.layers import Activation
 from modulus.sym.key import Key
 from modulus.sym.constants import NO_OP_NORM
 
@@ -99,6 +99,7 @@ class MultiplicativeFilterNetArch(Arch):
 
         self.nr_layers = nr_layers
         self.skip_connections = skip_connections
+        activation_fn = get_activation_fn(activation_fn)
 
         if isinstance(filter_type, str):
             filter_type = FilterType[filter_type]
@@ -127,7 +128,7 @@ class MultiplicativeFilterNetArch(Arch):
 
         for i in range(nr_layers):
             self.fc_layers.append(
-                layers.FCLayer(
+                FCLayer(
                     in_features=layer_size,
                     out_features=layer_size,
                     activation_fn=activation_fn,
@@ -157,10 +158,10 @@ class MultiplicativeFilterNetArch(Arch):
             else:
                 raise ValueError
 
-        self.final_layer = layers.FCLayer(
+        self.final_layer = FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

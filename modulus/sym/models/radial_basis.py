@@ -21,6 +21,7 @@ from torch import Tensor
 
 
 import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -70,10 +71,10 @@ class RadialBasisArch(Arch):
             for idx, bound in enumerate(bounds.values()):
                 self.centers[:, idx].uniform_(bound[0], bound[1])
 
-        self.fc_layer = layers.FCLayer(
+        self.fc_layer = FCLayer(
             nr_centers,
             out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
         )
 
     def _tensor_forward(self, x: Tensor) -> Tensor:

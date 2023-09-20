@@ -20,6 +20,8 @@ from torch import Tensor
 
 
 import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer
+from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -71,13 +73,14 @@ class DGMArch(Arch):
 
         in_features = sum(self.input_key_dict.values())
         out_features = sum(self.output_key_dict.values())
+        activation_fn = get_activation_fn(activation_fn, out_features=out_features)
 
         if adaptive_activations:
             activation_par = nn.Parameter(torch.ones(1))
         else:
             activation_par = None
 
-        self.fc_start = layers.FCLayer(
+        self.fc_start = FCLayer(
             in_features=in_features,
             out_features=layer_size,
             activation_fn=activation_fn,
@@ -99,10 +102,10 @@ class DGMArch(Arch):
                 )
             self.dgm_layers.append(nn.ModuleDict(single_layer))
 
-        self.fc_end = layers.FCLayer(
+        self.fc_end = FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

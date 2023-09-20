@@ -19,6 +19,8 @@ import torch.nn as nn
 from torch import Tensor
 
 import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer
+from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -98,6 +100,7 @@ class HighwayFourierNetArch(Arch):
         self.transform_fourier_features = transform_fourier_features
         self.project_fourier_features = project_fourier_features
         self.skip_connections = skip_connections
+        activation_fn = get_activation_fn(activation_fn)
 
         self.xyzt_var = [x for x in self.input_key_dict if x in ["x", "y", "z", "t"]]
         # Prepare slice index
@@ -155,18 +158,18 @@ class HighwayFourierNetArch(Arch):
         else:
             projector_in_features = initial_in_features
 
-        self.fc_t = layers.FCLayer(
+        self.fc_t = FCLayer(
             transformer_in_features,
             layer_size,
-            activation_fn=layers.Activation.SIGMOID,
+            activation_fn=get_activation_fn(layers.Activation.SIGMOID),
             weight_norm=weight_norm,
             activation_par=activation_par,
         )
 
-        self.fc_v = layers.FCLayer(
+        self.fc_v = FCLayer(
             projector_in_features,
             layer_size,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=get_activation_fn(layers.Activation.IDENTITY),
             weight_norm=weight_norm,
             activation_par=activation_par,
         )
@@ -175,7 +178,7 @@ class HighwayFourierNetArch(Arch):
         layer_in_features = in_features
         for i in range(nr_layers):
             self.fc_layers.append(
-                layers.FCLayer(
+                FCLayer(
                     layer_in_features,
                     layer_size,
                     activation_fn=activation_fn,
@@ -185,10 +188,10 @@ class HighwayFourierNetArch(Arch):
             )
             layer_in_features = layer_size
 
-        self.final_layer = layers.FCLayer(
+        self.final_layer = FCLayer(
             layer_size,
             out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

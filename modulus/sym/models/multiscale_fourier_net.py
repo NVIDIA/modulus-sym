@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 
 import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer
+from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -85,6 +87,7 @@ class MultiscaleFourierNetArch(Arch):
         )
 
         self.skip_connections = skip_connections
+        activation_fn = get_activation_fn(activation_fn)
 
         self.xyzt_var = [x for x in self.input_key_dict if x in ["x", "y", "z", "t"]]
         # Prepare slice index
@@ -153,7 +156,7 @@ class MultiscaleFourierNetArch(Arch):
         layer_in_features = in_features
         for i in range(nr_layers):
             self.fc_layers.append(
-                layers.FCLayer(
+                FCLayer(
                     layer_in_features,
                     layer_size,
                     activation_fn,
@@ -163,10 +166,10 @@ class MultiscaleFourierNetArch(Arch):
             )
             layer_in_features = layer_size
 
-        self.final_layer = layers.FCLayer(
+        self.final_layer = FCLayer(
             in_features=layer_size * self.num_freqs,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

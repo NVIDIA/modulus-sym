@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-from .weight_norm import WeightNormLinear
+from modulus.models.layers import WeightNormLinear
 from .activation import Activation, get_activation_fn
 
 

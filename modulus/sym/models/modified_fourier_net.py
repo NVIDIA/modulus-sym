@@ -19,6 +19,8 @@ import torch.nn as nn
 from torch import Tensor
 
 import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer
+from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -90,6 +92,7 @@ class ModifiedFourierNetArch(Arch):
         )
 
         self.skip_connections = skip_connections
+        activation_fn = get_activation_fn(activation_fn)
 
         if adaptive_activations:
             activation_par = nn.Parameter(torch.ones(1))
@@ -136,7 +139,7 @@ class ModifiedFourierNetArch(Arch):
         else:
             self.fourier_layer_params = None
 
-        self.fc_u = layers.FCLayer(
+        self.fc_u = FCLayer(
             in_features=in_features,
             out_features=layer_size,
             activation_fn=activation_fn,
@@ -144,7 +147,7 @@ class ModifiedFourierNetArch(Arch):
             activation_par=activation_par,
         )
 
-        self.fc_v = layers.FCLayer(
+        self.fc_v = FCLayer(
             in_features=in_features,
             out_features=layer_size,
             activation_fn=activation_fn,
@@ -152,7 +155,7 @@ class ModifiedFourierNetArch(Arch):
             activation_par=activation_par,
         )
 
-        self.fc_0 = layers.FCLayer(
+        self.fc_0 = FCLayer(
             in_features,
             layer_size,
             activation_fn,
@@ -164,7 +167,7 @@ class ModifiedFourierNetArch(Arch):
 
         for i in range(nr_layers - 1):
             self.fc_layers.append(
-                layers.FCLayer(
+                FCLayer(
                     layer_size,
                     layer_size,
                     activation_fn,
@@ -173,10 +176,10 @@ class ModifiedFourierNetArch(Arch):
                 )
             )
 
-        self.final_layer = layers.FCLayer(
+        self.final_layer = FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

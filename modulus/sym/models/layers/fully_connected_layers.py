@@ -20,55 +20,9 @@ from typing import Union
 import torch.nn as nn
 from torch import Tensor
 
-from .weight_norm import WeightNormLinear
 from .activation import Activation, get_activation_fn
 
 logger = logging.getLogger(__name__)
-
-
-class FCLayer(nn.Module):
-    def __init__(
-        self,
-        in_features: int,
-        out_features: int,
-        activation_fn: Union[
-            Activation, Callable[[Tensor], Tensor]
-        ] = Activation.IDENTITY,
-        weight_norm: bool = False,
-        activation_par: Optional[nn.Parameter] = None,
-    ) -> None:
-        super().__init__()
-        self.activation_fn = activation_fn
-        self.callable_activation_fn = get_activation_fn(
-            activation_fn, out_features=out_features
-        )
-        self.weight_norm = weight_norm
-        self.activation_par = activation_par
-
-        if weight_norm:
-            self.linear = WeightNormLinear(in_features, out_features, bias=True)
-        else:
-            self.linear = nn.Linear(in_features, out_features, bias=True)
-        self.reset_parameters()
-
-    def exec_activation_fn(self, x: Tensor) -> Tensor:
-        return self.callable_activation_fn(x)
-
-    def reset_parameters(self) -> None:
-        nn.init.constant_(self.linear.bias, 0)
-        nn.init.xavier_uniform_(self.linear.weight)
-        if self.weight_norm:
-            nn.init.constant_(self.linear.weight_g, 1.0)
-
-    def forward(self, x: Tensor) -> Tensor:
-        x = self.linear(x)
-        if self.activation_fn is not Activation.IDENTITY:
-            if self.activation_par is None:
-                x = self.exec_activation_fn(x)
-            else:
-                x = self.exec_activation_fn(self.activation_par * x)
-        return x
-
 
 # FC like layer for image channels
 class ConvFCLayer(nn.Module):

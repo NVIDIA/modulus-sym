@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Union, Optional, Tuple
+from typing import Dict, List, Union
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 import torch.nn.functional as F
-import numpy as np
 import logging
 
+from modulus.models.layers import Conv1dFCLayer, Conv2dFCLayer, Conv3dFCLayer
 import modulus.sym.models.layers as layers
 from modulus.sym.models.layers import Activation
 from modulus.sym.models.layers.spectral_layers import (
@@ -31,8 +31,6 @@ from modulus.sym.models.layers.spectral_layers import (
 from modulus.sym.models.arch import Arch
 from modulus.sym.models.fully_connected import ConvFullyConnectedArch
 from modulus.sym.key import Key
-from modulus.sym.node import Node
-from modulus.sym.constants import JIT_PYTORCH_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +65,7 @@ class FNO1DEncoder(nn.Module):
         self.conv_layers = nn.ModuleList()
 
         # Initial lift layer
-        self.lift_layer = layers.Conv1dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = Conv1dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
@@ -142,7 +140,7 @@ class FNO2DEncoder(nn.Module):
         self.conv_layers = nn.ModuleList()
 
         # Initial lift layer
-        self.lift_layer = layers.Conv2dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = Conv2dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
@@ -228,7 +226,7 @@ class FNO3DEncoder(nn.Module):
         self.conv_layers = nn.ModuleList()
 
         # Initial lift layer
-        self.lift_layer = layers.Conv3dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = Conv3dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):

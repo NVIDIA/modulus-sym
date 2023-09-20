@@ -22,11 +22,13 @@ class RSTSpellChecker:
         # Left over sphinx keys
         self.re_sphinx_keys = re.compile(r"\s*(:alt:)\s*")
         # Stuff from python code blocks and url stuff
-        self.re_code_words = re.compile(r"(.*\.py|.*\.html|.*\.org|.*\.com|.*\.vti|.*\.vtu|.*\.vtp)")
+        self.re_code_words = re.compile(
+            r"(.*\.py|.*\.html|.*\.org|.*\.com|.*\.vti|.*\.vtu|.*\.vtp)"
+        )
         # All caps for abbrv (can have trailing s)
         self.re_caps = re.compile(r"^[^a-z]*[s]?$")
 
-    def check_sphinx_block(self, line:str) -> bool:
+    def check_sphinx_block(self, line: str) -> bool:
         """Determins if line is in a code, math or table block based on indent whitespace
 
         Parameters
@@ -256,7 +258,7 @@ def test_rst_spelling(
     assert extra_dictionary_path.is_file(), "Invalid additional dictionary path"
 
     spell = SpellChecker(language=None, distance=2)
-    spell.word_frequency.load_dictionary(str(en_dictionary_path), encoding = "utf-8")
+    spell.word_frequency.load_dictionary(str(en_dictionary_path), encoding="utf-8")
     # Can be used to export current dictionary for merging dicts
     # spell.export('en_dictionary.json.gz', gzipped=True)
     # Load extra words
@@ -275,13 +277,22 @@ def test_rst_spelling(
                 corr_word = spell.correction(word)
                 # If there is a potential correct work in dictionary flag as error
                 if not corr_word == word:
-                    err_msg = f'Found potential spelling error: "{word.lower()}", did you mean "{corr_word}"?' + "\n"
-                    err_msg += f"Located in File: {doc_file}, Line: {i}, Word: {word}" + "\n"
+                    err_msg = (
+                        f'Found potential spelling error: "{word.lower()}", did you mean "{corr_word}"?'
+                        + "\n"
+                    )
+                    err_msg += (
+                        f"Located in File: {doc_file}, Line: {i}, Word: {word}" + "\n"
+                    )
                     spelling_errors.append(colored(err_msg, "red"))
                 # Otherwise make it a warning as a unrecognizable word
                 else:
-                    err_msg = f"Unknown word: {word}, consider adding to dictionary." + "\n"
-                    err_msg += f"Located in File: {doc_file}, Line: {i}, Word: {word}" + "\n"
+                    err_msg = (
+                        f"Unknown word: {word}, consider adding to dictionary." + "\n"
+                    )
+                    err_msg += (
+                        f"Located in File: {doc_file}, Line: {i}, Word: {word}" + "\n"
+                    )
                     spelling_warnings.append(colored(err_msg, "yellow"))
 
     # Print warnings
@@ -296,7 +307,9 @@ def test_rst_spelling(
             print(msg)
 
     if len(spelling_errors) > 0:
-        raise ValueError("Spelling errors found, either correct or add new words to dictionary.")
+        raise ValueError(
+            "Spelling errors found, either correct or add new words to dictionary."
+        )
 
 
 if __name__ == "__main__":

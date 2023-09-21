@@ -28,13 +28,13 @@ from modulus.models.layers import (
     SpectralConv2d,
     SpectralConv3d,
 )
-import modulus.sym.models.layers as layers
-from modulus.sym.models.layers import Activation
-from modulus.sym.models.layers.spectral_layers import (
+from modulus.models.layers.spectral_layers import (
     calc_latent_derivatives,
     first_order_pino_grads,
     second_order_pino_grads,
 )
+import modulus.sym.models.layers as layers
+from modulus.sym.models.layers import Activation
 from modulus.sym.models.arch import Arch
 from modulus.sym.models.fully_connected import ConvFullyConnectedArch
 from modulus.sym.key import Key

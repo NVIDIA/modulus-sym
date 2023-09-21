@@ -14,5 +14,4 @@
 
 from .activation import Activation, get_activation_fn
 from .dgm_layers import DGMLayer
-from .fourier_layers import FourierLayer, FourierFilter, GaborFilter
 from .siren_layers import SirenLayer, SirenLayerType

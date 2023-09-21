@@ -19,7 +19,7 @@ import torch.nn as nn
 from torch import Tensor
 
 import modulus.sym.models.layers as layers
-from modulus.models.layers import FCLayer
+from modulus.models.layers import FCLayer, FourierFilter, GaborFilter
 from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
@@ -105,14 +105,14 @@ class MultiplicativeFilterNetArch(Arch):
             filter_type = FilterType[filter_type]
 
         if filter_type == FilterType.FOURIER:
-            self.first_filter = layers.FourierFilter(
+            self.first_filter = FourierFilter(
                 in_features=in_features,
                 layer_size=layer_size,
                 nr_layers=nr_layers,
                 input_scale=input_scale,
             )
         elif filter_type == FilterType.GABOR:
-            self.first_filter = layers.GaborFilter(
+            self.first_filter = GaborFilter(
                 in_features=in_features,
                 layer_size=layer_size,
                 nr_layers=nr_layers,
@@ -137,7 +137,7 @@ class MultiplicativeFilterNetArch(Arch):
             )
             if filter_type == FilterType.FOURIER:
                 self.filters.append(
-                    layers.FourierFilter(
+                    FourierFilter(
                         in_features=in_features,
                         layer_size=layer_size,
                         nr_layers=nr_layers,
@@ -146,7 +146,7 @@ class MultiplicativeFilterNetArch(Arch):
                 )
             elif filter_type == FilterType.GABOR:
                 self.filters.append(
-                    layers.GaborFilter(
+                    GaborFilter(
                         in_features=in_features,
                         layer_size=layer_size,
                         nr_layers=nr_layers,

@@ -17,7 +17,7 @@ from torch import Tensor
 from typing import Dict, List, Tuple
 
 import modulus.sym.models.fully_connected as fully_connected
-import modulus.sym.models.layers as layers
+from modulus.models.layers import FourierLayer
 from modulus.sym.models.layers import Activation
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
@@ -154,7 +154,7 @@ class FourierNetArch(Arch):
         out_features = sum(self.output_key_dict.values())
 
         if in_features_xyzt > 0:
-            self.fourier_layer_xyzt = layers.FourierLayer(
+            self.fourier_layer_xyzt = FourierLayer(
                 in_features=in_features_xyzt, frequencies=frequencies
             )
             in_features += self.fourier_layer_xyzt.out_features()
@@ -162,7 +162,7 @@ class FourierNetArch(Arch):
             self.fourier_layer_xyzt = None
 
         if in_features_params > 0:
-            self.fourier_layer_params = layers.FourierLayer(
+            self.fourier_layer_params = FourierLayer(
                 in_features=in_features_params, frequencies=frequencies_params
             )
             in_features += self.fourier_layer_params.out_features()

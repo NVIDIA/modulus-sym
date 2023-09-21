@@ -19,7 +19,7 @@ import torch.nn as nn
 from torch import Tensor
 
 import modulus.sym.models.layers as layers
-from modulus.models.layers import FCLayer
+from modulus.models.layers import FCLayer, FourierLayer
 from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
@@ -124,7 +124,7 @@ class ModifiedFourierNetArch(Arch):
         in_features = in_features_xyzt + in_features_params
 
         if in_features_xyzt > 0:
-            self.fourier_layer_xyzt = layers.FourierLayer(
+            self.fourier_layer_xyzt = FourierLayer(
                 in_features=in_features_xyzt, frequencies=frequencies
             )
             in_features += self.fourier_layer_xyzt.out_features()
@@ -132,7 +132,7 @@ class ModifiedFourierNetArch(Arch):
             self.fourier_layer_xyzt = None
 
         if in_features_params > 0:
-            self.fourier_layer_params = layers.FourierLayer(
+            self.fourier_layer_params = FourierLayer(
                 in_features=in_features_params, frequencies=frequencies_params
             )
             in_features += self.fourier_layer_params.out_features()

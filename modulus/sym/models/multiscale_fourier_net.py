@@ -19,7 +19,7 @@ import torch.nn as nn
 from torch import Tensor
 
 import modulus.sym.models.layers as layers
-from modulus.models.layers import FCLayer
+from modulus.models.layers import FCLayer, FourierLayer
 from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
@@ -128,7 +128,7 @@ class MultiscaleFourierNetArch(Arch):
 
             for idx in range(self.num_freqs):
                 self.fourier_layers_xyzt.append(
-                    layers.FourierLayer(
+                    FourierLayer(
                         in_features=in_features_xyzt,
                         frequencies=frequencies[idx],
                     )
@@ -142,7 +142,7 @@ class MultiscaleFourierNetArch(Arch):
 
             for idx in range(self.num_freqs):
                 self.fourier_layers_params.append(
-                    layers.FourierLayer(
+                    FourierLayer(
                         in_features=in_features_params,
                         frequencies=frequencies_params[idx],
                     )

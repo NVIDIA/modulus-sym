@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Tuple, Optional
 
-import torch
 import torch.nn as nn
 from torch import Tensor
 
-import modulus.sym.models.layers as layers
+from modulus.models.layers import SirenLayer, SirenLayerType
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 from modulus.sym.constants import NO_OP_NORM
@@ -93,25 +92,21 @@ class SirenArch(Arch):
         layers_list = []
 
         layers_list.append(
-            layers.SirenLayer(
+            SirenLayer(
                 in_features,
                 layer_size,
-                layers.SirenLayerType.FIRST,
+                SirenLayerType.FIRST,
                 first_omega,
             )
         )
 
         for _ in range(nr_layers - 1):
             layers_list.append(
-                layers.SirenLayer(
-                    layer_size, layer_size, layers.SirenLayerType.HIDDEN, omega
-                )
+                SirenLayer(layer_size, layer_size, SirenLayerType.HIDDEN, omega)
             )
 
         layers_list.append(
-            layers.SirenLayer(
-                layer_size, out_features, layers.SirenLayerType.LAST, omega
-            )
+            SirenLayer(layer_size, out_features, SirenLayerType.LAST, omega)
         )
 
         self.layers = nn.Sequential(*layers_list)

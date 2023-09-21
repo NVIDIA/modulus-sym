@@ -20,7 +20,7 @@ from torch import Tensor
 
 
 import modulus.sym.models.layers as layers
-from modulus.models.layers import FCLayer
+from modulus.models.layers import FCLayer, DGMLayer
 from modulus.sym.models.layers import get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
@@ -91,7 +91,7 @@ class DGMArch(Arch):
         for _ in range(nr_layers - 1):
             single_layer = {}
             for key in ["z", "g", "r", "h"]:
-                single_layer[key] = layers.DGMLayer(
+                single_layer[key] = DGMLayer(
                     in_features_1=in_features,
                     in_features_2=layer_size,
                     out_features=layer_size,

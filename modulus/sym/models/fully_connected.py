@@ -41,8 +41,6 @@ class FullyConnectedArchCore(nn.Module):
 
         self.skip_connections = skip_connections
 
-        activation_fn = get_activation_fn(activation_fn, out_features=out_features)
-
         # Allows for regular linear layers to be swapped for 1D Convs
         # Useful for channel operations in FNO/Transformers
         if conv_layers:
@@ -70,7 +68,7 @@ class FullyConnectedArchCore(nn.Module):
                 fc_layer(
                     layer_in_features,
                     layer_size,
-                    activation_fn[i],
+                    get_activation_fn(activation_fn[i], out_features=out_features),
                     weight_norm,
                     activation_par,
                 )

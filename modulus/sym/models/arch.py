@@ -17,7 +17,6 @@ import torch.nn as nn
 from torch import Tensor
 import numpy as np
 import logging
-import functorch
 import ast
 
 from termcolor import colored
@@ -774,13 +773,13 @@ class FuncArch(nn.Module):
 
     def _jacobian_impl(self, forward_func):
         def jacobian_func(x, v):
-            pred, vjpfunc = functorch.vjp(forward_func, x)
+            pred, vjpfunc = torch.func.vjp(forward_func, x)
             return vjpfunc(v)[0], pred
 
         def get_jacobian(x):
             I_N = self.I_N
-            jacobian, pred = functorch.vmap(
-                functorch.vmap(jacobian_func, in_dims=(None, 0)), in_dims=(0, None)
+            jacobian, pred = torch.vmap(
+                torch.vmap(jacobian_func, in_dims=(None, 0)), in_dims=(0, None)
             )(x, I_N)
             pred = pred[:, 0, :]
             return pred, jacobian
@@ -790,24 +789,24 @@ class FuncArch(nn.Module):
     def _hessian_impl(self, forward_func):
         def hessian_func(x, v1, v2):
             def jacobian_func(x):
-                pred, vjpfunc = functorch.vjp(forward_func, x)
+                pred, vjpfunc = torch.func.vjp(forward_func, x)
                 return vjpfunc(v1)[0], pred
 
             # jvp and vjp
-            (jacobian, hessian, pred) = functorch.jvp(
+            (jacobian, hessian, pred) = torch.func.jvp(
                 jacobian_func, (x,), (v2,), has_aux=True
             )
             # vjp and vjp is slow
-            # jacobian, hessianfunc, pred = functorch.vjp(jacobian_func, x, has_aux=True)
+            # jacobian, hessianfunc, pred = torch.func.vjp(jacobian_func, x, has_aux=True)
             # hessian = hessianfunc(v2)[0]
             return hessian, jacobian, pred
 
         def get_hessian(x):
             I_N1 = self.I_N1  # used to slice hessian rows
             I_N2 = self.I_N2  # used to slice hessian columns
-            hessian, jacobian, pred = functorch.vmap(
-                functorch.vmap(
-                    functorch.vmap(hessian_func, in_dims=(None, None, 0)),  # I_N2
+            hessian, jacobian, pred = torch.vmap(
+                torch.vmap(
+                    torch.vmap(hessian_func, in_dims=(None, None, 0)),  # I_N2
                     in_dims=(None, 0, None),  # I_N1
                 ),
                 in_dims=(0, None, None),  # x

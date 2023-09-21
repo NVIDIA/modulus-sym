@@ -73,7 +73,6 @@ class DGMArch(Arch):
 
         in_features = sum(self.input_key_dict.values())
         out_features = sum(self.output_key_dict.values())
-        activation_fn = get_activation_fn(activation_fn, out_features=out_features)
 
         if adaptive_activations:
             activation_par = nn.Parameter(torch.ones(1))
@@ -83,7 +82,7 @@ class DGMArch(Arch):
         self.fc_start = FCLayer(
             in_features=in_features,
             out_features=layer_size,
-            activation_fn=activation_fn,
+            activation_fn=get_activation_fn(activation_fn, out_features=out_features),
             weight_norm=weight_norm,
         )
 
@@ -96,7 +95,9 @@ class DGMArch(Arch):
                     in_features_1=in_features,
                     in_features_2=layer_size,
                     out_features=layer_size,
-                    activation_fn=activation_fn,
+                    activation_fn=get_activation_fn(
+                        activation_fn, out_features=out_features
+                    ),
                     weight_norm=weight_norm,
                     activation_par=activation_par,
                 )

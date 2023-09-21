@@ -18,9 +18,8 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-import modulus.sym.models.layers as layers
 from modulus.models.layers import FCLayer, FourierLayer
-from modulus.sym.models.layers import get_activation_fn
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -58,7 +57,7 @@ class HighwayFourierNetArch(Arch):
     frequencies_params : Tuple[str, List[float]] = ("axis", [i for i in range(10)])
         Same as `frequencies` except these are used for encodings
         on any inputs not in the list `['x', 'y', 'z', 't']`.
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     layer_size : int = 512
         Layer size for every hidden layer of the model.
@@ -84,7 +83,7 @@ class HighwayFourierNetArch(Arch):
         detach_keys: List[Key] = [],
         frequencies=("axis", [i for i in range(10)]),
         frequencies_params=("axis", [i for i in range(10)]),
-        activation_fn=layers.Activation.SILU,
+        activation_fn=Activation.SILU,
         layer_size: int = 512,
         nr_layers: int = 6,
         skip_connections: bool = False,
@@ -161,7 +160,7 @@ class HighwayFourierNetArch(Arch):
         self.fc_t = FCLayer(
             transformer_in_features,
             layer_size,
-            activation_fn=get_activation_fn(layers.Activation.SIGMOID),
+            activation_fn=get_activation_fn(Activation.SIGMOID),
             weight_norm=weight_norm,
             activation_par=activation_par,
         )
@@ -169,7 +168,7 @@ class HighwayFourierNetArch(Arch):
         self.fc_v = FCLayer(
             projector_in_features,
             layer_size,
-            activation_fn=get_activation_fn(layers.Activation.IDENTITY),
+            activation_fn=get_activation_fn(Activation.IDENTITY),
             weight_norm=weight_norm,
             activation_par=activation_par,
         )

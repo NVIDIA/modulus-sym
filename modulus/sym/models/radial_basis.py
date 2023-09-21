@@ -20,7 +20,6 @@ import torch.nn as nn
 from torch import Tensor
 
 
-import modulus.sym.models.layers as layers
 from modulus.models.layers import FCLayer
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key

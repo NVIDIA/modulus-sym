@@ -20,7 +20,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from modulus.models.layers import FCLayer, Conv1dFCLayer
-from modulus.sym.models.layers import Activation, get_activation_fn
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 
 

@@ -32,7 +32,6 @@ from modulus.sym.key import Key
 from modulus.sym.models.arch import Arch
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.models.utils import ModulusModels
-from modulus.sym.models.layers import Activation
 
 from .arch import ModelConf
 from .config import register_modulus_configs, ModulusConfig

@@ -33,8 +33,7 @@ from modulus.models.layers.spectral_layers import (
     first_order_pino_grads,
     second_order_pino_grads,
 )
-import modulus.sym.models.layers as layers
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.models.fully_connected import ConvFullyConnectedArch
 from modulus.sym.key import Key
@@ -66,7 +65,7 @@ class FNO1DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 1
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.ModuleList()
         self.conv_layers = nn.ModuleList()
@@ -141,7 +140,7 @@ class FNO2DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 2
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.ModuleList()
         self.conv_layers = nn.ModuleList()
@@ -227,7 +226,7 @@ class FNO3DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 3
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.ModuleList()
         self.conv_layers = nn.ModuleList()

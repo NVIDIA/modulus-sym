@@ -19,9 +19,8 @@ import torch.nn as nn
 from torch import Tensor
 
 
-import modulus.sym.models.layers as layers
 from modulus.models.layers import FCLayer, DGMLayer
-from modulus.sym.models.layers import get_activation_fn
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -47,7 +46,7 @@ class DGMArch(Arch):
         Number of hidden layers of the model.
     skip_connections : bool = False
         If true then apply skip connections every 2 hidden layers.
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     adaptive_activations : bool = False
         If True then use an adaptive activation function as described here
@@ -63,7 +62,7 @@ class DGMArch(Arch):
         detach_keys: List[Key] = [],
         layer_size: int = 512,
         nr_layers: int = 6,
-        activation_fn=layers.Activation.SIN,
+        activation_fn=Activation.SIN,
         adaptive_activations: bool = False,
         weight_norm: bool = True,
     ) -> None:

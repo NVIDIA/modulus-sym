@@ -28,7 +28,7 @@ from modulus.sym.node import Node
 from modulus.sym.constants import JIT_PYTORCH_VERSION
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.manager import JitManager, JitArchMode
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation
 
 logger = logging.getLogger(__name__)
 

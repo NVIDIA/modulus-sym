@@ -33,7 +33,7 @@ pip install nvidia-modulus.sym
 The recommended Modulus docker image can be pulled from the [NVIDIA Container Registry](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/containers/modulus):
 
 ```bash
-docker pull nvcr.io/nvidia/modulus/modulus:23.05
+docker pull nvcr.io/nvidia/modulus/modulus:23.09
 ```
 
 ## From Source

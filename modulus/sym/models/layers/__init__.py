@@ -16,4 +16,3 @@ from .activation import Activation, get_activation_fn
 from .dgm_layers import DGMLayer
 from .fourier_layers import FourierLayer, FourierFilter, GaborFilter
 from .siren_layers import SirenLayer, SirenLayerType
-from .spectral_layers import SpectralConv1d, SpectralConv2d, SpectralConv3d

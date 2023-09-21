@@ -20,7 +20,14 @@ from torch import Tensor
 import torch.nn.functional as F
 import logging
 
-from modulus.models.layers import Conv1dFCLayer, Conv2dFCLayer, Conv3dFCLayer
+from modulus.models.layers import (
+    Conv1dFCLayer,
+    Conv2dFCLayer,
+    Conv3dFCLayer,
+    SpectralConv1d,
+    SpectralConv2d,
+    SpectralConv3d,
+)
 import modulus.sym.models.layers as layers
 from modulus.sym.models.layers import Activation
 from modulus.sym.models.layers.spectral_layers import (
@@ -70,7 +77,7 @@ class FNO1DEncoder(nn.Module):
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                layers.SpectralConv1d(self.fno_width, self.fno_width, fno_modes[0])
+                SpectralConv1d(self.fno_width, self.fno_width, fno_modes[0])
             )
             self.conv_layers.append(nn.Conv1d(self.fno_width, self.fno_width, 1))
 
@@ -145,7 +152,7 @@ class FNO2DEncoder(nn.Module):
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                layers.SpectralConv2d(
+                SpectralConv2d(
                     self.fno_width, self.fno_width, fno_modes[0], fno_modes[1]
                 )
             )
@@ -231,7 +238,7 @@ class FNO3DEncoder(nn.Module):
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                layers.SpectralConv3d(
+                SpectralConv3d(
                     self.fno_width,
                     self.fno_width,
                     fno_modes[0],

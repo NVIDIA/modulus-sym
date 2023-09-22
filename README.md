@@ -25,12 +25,6 @@ for updating to the latest version.
 The recommended method for installing the latest version of Modulus Symbolic is using PyPi:
 
 ```bash
-pip install nvidia-modulus.sym
-```
-
-To install the vtk dependency of Modulus Sym, you can do 
-
-```bash
 pip install nvidia-modulus.sym[all]
 ```
 

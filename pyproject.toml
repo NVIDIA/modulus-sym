@@ -31,6 +31,7 @@ dependencies = [
     "mistune==2.0.3",
     "pint==0.19.2",
     "tensorboard>=2.8.0",
+    "vtk>=9.2.6",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -38,11 +39,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dynamic = ["version"]
-
-[project.optional-dependencies]
-all = [
-    "vtk>=9.2.6",
-]
 
 [tool.setuptools.dynamic]
 version = {attr = "modulus.sym.__version__"}

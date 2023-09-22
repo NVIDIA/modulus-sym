@@ -31,7 +31,7 @@ arch:
   trunk:
     input_keys: [x, y]
     output_keys: ['trunk', 256]
-    frequencies: "('axis', [i for i in range(5)])"
+    frequencies: "('axis', [0, 1, 2, 3, 4])"
     nr_layers: 4
     layer_size: 128
   deeponet:

@@ -28,6 +28,16 @@ The recommended method for installing the latest version of Modulus Symbolic is 
 pip install nvidia-modulus.sym
 ```
 
+To install the vtk dependency of Modulus Sym, you can do 
+
+```bash
+pip install nvidia-modulus.sym[all]
+```
+
+Note, the above method only works for x86/amd64 based architectures. For installing Modulus Sym on Arm based systems using pip, 
+Install VTK from source as shown [here](https://gitlab.kitware.com/vtk/vtk/-/blob/v9.2.6/Documentation/dev/build.md?ref_type=tags#python-wheels) followed by 
+`pip install nvidia-modulus.sym`
+
 ### Container
 
 The recommended Modulus docker image can be pulled from the [NVIDIA Container Registry](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/containers/modulus):

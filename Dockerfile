@@ -99,14 +99,22 @@ ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
 FROM pysdf-install as ci
 RUN pip install "black==22.10.0" "interrogate==1.5.0" "coverage==6.5.0"
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install -e . && rm -rf /modulus-sym/
+# Install modulus sym dependencies
+RUN pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
+    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.5.1" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==9.3.0" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+RUN cd /modulus-sym/ && pip install -e . --no-deps && rm -rf /modulus-sym/
 
 # Image without pysdf
 FROM builder as no-pysdf
 
 # Install modulus sym
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install .
+# Install modulus sym dependencies
+RUN pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
+    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.5.1" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==9.3.0" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+RUN cd /modulus-sym/ && pip install . --no-deps
 RUN rm -rf /modulus-sym/
 
 # Image with pysdf 
@@ -115,7 +123,11 @@ FROM pysdf-install as deploy
 
 # Install modulus sym
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install .
+# Install modulus sym dependencies
+RUN pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
+    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.5.1" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==9.3.0" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+RUN cd /modulus-sym/ && pip install . --no-deps
 RUN rm -rf /modulus-sym/
 
 # Docs image

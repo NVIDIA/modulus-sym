@@ -39,6 +39,11 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+all = [
+    "vtk>=9.2.6",
+]
+
 [tool.setuptools.dynamic]
 version = {attr = "modulus.sym.__version__"}
 

@@ -15,6 +15,8 @@
 ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:23.06-py3
 FROM $BASE_CONTAINER as builder
 
+ARG TARGETPLATFORM
+
 # Update pip and setuptools
 RUN pip install --upgrade pip setuptools  
 
@@ -23,27 +25,75 @@ RUN apt-get update && \
     apt-get install -y git-lfs graphviz libgl1 && \
     git lfs install
 
+# install vtk
+COPY . /modulus-sym/
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl" ]; then \
+	echo "VTK wheel for $TARGETPLATFORM exists, installing!" && \
+	pip install /modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl; \
+    elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+	echo "Installing vtk for: $TARGETPLATFORM" && \
+	pip install "vtk>=9.2.6"; \ 
+    else \
+	echo "Installing vtk for: $TARGETPLATFORM from source" && \
+	apt-get update && apt-get install -y libgl1-mesa-dev && \
+	git clone https://gitlab.kitware.com/vtk/vtk.git && cd vtk && git checkout tags/v9.2.6 && git submodule update --init --recursive && \
+	mkdir build && cd build && cmake -GNinja -DVTK_WHEEL_BUILD=ON -DVTK_WRAP_PYTHON=ON /workspace/vtk/ && ninja && \
+	python setup.py bdist_wheel && \
+	pip install dist/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl && \
+	cd ../../ && rm -r vtk; \
+    fi
+
+# Install modulus sym dependencies
+RUN pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
+    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.5.1" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==9.3.0" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+
 # Install tiny-cuda-nn
 ENV TCNN_CUDA_ARCHITECTURES="60;70;75;80;86;90"
-RUN pip install git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ] && [ -e "/modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_x86_64.whl" ]; then \
+        echo "Tiny CUDA NN wheel for $TARGETPLATFORM exists, installing!" && \
+        pip install --force-reinstall /modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_x86_64.whl; \
+    elif [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_aarch64.whl" ]; then \
+        echo "Tiny CUDA NN wheel for $TARGETPLATFORM exists, installing!" && \
+        pip install --force-reinstall /modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_aarch64.whl; \
+    else \
+        echo "No Tiny CUDA NN wheel present, building from source" && \
+	pip install git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch; \	
+    fi
+
 
 FROM builder as pysdf-install
-# Extract OptiX 7.0.0 SDK and CMake 3.18.2
-COPY ./deps/NVIDIA-OptiX-SDK-7.0.0-linux64.sh /modulus-sym/
-RUN cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.0.0-linux64.sh --skip-license --include-subdir --prefix=/root
-RUN cd /root && \
-     wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
-     tar xvfz cmake-3.24.1-linux-x86_64.tar.gz
 
-# Build libsdf.so
-COPY ./deps/external /external/
-RUN mkdir /external/pysdf/build/ && \
-        cd /external/pysdf/build && \
-        /root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.0.0-linux64 -DCUDA_CUDA_LIBRARY="" && \
-        make -j && \
-        mkdir /external/lib && \
-        cp libpysdf.so /external/lib/ && \
-        cd /external/pysdf && pip install .
+COPY . /modulus-sym/
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh /modulus-sym/ && \
+	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh --skip-license --include-subdir --prefix=/root && \
+	cd /root && \
+	wget  https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-aarch64.tar.gz && \
+	tar xvfz cmake-3.24.1-linux-aarch64.tar.gz && \
+	cp -r /modulus-sym/deps/external /external/ && \
+	mkdir /external/pysdf/build/ && \
+	cd /external/pysdf/build && \
+	/root/cmake-3.24.1-linux-aarch64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64 -DCUDA_CUDA_LIBRARY="" && \
+	make -j && \
+	mkdir /external/lib && \
+	cp libpysdf.so /external/lib/ && \
+	cd /external/pysdf && pip install . ; \
+    elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.0.0-linux64.sh /modulus-sym/ && \
+	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.0.0-linux64.sh --skip-license --include-subdir --prefix=/root && \
+	cd /root && \
+	wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
+	tar xvfz cmake-3.24.1-linux-x86_64.tar.gz && \
+	cp -r /modulus-sym/deps/external /external/ && \
+	mkdir /external/pysdf/build/ && \
+	cd /external/pysdf/build && \
+	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.0.0-linux64 -DCUDA_CUDA_LIBRARY="" && \
+	make -j && \
+	mkdir /external/lib && \
+	cp libpysdf.so /external/lib/ && \
+	cd /external/pysdf && pip install . ; \
+    fi
 
 ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
      NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,video \
@@ -53,14 +103,14 @@ ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
 FROM pysdf-install as ci
 RUN pip install "black==22.10.0" "interrogate==1.5.0" "coverage==6.5.0"
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install -e . && rm -rf /modulus-sym/
+RUN cd /modulus-sym/ && pip install -e . --no-deps && rm -rf /modulus-sym/
 
 # Image without pysdf
 FROM builder as no-pysdf
 
 # Install modulus sym
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install .
+RUN cd /modulus-sym/ && pip install . --no-deps
 RUN rm -rf /modulus-sym/
 
 # Image with pysdf 
@@ -69,7 +119,7 @@ FROM pysdf-install as deploy
 
 # Install modulus sym
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install .
+RUN cd /modulus-sym/ && pip install . --no-deps
 RUN rm -rf /modulus-sym/
 
 # Docs image

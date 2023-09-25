@@ -1,6 +1,11 @@
 Installation
 ===================================
 
+.. warning::
+   This page will be deprecated soon. Please refer 
+   https://docs.nvidia.com/deeplearning/modulus/getting-started/ for latest information
+   on getting started
+
 .. _system_requirements:
 
 System Requirements

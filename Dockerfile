@@ -23,6 +23,9 @@ RUN apt-get update && \
     apt-get install -y git-lfs graphviz libgl1 && \
     git lfs install
 
+# Install Modulus
+RUN pip install git+https://github.com/NVIDIA/modulus.git
+
 # Install tiny-cuda-nn
 ENV TCNN_CUDA_ARCHITECTURES="60;70;75;80;86;90"
 RUN pip install git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch

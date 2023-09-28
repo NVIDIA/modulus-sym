@@ -64,6 +64,8 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ] && [ -e "/modulus-sym/deps/tinycuda
 
 FROM builder as pysdf-install
 
+ARG TARGETPLATFORM
+
 COPY . /modulus-sym/
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
 	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh /modulus-sym/ && \
@@ -103,7 +105,7 @@ ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
 FROM pysdf-install as ci
 
 # Install Modulus
-RUN pip install -u git+https://github.com/NVIDIA/modulus.git
+RUN pip install --upgrade git+https://github.com/NVIDIA/modulus.git
 
 RUN pip install "black==22.10.0" "interrogate==1.5.0" "coverage==6.5.0"
 COPY . /modulus-sym/

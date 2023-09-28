@@ -6,11 +6,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0a0]
+## [1.3.0] - 2023-11-xx
 
 ### Added
 
-- Example for reservoir modeling using PINO and FNO
+- Added instructions for docker build on ARM architecture.
 
 ### Changed
 
@@ -24,15 +24,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
-## [1.1.0] - 2023-08-08
+## [1.2.0] - 2023-09-21
+
+### Added
+
+- Example for reservoir modeling using PINO and FNO
+
+## [1.1.0] - 2023-08-10
 
 ### Added
 
 - Added a CHANGELOG.md
-
-### Changed
-
-### Deprecated
 
 ### Removed
 
@@ -44,8 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed fused SiLU activation test.
 - Update `np.bool` to `np.bool_`.
 - Added a workaround fix for the CUDA graphs error in multi-node runs
-
-### Security
 
 ### Dependencies
 

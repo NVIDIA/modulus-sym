@@ -25,9 +25,6 @@ RUN apt-get update && \
     apt-get install -y git-lfs graphviz libgl1 && \
     git lfs install
 
-# Install Modulus
-RUN pip install git+https://github.com/NVIDIA/modulus.git
-
 # install vtk
 COPY . /modulus-sym/
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl" ]; then \
@@ -104,6 +101,10 @@ ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
 
 # CI Image
 FROM pysdf-install as ci
+
+# Install Modulus
+RUN pip install -u git+https://github.com/NVIDIA/modulus.git
+
 RUN pip install "black==22.10.0" "interrogate==1.5.0" "coverage==6.5.0"
 COPY . /modulus-sym/
 RUN cd /modulus-sym/ && pip install -e . --no-deps && rm -rf /modulus-sym/

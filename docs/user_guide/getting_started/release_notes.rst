@@ -3,6 +3,10 @@
 Release Notes
 =============
 
+.. warning::
+   This page will be deprecated soon. Please refer 
+   https://docs.nvidia.com/deeplearning/modulus/release-notes/ for latest information.
+
 New features/Highlights v22.09
 -------------------------------
 

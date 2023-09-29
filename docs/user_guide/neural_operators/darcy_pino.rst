@@ -101,7 +101,7 @@ which is done via its ``.forward(...)`` method:
 
 .. code:: python
 
-    from modulus.sym.models.layers import fourier_derivatives # helper function for computing spectral derivatives
+    from modulus.models.layers import fourier_derivatives # helper function for computing spectral derivatives
     from ops import dx, ddx # helper function for computing finite difference derivatives
     
 .. literalinclude:: ../../../examples/darcy/darcy_PINO.py

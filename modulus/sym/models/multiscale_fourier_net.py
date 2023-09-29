@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 
-import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer, FourierLayer
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -51,7 +52,7 @@ class MultiscaleFourierNetArch(Arch):
     frequencies_params : Tuple[Tuple[str, List[float]],...] = (("axis", [i for i in range(10)]),)
         Same as `frequencies` except these are used for encodings
         on any inputs not in the list `['x', 'y', 'z', 't']`.
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     layer_size : int = 512
         Layer size for every hidden layer of the model.
@@ -73,7 +74,7 @@ class MultiscaleFourierNetArch(Arch):
         detach_keys: List[Key] = [],
         frequencies=(("axis", [i for i in range(10)]),),
         frequencies_params=(("axis", [i for i in range(10)]),),
-        activation_fn=layers.Activation.SILU,
+        activation_fn=Activation.SILU,
         layer_size: int = 512,
         nr_layers: int = 6,
         skip_connections: bool = False,
@@ -85,6 +86,7 @@ class MultiscaleFourierNetArch(Arch):
         )
 
         self.skip_connections = skip_connections
+        activation_fn = get_activation_fn(activation_fn)
 
         self.xyzt_var = [x for x in self.input_key_dict if x in ["x", "y", "z", "t"]]
         # Prepare slice index
@@ -125,7 +127,7 @@ class MultiscaleFourierNetArch(Arch):
 
             for idx in range(self.num_freqs):
                 self.fourier_layers_xyzt.append(
-                    layers.FourierLayer(
+                    FourierLayer(
                         in_features=in_features_xyzt,
                         frequencies=frequencies[idx],
                     )
@@ -139,7 +141,7 @@ class MultiscaleFourierNetArch(Arch):
 
             for idx in range(self.num_freqs):
                 self.fourier_layers_params.append(
-                    layers.FourierLayer(
+                    FourierLayer(
                         in_features=in_features_params,
                         frequencies=frequencies_params[idx],
                     )
@@ -153,7 +155,7 @@ class MultiscaleFourierNetArch(Arch):
         layer_in_features = in_features
         for i in range(nr_layers):
             self.fc_layers.append(
-                layers.FCLayer(
+                FCLayer(
                     layer_in_features,
                     layer_size,
                     activation_fn,
@@ -163,10 +165,10 @@ class MultiscaleFourierNetArch(Arch):
             )
             layer_in_features = layer_size
 
-        self.final_layer = layers.FCLayer(
+        self.final_layer = FCLayer(
             in_features=layer_size * self.num_freqs,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

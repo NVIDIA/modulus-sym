@@ -121,7 +121,9 @@ def create_gitlab_issue(commit_files, doc_files, gl_token: str):
             doc_file = Path(doc_file)
             desc_str += f"- {doc_file.name} : "
             for line in doc_files[str(doc_file)]:
-                desc_str += f"[L{line}]({docs_repo_url}{ug_folder}{str(doc_file)}#L{line}), "
+                desc_str += (
+                    f"[L{line}]({docs_repo_url}{ug_folder}{str(doc_file)}#L{line}), "
+                )
             desc_str = desc_str[:-2]
             desc_str += "\n\n"
 

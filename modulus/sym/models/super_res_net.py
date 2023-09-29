@@ -30,13 +30,12 @@ SOFTWARE.
 """
 import torch
 from torch import nn
-import torchvision
 import math
 from typing import List, Dict
 
 from modulus.sym.key import Key
 from modulus.sym.models.arch import Arch
-from modulus.sym.models.layers import Activation, get_activation_fn
+from modulus.sym.models.activation import Activation, get_activation_fn
 
 Tensor = torch.Tensor
 

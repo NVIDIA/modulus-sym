@@ -55,14 +55,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import torch
 import torch.nn as nn
-import functools
 from typing import List, Dict
-from torch.autograd import Variable
 import numpy as np
 
 from modulus.sym.key import Key
-import modulus.sym.models.layers as layers
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 
 Tensor = torch.Tensor
@@ -88,7 +85,7 @@ class Pix2PixModelCore(nn.Module):
         assert padding_type in ["reflect", "zero", "replicate"], "Invalid padding type"
         super().__init__()
 
-        activation = layers.get_activation_fn(activation_fn, module=True, inplace=True)
+        activation = get_activation_fn(activation_fn, module=True, inplace=True)
         # set padding and convolutions
         if dimension == 1:
             padding = nn.ReflectionPad1d(3)

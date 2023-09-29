@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Dict, Tuple
+from typing import Dict
 from modulus.sym.key import Key
 import copy
 
@@ -20,11 +20,7 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-import modulus.sym.models.layers as layers
-from .interpolation import smooth_step_1, smooth_step_2
 from modulus.sym.models.arch import Arch
-
-from typing import List
 
 
 class MovingTimeWindowArch(Arch):

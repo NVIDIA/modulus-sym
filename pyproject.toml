@@ -32,6 +32,7 @@ dependencies = [
     "pint==0.19.2",
     "tensorboard>=2.8.0",
     "vtk>=9.2.6",
+    "h5py>=3.7.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

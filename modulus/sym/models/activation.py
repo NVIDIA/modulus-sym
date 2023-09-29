@@ -15,7 +15,6 @@
 import enum
 from typing import Callable
 from typing import Union
-from typing import List
 
 import torch
 import torch.nn as nn

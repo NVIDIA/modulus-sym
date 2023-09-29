@@ -13,14 +13,8 @@
 # limitations under the License.
 
 import logging
-import enum
-import inspect
 import importlib
-from omegaconf import OmegaConf
-from inspect import signature
 
-from modulus.sym import Key
-from modulus.sym.models.layers import Activation
 from modulus.sym.models.arch import Arch
 
 

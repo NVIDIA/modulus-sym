@@ -13,15 +13,11 @@
 # limitations under the License.
 
 import logging
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Union
 
 import torch
-import functorch
-import logging
-import torch.nn as nn
-from torch import Tensor
-from typing import Optional, Dict, Union, List
 
+from torch import Tensor
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 from modulus.sym.manager import GraphManager

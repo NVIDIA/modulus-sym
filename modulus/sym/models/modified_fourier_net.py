@@ -18,7 +18,8 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer, FourierLayer
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -56,7 +57,7 @@ class ModifiedFourierNetArch(Arch):
     frequencies_params : Tuple[str, List[float]] = ("axis", [i for i in range(10)])
         Same as `frequencies` except these are used for encodings
         on any inputs not in the list `['x', 'y', 'z', 't']`.
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     layer_size : int = 512
         Layer size for every hidden layer of the model.
@@ -78,7 +79,7 @@ class ModifiedFourierNetArch(Arch):
         detach_keys: List[Key] = [],
         frequencies=("axis", [i for i in range(10)]),
         frequencies_params=("axis", [i for i in range(10)]),
-        activation_fn=layers.Activation.SILU,
+        activation_fn=Activation.SILU,
         layer_size: int = 512,
         nr_layers: int = 6,
         skip_connections: bool = False,
@@ -90,6 +91,7 @@ class ModifiedFourierNetArch(Arch):
         )
 
         self.skip_connections = skip_connections
+        activation_fn = get_activation_fn(activation_fn)
 
         if adaptive_activations:
             activation_par = nn.Parameter(torch.ones(1))
@@ -121,7 +123,7 @@ class ModifiedFourierNetArch(Arch):
         in_features = in_features_xyzt + in_features_params
 
         if in_features_xyzt > 0:
-            self.fourier_layer_xyzt = layers.FourierLayer(
+            self.fourier_layer_xyzt = FourierLayer(
                 in_features=in_features_xyzt, frequencies=frequencies
             )
             in_features += self.fourier_layer_xyzt.out_features()
@@ -129,14 +131,14 @@ class ModifiedFourierNetArch(Arch):
             self.fourier_layer_xyzt = None
 
         if in_features_params > 0:
-            self.fourier_layer_params = layers.FourierLayer(
+            self.fourier_layer_params = FourierLayer(
                 in_features=in_features_params, frequencies=frequencies_params
             )
             in_features += self.fourier_layer_params.out_features()
         else:
             self.fourier_layer_params = None
 
-        self.fc_u = layers.FCLayer(
+        self.fc_u = FCLayer(
             in_features=in_features,
             out_features=layer_size,
             activation_fn=activation_fn,
@@ -144,7 +146,7 @@ class ModifiedFourierNetArch(Arch):
             activation_par=activation_par,
         )
 
-        self.fc_v = layers.FCLayer(
+        self.fc_v = FCLayer(
             in_features=in_features,
             out_features=layer_size,
             activation_fn=activation_fn,
@@ -152,7 +154,7 @@ class ModifiedFourierNetArch(Arch):
             activation_par=activation_par,
         )
 
-        self.fc_0 = layers.FCLayer(
+        self.fc_0 = FCLayer(
             in_features,
             layer_size,
             activation_fn,
@@ -164,7 +166,7 @@ class ModifiedFourierNetArch(Arch):
 
         for i in range(nr_layers - 1):
             self.fc_layers.append(
-                layers.FCLayer(
+                FCLayer(
                     layer_size,
                     layer_size,
                     activation_fn,
@@ -173,10 +175,10 @@ class ModifiedFourierNetArch(Arch):
                 )
             )
 
-        self.final_layer = layers.FCLayer(
+        self.final_layer = FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

@@ -81,7 +81,7 @@ New modification suppose to work with pip to (you'll just need to install two ad
 pip install trimesh
 pip install mesh_to_sdf
 ```
-Tesselation will work because insted of using pysdf I used mesh_to_sdf (I have not yet implemented sdf derivatives yet, so some function will not work on windows (It's only a few functions for visualisation difference with real data (as far as I know)))
+Tesselation will work because instead of using pysdf I used mesh_to_sdf (I have not yet implemented sdf derivatives yet, so some functions will not work on windows (It's only a few functions for visualization differences with real data (as far as I know)))
 
 ## Contributing
 

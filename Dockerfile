@@ -97,6 +97,9 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
 	cd /external/pysdf && pip install . ; \
     fi
 
+# Cleanup
+RUN rm -rf /root/NVIDIA-OptiX-SDK* /root/cmake* /external/pysdf
+
 ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
      NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,video \
     _CUDA_COMPAT_TIMEOUT=90

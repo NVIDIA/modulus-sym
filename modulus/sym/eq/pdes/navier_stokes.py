@@ -340,7 +340,7 @@ class GradNormal(PDE):
         )
 
 class NavierStokesIncompressible(PDE):
-    '''Cystom implementation of incompressible NS eqyastyans'''
+    '''Custom  implementation of incompressible NS equations'''
 
     name = "navier stokes incompressible"
 
@@ -354,12 +354,8 @@ class NavierStokesIncompressible(PDE):
             If `nu` is a Sympy Symbol or Expression then this
             is substituted into the equation. This allows for
             variable viscosity.
-        rho : float, Sympy Symbol/Expr, str
-            The density of the fluid. If `rho` is a str then it is
-            converted to Sympy Function of form 'rho(x,y,z,t)'.
-            If 'rho' is a Sympy Symbol or Expression then this
-            is substituted into the equation to allow for
-            compressible Navier Stokes. Default is 1.
+        rho : float, int
+            The density of the fluid. Default is 1.
         dim : int
             Dimension of the Navier Stokes (2 or 3). Default is 3.
         time : bool
@@ -389,7 +385,7 @@ class NavierStokesIncompressible(PDE):
 
         # density
         if isinstance(rho, str):
-            rho = Function(rho)(*input_variables)
+            raise Exception("rho myst be number")
         elif isinstance(rho, (float, int)):
             rho = Number(rho)
         
@@ -594,7 +590,7 @@ class FluxContinuity(PDE):
 
 
 class Euler(PDE):
-    '''Cystom implementation of compressible Euler eqyastyans'''
+    '''Custom implementation of compressible Euler equations'''
     def __init__(self, rho=1, dim=3, ratio_heats=1.4, time=False):
         '''
         Parameters

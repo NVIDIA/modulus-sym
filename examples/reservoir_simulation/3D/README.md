@@ -170,7 +170,7 @@ cd ..
 ##### Docker
 ```bash
 cd src
-python Compare_FVM_Surrogate.py
+python Compare_FVM_surrogate.py
 cd ..
 ```
 
@@ -184,7 +184,7 @@ cd ..
 
 - Pre-trained models and all necessary files are provided in the script for rapid prototyping & reproduction
 
-- The Inverse_problem.py/Compare_FVM_Surrogate.py scripts can be ran without necessary running the forward problem steps.
+- The Inverse_problem.py/Compare_FVM_surrogate.py scripts can be ran without necessary running the forward problem steps.
 
 ## Setting up Tensorboard
 Tensorboard is a great tool for visualization of machine learning experiments. To visualize the various training and validation losses, Tensorboard can be set up as follows:

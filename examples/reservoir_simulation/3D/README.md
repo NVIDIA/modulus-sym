@@ -163,7 +163,7 @@ cd ..
 ##### RUN
 ```bash
 cd src
-python Compare_FVM_Surrogate.py
+python Compare_FVM_surrogate.py
 cd ..
 ```
 

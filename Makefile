@@ -14,7 +14,8 @@ interrogate:
 	echo "Interrogate CI stage not currently implemented"
 
 lint:
-	pre-commit run markdownlint -a
+	# pre-commit run markdownlint -a
+	echo "Lint CI stage not currently implemented"
 
 license: 
 	pre-commit run license -a

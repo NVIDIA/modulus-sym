@@ -140,9 +140,7 @@ pip install -r requirements.txt
 ```bash
 cd /examples/modulus-sym/examples/reservoir_simulation/2D/
 ```
-- Run the Forward Problem surrogation with PINO/FNO/PINO2/PINO3 via the **src** folder.
-
-- **PINO 2 & PINO3 are the original implemenation from the paper [link](https://arxiv.org/pdf/2111.03794.pdf) where PINO3 has an added output of the overall Flux ( x & y direction) and water Flux (x & y direction) as added outputs**
+- Run the Forward Problem surrogation with PINO/FNO via the **src** folder.
 
 ##### RUN
 ```bash
@@ -150,10 +148,6 @@ cd src
 python Forward_problem_PINO.py
 or
 python Forward_problem_FNO.py
-or
-python Forward_problem_PINO2.py
-or
-python Forward_problem_PINO3.py
 cd ..
 ```
 
@@ -166,7 +160,7 @@ cd ..
 ##### RUN
 ```bash
 cd src
-python Compare_FVM_Surrogate.py
+python Compare_FVM_surrogate.py
 cd ..
 ```
 
@@ -181,7 +175,7 @@ cd ..
 
 - Pre-trained models and all necessary files are provided in the script for rapid prototyping & reproduction
 
-- The Inverse_problem.py/Compare_FVM_Surrogate.py scripts can be ran without necessary running the forward problem steps.
+- The Inverse_problem.py/Compare_FVM_surrogate.py scripts can be ran without necessary running the forward problem steps.
 
 ## Setting up Tensorboard
 Tensorboard is a great tool for visualization of machine learning experiments. To visualize the various training and validation losses, Tensorboard can be set up as follows:

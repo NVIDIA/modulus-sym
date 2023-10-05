@@ -385,7 +385,7 @@ class NavierStokesIncompressible(PDE):
 
         # density
         if isinstance(rho, str):
-            raise Exception("rho myst be number")
+            raise Exception("rho must be number")
         elif isinstance(rho, (float, int)):
             rho = Number(rho)
         

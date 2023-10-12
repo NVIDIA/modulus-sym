@@ -1,0 +1,36 @@
+# @package _global_
+training:
+  rec_validation_freq: 100000
+  rec_inference_freq: 100000
+  rec_monitor_freq: 100000
+  rec_constraint_freq: 100000
+  max_steps: 3000
+  grad_agg_freq: 1
+  rec_results_freq: 100000
+  save_network_freq: 100000
+  print_stats_freq: 1000
+  summary_freq: 100000
+  amp: False
+  amp_dtype: "float16"
+
+custom:
+  arch: "FullyConnectedArch"
+  exact_continuity: false
+  quasirandom: false
+  adaptive_activations: false
+  num_workers:
+    inlet: 1
+    outlet: 1
+    no_slip: 1
+    lr_interior: 1
+    hr_interior: 1
+    integral_continuity: 1  
+
+batch_size:
+  inlet: 4096
+  outlet: 4096
+  no_slip: 192000
+  lr_interior: 20480
+  hr_interior: 20480
+  integral_continuity: 102400
+  num_integral_continuity: 8

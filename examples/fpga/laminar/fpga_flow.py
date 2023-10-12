@@ -49,6 +49,7 @@ from fpga_geometry import *
 
 @modulus.sym.main(config_path="conf", config_name="config")
 def run(cfg: ModulusConfig) -> None:
+    print(cfg)
     # params for simulation
     # fluid params
     nu = 0.02
@@ -125,6 +126,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=Eq(x, channel_origin[0]),
         lambda_weighting={"u": channel_sdf, "v": 1.0, "w": 1.0},  # weight zero on edges
         quasirandom=cfg.custom.quasirandom,
+        num_workers=cfg.custom.num_workers.inlet,
     )
     flow_domain.add_constraint(constraint_inlet, "inlet")
 
@@ -136,6 +138,7 @@ def run(cfg: ModulusConfig) -> None:
         batch_size=cfg.batch_size.outlet,
         criteria=Eq(x, channel_origin[0] + channel_dim[0]),
         quasirandom=cfg.custom.quasirandom,
+        num_workers=cfg.custom.num_workers.outlet,
     )
     flow_domain.add_constraint(constraint_outlet, "outlet")
 
@@ -146,6 +149,7 @@ def run(cfg: ModulusConfig) -> None:
         outvar={"u": 0, "v": 0, "w": 0},
         batch_size=cfg.batch_size.no_slip,
         quasirandom=cfg.custom.quasirandom,
+        num_workers=cfg.custom.num_workers.no_slip,
     )
     flow_domain.add_constraint(no_slip, "no_slip")
 
@@ -163,6 +167,7 @@ def run(cfg: ModulusConfig) -> None:
             "momentum_z": Symbol("sdf"),
         },
         quasirandom=cfg.custom.quasirandom,
+        num_workers=cfg.custom.num_workers.lr_interior,
     )
     flow_domain.add_constraint(lr_interior, "lr_interior")
 
@@ -182,6 +187,7 @@ def run(cfg: ModulusConfig) -> None:
             "momentum_z": Symbol("sdf"),
         },
         quasirandom=cfg.custom.quasirandom,
+        num_workers=cfg.custom.num_workers.hr_interior,
     )
     flow_domain.add_constraint(hr_interior, "hr_interior")
 
@@ -199,6 +205,7 @@ def run(cfg: ModulusConfig) -> None:
         criteria=integral_criteria,
         lambda_weighting={"normal_dot_vel": 1.0},
         quasirandom=cfg.custom.quasirandom,
+        num_workers=cfg.custom.num_workers.integral_continuity,
     )
     flow_domain.add_constraint(integral_continuity, "integral_continuity")
 

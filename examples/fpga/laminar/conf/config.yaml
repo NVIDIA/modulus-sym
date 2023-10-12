@@ -55,6 +55,13 @@ custom:
   exact_continuity: false
   quasirandom: false
   adaptive_activations: false
+  num_workers:
+    inlet: 0
+    outlet: 0
+    no_slip: 0
+    lr_interior: 0
+    hr_interior: 0
+    integral_continuity: 0
 
 network_dir: "network_checkpoint_flow"
 initialization_network_dir: ""

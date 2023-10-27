@@ -14,7 +14,7 @@
 
 import enum
 import math
-from typing import Dict, Tuple, Callable, List, Union
+from typing import Tuple, List
 
 import numpy as np
 import torch

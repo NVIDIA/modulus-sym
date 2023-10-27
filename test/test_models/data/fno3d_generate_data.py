@@ -16,11 +16,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
-
-import operator
-from functools import reduce
-from functools import partial
 
 torch.manual_seed(0)
 np.random.seed(0)

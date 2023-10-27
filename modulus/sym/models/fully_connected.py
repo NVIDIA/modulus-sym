@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Dict, Tuple, Union
+from typing import Optional, Dict, Tuple, Union, List
 from modulus.sym.key import Key
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 
-from modulus.sym.models.layers import Activation, FCLayer, Conv1dFCLayer
+from modulus.models.layers import FCLayer, Conv1dFCLayer
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
-
-from typing import List
 
 
 class FullyConnectedArchCore(nn.Module):
@@ -69,7 +68,7 @@ class FullyConnectedArchCore(nn.Module):
                 fc_layer(
                     layer_in_features,
                     layer_size,
-                    activation_fn[i],
+                    get_activation_fn(activation_fn[i], out_features=out_features),
                     weight_norm,
                     activation_par,
                 )
@@ -79,7 +78,7 @@ class FullyConnectedArchCore(nn.Module):
         self.final_layer = fc_layer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

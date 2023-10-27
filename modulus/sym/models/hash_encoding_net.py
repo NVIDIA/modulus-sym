@@ -20,7 +20,7 @@ from typing import Dict, List, Tuple
 import itertools
 
 import modulus.sym.models.fully_connected as fully_connected
-import modulus.sym.models.layers as layers
+from modulus.sym.models.activation import Activation
 from modulus.sym.models.interpolation import (
     _grid_knn_idx,
     _hyper_cube_weighting,
@@ -46,7 +46,7 @@ class MultiresolutionHashNetArch(Arch):
         Output key list
     detach_keys : List[Key], optional
         List of keys to detach gradients, by default []
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     layer_size : int = 64
         Layer size for every hidden layer of the model.
@@ -79,7 +79,7 @@ class MultiresolutionHashNetArch(Arch):
         input_keys: List[Key],
         output_keys: List[Key],
         detach_keys: List[Key] = [],
-        activation_fn=layers.Activation.SILU,
+        activation_fn=Activation.SILU,
         layer_size: int = 64,
         nr_layers: int = 3,
         skip_connections: bool = False,

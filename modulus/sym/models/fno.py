@@ -12,27 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Union, Optional, Tuple
+from typing import Dict, List, Union
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 import torch.nn.functional as F
-import numpy as np
 import logging
 
-import modulus.sym.models.layers as layers
-from modulus.sym.models.layers import Activation
-from modulus.sym.models.layers.spectral_layers import (
+from modulus.models.layers import (
+    Conv1dFCLayer,
+    Conv2dFCLayer,
+    Conv3dFCLayer,
+    SpectralConv1d,
+    SpectralConv2d,
+    SpectralConv3d,
+)
+from modulus.models.layers.spectral_layers import (
     calc_latent_derivatives,
     first_order_pino_grads,
     second_order_pino_grads,
 )
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.models.fully_connected import ConvFullyConnectedArch
 from modulus.sym.key import Key
-from modulus.sym.node import Node
-from modulus.sym.constants import JIT_PYTORCH_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -61,18 +65,18 @@ class FNO1DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 1
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.ModuleList()
         self.conv_layers = nn.ModuleList()
 
         # Initial lift layer
-        self.lift_layer = layers.Conv1dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = Conv1dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                layers.SpectralConv1d(self.fno_width, self.fno_width, fno_modes[0])
+                SpectralConv1d(self.fno_width, self.fno_width, fno_modes[0])
             )
             self.conv_layers.append(nn.Conv1d(self.fno_width, self.fno_width, 1))
 
@@ -136,18 +140,18 @@ class FNO2DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 2
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.ModuleList()
         self.conv_layers = nn.ModuleList()
 
         # Initial lift layer
-        self.lift_layer = layers.Conv2dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = Conv2dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                layers.SpectralConv2d(
+                SpectralConv2d(
                     self.fno_width, self.fno_width, fno_modes[0], fno_modes[1]
                 )
             )
@@ -222,18 +226,18 @@ class FNO3DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 3
-        self.activation_fn = layers.get_activation_fn(activation_fn)
+        self.activation_fn = get_activation_fn(activation_fn)
 
         self.spconv_layers = nn.ModuleList()
         self.conv_layers = nn.ModuleList()
 
         # Initial lift layer
-        self.lift_layer = layers.Conv3dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = Conv3dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                layers.SpectralConv3d(
+                SpectralConv3d(
                     self.fno_width,
                     self.fno_width,
                     fno_modes[0],

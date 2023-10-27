@@ -19,9 +19,9 @@ import torch
 import torch.nn.functional as F
 
 import modulus.sym
+from modulus.models.layers.spectral_layers import fourier_derivatives
 from modulus.sym.hydra import instantiate_arch, ModulusConfig
 from modulus.sym.key import Key
-from modulus.sym.models.layers.spectral_layers import fourier_derivatives
 from modulus.sym.node import Node
 
 from modulus.sym.solver import Solver

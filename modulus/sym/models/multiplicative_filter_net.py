@@ -15,13 +15,12 @@
 import enum
 from typing import Optional, List, Dict, Tuple, Union
 
-import torch
 import torch.nn as nn
 from torch import Tensor
 
-import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer, FourierFilter, GaborFilter
+from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
-from modulus.sym.models.layers import Activation
 from modulus.sym.key import Key
 from modulus.sym.constants import NO_OP_NORM
 
@@ -58,7 +57,7 @@ class MultiplicativeFilterNetArch(Arch):
         Number of hidden layers of the model.
     skip_connections : bool = False
         If true then apply skip connections every 2 hidden layers.
-    activation_fn : layers.Activation = layers.Activation.SILU
+    activation_fn : Activation = Activation.SILU
         Activation function used by network.
     filter_type : FilterType = FilterType.FOURIER
         Filter type for multiplicative filter network, (Fourier or Gabor).
@@ -82,7 +81,7 @@ class MultiplicativeFilterNetArch(Arch):
         layer_size: int = 512,
         nr_layers: int = 6,
         skip_connections: bool = False,
-        activation_fn=layers.Activation.IDENTITY,
+        activation_fn=Activation.IDENTITY,
         filter_type: Union[FilterType, str] = FilterType.FOURIER,
         weight_norm: bool = True,
         input_scale: float = 10.0,
@@ -99,19 +98,20 @@ class MultiplicativeFilterNetArch(Arch):
 
         self.nr_layers = nr_layers
         self.skip_connections = skip_connections
+        activation_fn = get_activation_fn(activation_fn)
 
         if isinstance(filter_type, str):
             filter_type = FilterType[filter_type]
 
         if filter_type == FilterType.FOURIER:
-            self.first_filter = layers.FourierFilter(
+            self.first_filter = FourierFilter(
                 in_features=in_features,
                 layer_size=layer_size,
                 nr_layers=nr_layers,
                 input_scale=input_scale,
             )
         elif filter_type == FilterType.GABOR:
-            self.first_filter = layers.GaborFilter(
+            self.first_filter = GaborFilter(
                 in_features=in_features,
                 layer_size=layer_size,
                 nr_layers=nr_layers,
@@ -127,7 +127,7 @@ class MultiplicativeFilterNetArch(Arch):
 
         for i in range(nr_layers):
             self.fc_layers.append(
-                layers.FCLayer(
+                FCLayer(
                     in_features=layer_size,
                     out_features=layer_size,
                     activation_fn=activation_fn,
@@ -136,7 +136,7 @@ class MultiplicativeFilterNetArch(Arch):
             )
             if filter_type == FilterType.FOURIER:
                 self.filters.append(
-                    layers.FourierFilter(
+                    FourierFilter(
                         in_features=in_features,
                         layer_size=layer_size,
                         nr_layers=nr_layers,
@@ -145,7 +145,7 @@ class MultiplicativeFilterNetArch(Arch):
                 )
             elif filter_type == FilterType.GABOR:
                 self.filters.append(
-                    layers.GaborFilter(
+                    GaborFilter(
                         in_features=in_features,
                         layer_size=layer_size,
                         nr_layers=nr_layers,
@@ -157,10 +157,10 @@ class MultiplicativeFilterNetArch(Arch):
             else:
                 raise ValueError
 
-        self.final_layer = layers.FCLayer(
+        self.final_layer = FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=layers.Activation.IDENTITY,
+            activation_fn=None,
             weight_norm=False,
             activation_par=None,
         )

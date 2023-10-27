@@ -70,7 +70,7 @@ def test_func_arch_graph_1(jit_activation):
     if jit_activation:
         # ensure we are using fused SiLU from torchscript
         assert isinstance(
-            network._impl.layers[0].callable_activation_fn, torch.jit.ScriptFunction
+            network._impl.layers[0].activation_fn, torch.jit.ScriptFunction
         )
 
     # check FuncArch presence

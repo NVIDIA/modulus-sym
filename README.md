@@ -28,12 +28,22 @@ The recommended method for installing the latest version of Modulus Symbolic is 
 pip install nvidia-modulus.sym
 ```
 
+Note, the above method only works for x86/amd64 based architectures. For installing Modulus Sym on Arm based systems using pip, 
+Install VTK from source as shown [here](https://gitlab.kitware.com/vtk/vtk/-/blob/v9.2.6/Documentation/dev/build.md?ref_type=tags#python-wheels) and then install Modulus-Sym and other dependencies
+
+```bash
+pip install nvidia-modulus.sym --no-deps
+pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
+    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.5.1" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==9.3.0" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+```
+
 ### Container
 
 The recommended Modulus docker image can be pulled from the [NVIDIA Container Registry](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/containers/modulus):
 
 ```bash
-docker pull nvcr.io/nvidia/modulus/modulus:23.05
+docker pull nvcr.io/nvidia/modulus/modulus:23.09
 ```
 
 ## From Source
@@ -72,14 +82,18 @@ git clone <internal pysdf repo>
 Then to build the image, insert next tag and run below:
 
 ```bash
-docker build -t modulus-sym:deploy -f Dockerfile --target deploy .
+docker build -t modulus-sym:deploy \
+    --build-arg TARGETPLATFORM=linux/amd64 --target deploy -f Dockerfile .
 ```
 
 Alternatively, if you want to skip pysdf installation, you can run the following:
 
 ```bash
-docker build -t modulus-sym:deploy -f Dockerfile --target no-pysdf .
+docker build -t modulus-sym:deploy \
+    --build-arg TARGETPLATFORM=linux/amd64 --target no-pysdf -f Dockerfile .
 ```
+
+Currently only `linux/amd64` and `linux/arm64` platforms are supported.
 
 ## Contributing
 

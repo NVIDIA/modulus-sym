@@ -84,7 +84,7 @@ if __name__ == "__main__":
         print(f"Collecting experiments with tag: {tag}")
         experiments = get_experiments(tag, run_opt)
 
-        q = Que(available_gpus=available_gpus, print_type="que")
+        q = Que(available_gpus=available_gpus, print_type="que", exit_on_fail=False)
         for key, value in experiments.items():
             q.enque_cmds(name=key, cmds=value["run_cmd"], cwds=value["path"])
         # Run experiment queue

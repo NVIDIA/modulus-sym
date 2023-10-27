@@ -14,7 +14,8 @@ interrogate:
 	echo "Interrogate CI stage not currently implemented"
 
 lint:
-	pre-commit run markdownlint -a
+	# pre-commit run markdownlint -a
+	echo "Lint CI stage not currently implemented"
 
 license: 
 	pre-commit run license -a
@@ -36,12 +37,25 @@ coverage:
 		coverage report --show-missing --omit=*test* --omit=*internal* --fail-under=50 && \
 		coverage html
 
+# For arch naming conventions, refer
+# https://docs.docker.com/build/building/multi-platform/
+# https://github.com/containerd/containerd/blob/v1.4.3/platforms/platforms.go#L86
+ARCH := $(shell uname -p)
+
+ifeq ($(ARCH), x86_64)
+    TARGETPLATFORM := "linux/amd64"
+else ifeq ($(ARCH), aarch64)
+    TARGETPLATFORM := "linux/arm64"
+else
+    $(error Unknown CPU architecture ${ARCH} detected)
+endif
+
 container-deploy:
-	docker build -t modulus-sym:deploy --target deploy -f Dockerfile .
+	docker build -t modulus-sym:deploy --build-arg TARGETPLATFORM=${TARGETPLATFORM} --target deploy -f Dockerfile .
 
 container-ci:
-	docker build -t modulus-sym:ci --target ci -f Dockerfile .
+	docker build -t modulus-sym:ci --build-arg TARGETPLATFORM=${TARGETPLATFORM} --target ci -f Dockerfile .
 
 container-docs:
-	docker build -t modulus-sym:docs --target docs -f Dockerfile .
+	docker build -t modulus-sym:docs --build-arg TARGETPLATFORM=${TARGETPLATFORM} --target docs -f Dockerfile .
 

@@ -73,7 +73,7 @@ class AdamMixin:
                 self.device_amp, enabled=self.amp, dtype=self.amp_dtype
             ):
                 torch.cuda.nvtx.range_push("Loss computation")
-                if self.grad_agg_freq != 1:
+                if agg_step != 0:  # load new data for subsequent steps
                     self.load_data()
                 losses_minibatch = self.compute_losses(step)
                 torch.cuda.nvtx.range_pop()

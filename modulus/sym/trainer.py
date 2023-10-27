@@ -63,7 +63,7 @@ class AdamMixin:
 
         if self.cfg.cuda_graphs and self.grad_agg_freq != 1:
             raise ValueError(
-                "Gradient Aggregation with CUDA Graphs is not " "supported currently."
+                "Gradient Aggregation with CUDA Graphs is not supported currently."
             )
 
         for agg_step in range(self.grad_agg_freq):

@@ -60,11 +60,21 @@ class AdamMixin:
         self, aggregator: nn.Module, global_optimizer_model: nn.Module, step: int
     ):
         loss, losses = 0, Counter({})
+
+        if self.cfg.cuda_graphs and self.grad_agg_freq != 1:
+            self.log.warn(
+                "Gradient Aggregation with CUDA Graphs is not "
+                "supported currently. Setting grad_agg_freq = 1."
+            )
+            self.grad_agg_freq = 1
+
         for agg_step in range(self.grad_agg_freq):
             with torch.autocast(
                 self.device_amp, enabled=self.amp, dtype=self.amp_dtype
             ):
                 torch.cuda.nvtx.range_push("Loss computation")
+                if self.grad_agg_freq != 1:
+                    self.load_data()
                 losses_minibatch = self.compute_losses(step)
                 torch.cuda.nvtx.range_pop()
                 losses_minibatch = {

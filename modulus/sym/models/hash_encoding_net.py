@@ -21,7 +21,7 @@ import itertools
 
 import modulus.sym.models.fully_connected as fully_connected
 from modulus.sym.models.activation import Activation
-from modulus.sym.models.interpolation import (
+from modulus.models.layers.interpolation import (
     _grid_knn_idx,
     _hyper_cube_weighting,
     smooth_step_2,

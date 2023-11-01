@@ -33,7 +33,7 @@ from modulus.sym.domain.constraint import (
     PointwiseInteriorConstraint,
     IntegralBoundaryConstraint,
 )
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation
 from modulus.sym.domain.monitor import PointwiseMonitor
 from modulus.sym.domain.validator import PointwiseValidator
 from modulus.sym.utils.io.plotter import ValidatorPlotter, InferencerPlotter

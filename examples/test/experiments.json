@@ -226,13 +226,6 @@
                 "first"
             ]
         },
-        "plane_displacement": {
-            "path": "../plane_displacement/",
-            "run_cmd": "python plane_displacement.py",
-            "tags": [
-                "first"
-            ]
-        },
         "slab_2D": {
             "path": "../waveguide/slab_2D/",
             "run_cmd": "python slab_2D.py",

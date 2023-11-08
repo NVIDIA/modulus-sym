@@ -96,7 +96,9 @@ def run(cfg: ModulusConfig) -> None:
         cfg=cfg.arch.fully_connected,
     )
 
-    # nodes for interface condition. Currently only dirichlet, but can be extended to neumann too
+    # nodes for interface condition. Currently only dirichlet are used for this
+    # demo problem. However, it can also be extended to include higher order
+    # derivative continuity conditions too (e.g. neumann).
     # dirichlet BCs
     interface_nodes = [Node.from_sympy(Symbol("u_1") - Symbol("u_2"), "dirichlet_u")]
     interface_nodes += [Node.from_sympy(Symbol("v_1") - Symbol("v_2"), "dirichlet_v")]

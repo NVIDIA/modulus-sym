@@ -15,7 +15,7 @@
 import os
 import warnings
 
-from sympy import Symbol, Eq, Abs, Function
+from sympy import Symbol, Eq, Abs, Function, Piecewise, Heaviside, tanh
 
 import modulus.sym
 from modulus.sym.hydra import to_absolute_path, instantiate_arch, ModulusConfig
@@ -35,6 +35,7 @@ from modulus.sym.utils.io import (
     ValidatorPlotter,
     InferencerPlotter,
 )
+from modulus.sym.node import Node
 
 import copy
 
@@ -95,43 +96,46 @@ def run(cfg: ModulusConfig) -> None:
         cfg=cfg.arch.fully_connected,
     )
 
-    from sympy import Piecewise, Heaviside, tanh
-    from modulus.sym.node import Node
-
     # nodes for interface condition. Currently only dirichlet, but can be extended to neumann too
-    interface_node_1 = Node.from_sympy(Symbol("u_1") - Symbol("u_2"), "dirichlet_u")
-    interface_node_2 = Node.from_sympy(Symbol("v_1") - Symbol("v_2"), "dirichlet_v")
-    interface_node_3 = Node.from_sympy(Symbol("p_1") - Symbol("p_2"), "dirichlet_p")
+    # dirichlet BCs
+    interface_nodes = [Node.from_sympy(Symbol("u_1") - Symbol("u_2"), "dirichlet_u")]
+    interface_nodes += [Node.from_sympy(Symbol("v_1") - Symbol("v_2"), "dirichlet_v")]
+    interface_nodes += [Node.from_sympy(Symbol("p_1") - Symbol("p_2"), "dirichlet_p")]
 
     # nodes for inferencing to merge the results of the two networks
     # For this problem, the division of domain is done at y=0
-    custom_node_1 = Node.from_sympy(
-        Symbol("u_1") * Heaviside(-Symbol("y"))
-        + Symbol("u_2") * Heaviside(Symbol("y")),
-        "u",
-    )
-    custom_node_2 = Node.from_sympy(
-        Symbol("v_1") * Heaviside(-Symbol("y"))
-        + Symbol("v_2") * Heaviside(Symbol("y")),
-        "v",
-    )
-    custom_node_3 = Node.from_sympy(
-        Symbol("p_1") * Heaviside(-Symbol("y"))
-        + Symbol("p_2") * Heaviside(Symbol("y")),
-        "p",
-    )
+
+    custom_nodes = [
+        Node.from_sympy(
+            Symbol("u_1") * Heaviside(-Symbol("y"))
+            + Symbol("u_2") * Heaviside(Symbol("y")),
+            "u",
+        )
+    ]
+    custom_nodes += [
+        Node.from_sympy(
+            Symbol("v_1") * Heaviside(-Symbol("y"))
+            + Symbol("v_2") * Heaviside(Symbol("y")),
+            "v",
+        )
+    ]
+    custom_nodes += [
+        Node.from_sympy(
+            Symbol("p_1") * Heaviside(-Symbol("y"))
+            + Symbol("p_2") * Heaviside(Symbol("y")),
+            "p",
+        )
+    ]
 
     nodes = (
         copies[0].make_nodes()
         + copies[1].make_nodes()
-        + [interface_node_1]
-        + [interface_node_2]
-        + [interface_node_3]
+        + interface_nodes
         + [flow_net_1.make_node(name="flow_network_1")]
         + [flow_net_2.make_node(name="flow_network_2")]
     )
 
-    nodes_infer = [custom_node_1] + [custom_node_2] + [custom_node_3]
+    nodes_infer = custom_nodes
 
     # add constraints to solver
     # make geometry

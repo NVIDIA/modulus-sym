@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added instructions for docker build on ARM architecture.
+- Added domain decomposition examples using X-PINN and FB-PINN style.
 
 ### Changed
 

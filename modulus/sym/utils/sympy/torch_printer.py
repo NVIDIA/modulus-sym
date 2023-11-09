@@ -72,8 +72,9 @@ def _where_torch(conditions, x, y):
     return torch.where(conditions, x, y)
 
 
-def _heaviside_torch(x):
-    return torch.maximum(torch.sign(x), torch.zeros(1, device=x.device))
+def _heaviside_torch(x, values=0.5):
+    values = torch.tensor([values]).to(x.device)
+    return torch.heaviside(x, values)
 
 
 def _sqrt_torch(x):

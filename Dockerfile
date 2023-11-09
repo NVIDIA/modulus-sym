@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:23.06-py3
+ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:23.10-py3
 FROM $BASE_CONTAINER as builder
 
 ARG TARGETPLATFORM
@@ -82,15 +82,15 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
 	cp libpysdf.so /external/lib/ && \
 	cd /external/pysdf && pip install . ; \
     elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
-	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.0.0-linux64.sh /modulus-sym/ && \
-	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.0.0-linux64.sh --skip-license --include-subdir --prefix=/root && \
+	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh /modulus-sym/ && \
+	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh --skip-license --include-subdir --prefix=/root && \
 	cd /root && \
 	wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
 	tar xvfz cmake-3.24.1-linux-x86_64.tar.gz && \
 	cp -r /modulus-sym/deps/external /external/ && \
 	mkdir /external/pysdf/build/ && \
 	cd /external/pysdf/build && \
-	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.0.0-linux64 -DCUDA_CUDA_LIBRARY="" && \
+	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64 -DCUDA_CUDA_LIBRARY="" && \
 	make -j && \
 	mkdir /external/lib && \
 	cp libpysdf.so /external/lib/ && \

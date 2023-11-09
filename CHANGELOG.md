@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
-- Updated base PyTorch container and Optix version
+- Updated base PyTorch container to 23.10 and Optix version to 7.3.0
 
 ## [1.2.0] - 2023-09-21
 

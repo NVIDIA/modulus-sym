@@ -11,9 +11,8 @@ such models can help solve real world problems.
 
 |Use case|Model|Level|Attributes|
 | --- | --- |  --- | --- |
-|Ldc| xx |Introductory|Steady state, Multi-GPU|
+|Ldc| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
 |Anti_derivative| xx |Introductory|Steady state, Multi-GPU|
-|Chip_2D| xx |Introductory|Steady state, Multi-GPU|
 |Darcy Flow| xx |Introductory|Steady state, Multi-GPU|
 |Discontinuous_galerkin| xx |Intermediate|Steady state, Multi-GPU|
 |ODE_spring_mass| xx |Introductory|Steady state, Multi-GPU|
@@ -43,6 +42,7 @@ such models can help solve real world problems.
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
+|Chip_2D| xx |Advanced|Steady state, Multi-GPU|
 |Three_fin_3D| Advanced |YES|Steady state, Multi-Node|
 |FPGA| xx |Advanced|Steady state, Multi-Node|
 |Limerock| xx |Advanced|Steady state, Multi-Node|

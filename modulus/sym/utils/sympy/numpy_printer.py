@@ -181,7 +181,9 @@ def _max_np(x, axis=None):
     return return_value
 
 
-def _heaviside_np(x, x2=0.5):
+def _heaviside_np(x, x2=0):
+    # force x2 to 0
+    x2 = 0
     return np.heaviside(x, x2)
 
 

@@ -6,7 +6,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 <!-- markdownlint-enable -->
 
-Modulus Symbolic (Modulus Sym) provides higher level pythonic APIs, algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes symbolic APIs for PDEs and boundary conditions, geometry modulus, PDE-based residuals. Please refer to the [DeepONet example](https://github.com/modulus/tree/physics_informed_deeponet/examples/cfd/darcy_deeponet_physics) that illustrated the concepts and Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
+Modulus Symbolic (Modulus Sym) provides higher level pythonic APIs, algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes symbolic APIs for PDEs and boundary conditions, geometry modulus, PDE-based residuals. Please refer to the [DeepONet example](https://github.com/modulus/tree/main/examples/cfd/darcy_deeponet_physics) that illustrated the concepts and Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
 Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html)
 for updating to the latest version.
 

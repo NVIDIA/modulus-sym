@@ -1,14 +1,14 @@
 # PINNs for simulating 2D seismic wave propagation
 
-This example uses PINNs for emulating 2D time-dependent seismic wave propagation using a simple domain geometry. This sample illustrates how to include custom PDEs,  xxx
+This example uses PINNs for emulating 2D time-dependent seismic wave propagation using a simple domain geometry. 
 
 ## Problem overview
-
+This sample illustrates how to solve the acoustiv wave equation
 You can get more details on this sample from the [documentation](https://docs.nvidia.com/deeplearning/modulus/modulus-sym-v110/user_guide/foundational/2d_wave_equation.html)
 
 ## Dataset
 
-This example does not require any Dataset as it solves of the wave propogation using the equations, the physical geometry and the boundary conditions.
+This example does not require any dataset as it solves of the acoustic wave equation, the physical geometry and the boundary conditions.
 
 ## Model overview and architecture
 

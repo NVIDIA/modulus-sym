@@ -6,8 +6,12 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 <!-- markdownlint-enable -->
 
-Modulus Symbolic (Modulus Sym) provides an abstraction layer for using PDE-based symbolic
-loss functions. Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
+Modulus Symbolic (Modulus Sym) provides pythonic APIs, algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes symbolic APIs for PDEs, domain sampling and PDE-based residuals. Please refer to the [DeepONet example](https://github.com/modulus/tree/main/examples/cfd/darcy_deeponet_physics) that illustrates the concept. 
+
+It also provides higher level abstraction to compose a training loop from specification of the geometry, PDEs and constraints like boundary conditions using simple symbolic APIs. 
+Please refer to the [Lid Driven cavity](https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/basics/lid_driven_cavity_flow.html) that illustrates the concept.
+Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
+
 Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html)
 for updating to the latest version.
 

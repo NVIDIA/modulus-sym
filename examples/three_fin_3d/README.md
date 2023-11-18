@@ -12,7 +12,7 @@ This example does not require any dataset as it solves of the Navier Stokes flow
 
 ## Model overview and architecture
 
-This is a multi-physics problem where we have to emulate both the flow and heat tranfer. This example has three neural networks - one for emulating the flow goverened by the Navier-Stokes equations, one for heat transfer in the fluid for Advection diffusion and one for heat transfer in the solid due to diffusion. We use a simple fully connected MLP for all three networks.
+This is a multi-physics problem where we have to emulate both the flow and heat tranfer. This example has three neural networks - one for emulating the flow governed by the Navier-Stokes equations, one for heat transfer in the fluid for Advection diffusion and one for heat transfer in the solid due to diffusion. We use a simple fully connected MLP for all three networks.
 
 ## Getting Started
 
@@ -30,4 +30,4 @@ python three_fin_design.py
 
 ## References
 
-- [Modulus Documentation](https://docs.nvidia.com/deeplearning/modulus/modulus-sym-v110/user_guide/advanced/parametrized_simulations.html)
+- [Modulus Documentation](https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/advanced/parametrized_simulations.html)

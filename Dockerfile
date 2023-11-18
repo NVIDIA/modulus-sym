@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:23.06-py3
+ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:23.10-py3
 FROM $BASE_CONTAINER as builder
 
 ARG TARGETPLATFORM
@@ -45,8 +45,8 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/vtk-9.2.
 
 # Install modulus sym dependencies
 RUN pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
-    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.5.1" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
-    "typing==3.7.4.3" "pillow==9.3.0" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.12" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==10.0.1" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
 
 # Install tiny-cuda-nn
 ENV TCNN_CUDA_ARCHITECTURES="60;70;75;80;86;90"
@@ -82,15 +82,15 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
 	cp libpysdf.so /external/lib/ && \
 	cd /external/pysdf && pip install . ; \
     elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
-	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.0.0-linux64.sh /modulus-sym/ && \
-	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.0.0-linux64.sh --skip-license --include-subdir --prefix=/root && \
+	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh /modulus-sym/ && \
+	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh --skip-license --include-subdir --prefix=/root && \
 	cd /root && \
 	wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
 	tar xvfz cmake-3.24.1-linux-x86_64.tar.gz && \
 	cp -r /modulus-sym/deps/external /external/ && \
 	mkdir /external/pysdf/build/ && \
 	cd /external/pysdf/build && \
-	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.0.0-linux64 -DCUDA_CUDA_LIBRARY="" && \
+	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64 -DCUDA_CUDA_LIBRARY="" && \
 	make -j && \
 	mkdir /external/lib && \
 	cp libpysdf.so /external/lib/ && \

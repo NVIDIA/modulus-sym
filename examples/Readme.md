@@ -12,54 +12,53 @@ such models can help solve real world problems.
 |Use case|Model|Level|Attributes|
 | --- | --- |  --- | --- |
 |Ldc| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
-|Anti_derivative| xx |Introductory|Steady state, Multi-GPU|
-|Darcy Flow| xx |Introductory|Steady state, Multi-GPU|
-|Discontinuous_galerkin| xx |Intermediate|Steady state, Multi-GPU|
-|ODE_spring_mass| xx |Introductory|Steady state, Multi-GPU|
-|Surface_pde| xx |Introductory|Steady state, Multi-GPU|
+|Anti_derivative| Data and Physics informed DeepONet |Introductory|Steady state, Multi-GPU|
+|Darcy Flow| FNO, AFNO, PINO |Introductory|Steady state, Multi-GPU|
+|ODE_spring_mass| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
+|Surface_pde| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
 
 ## Turbulence
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
-|Taylor_green| xx |YES|NO|
-|Turbulent_channel| xx |Intermediate|Steady state, Multi-GPU|
-|Super_resolution| xx |Intermediate|Steady state, Multi-GPU|
+|Taylor_green| Fully Connected MLP PINN | Intermediate |Steady state, Multi-GPU|
+|Turbulent_channel| Fourier Feature MLP PINN |Intermediate|Steady state, Multi-GPU|
+|Super_resolution| Super Resolution Network, Pix2Pix |Intermediate|Steady state, Multi-GPU|
 
 ## Electromagnetics
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
-|Waveguide| xx |Intermediate|Steady state, Multi-GPU|
+|Waveguide| Fourier Feature MLP PINN |Intermediate|Steady state, Multi-GPU|
 
 ## Solid Mechanics
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
-|Plane_displacement| xx |Intermediate|Steady state, Multi-GPU|
+|Plane_displacement| Fully Connected MLP PINN, VPINN |Intermediate|Steady state, Multi-GPU|
 
 ## Design Optimization
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
-|Chip_2D| xx |Advanced|Steady state, Multi-GPU|
-|Three_fin_3D| Advanced |YES|Steady state, Multi-Node|
-|FPGA| xx |Advanced|Steady state, Multi-Node|
-|Limerock| xx |Advanced|Steady state, Multi-Node|
+|Chip_2D| Fully Connected MLP PINN |Advanced|Steady state, Multi-GPU|
+|Three_fin_3D| Fully Connected MLP PINN | Advanced |Steady state, Multi-Node|
+|FPGA| Multiple Models (including Fourier Feature MLP PINN, SIRENS, etc.) |Advanced|Steady state, Multi-Node|
+|Limerock| Fourier Feature MLP PINN |Advanced|Steady state, Multi-Node|
 
 ## Geophyscis
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
-|Reservoir simulation| Advanced |YES|Steady state, Multi-Node|
-|Seismic wave| xx |Intermediate|Steady state, Multi-Node|
-|Wave_equation| xx |Intermediate|Steady state, Multi-Node|
+|Reservoir simulation| FNO, PINO | Advanced | Steady state, Multi-Node|
+|Seismic wave| Fully Connected MLP PINN |Intermediate|Steady state, Multi-Node|
+|Wave_equation| Fully Connected MLP PINN |Intermediate|Steady state, Multi-Node|
 
 ## Healthcare
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
-|Aneurysm| xx |Intermediate|Steady state, Multi-Node|
+|Aneurysm| Fully Connected MLP PINN |Intermediate|Steady state, Multi-Node|
 
 
 ## NVIDIA support

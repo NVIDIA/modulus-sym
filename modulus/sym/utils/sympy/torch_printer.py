@@ -72,7 +72,7 @@ def _where_torch(conditions, x, y):
     return torch.where(conditions, x, y)
 
 
-def _heaviside_torch(x):
+def _heaviside_torch(x, values=0):
     return torch.maximum(torch.sign(x), torch.zeros(1, device=x.device))
 
 

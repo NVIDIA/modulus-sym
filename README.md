@@ -6,17 +6,23 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 <!-- markdownlint-enable -->
 
-Modulus Symbolic (Modulus Sym) provides an abstraction layer for using PDE-based symbolic
-loss functions. Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
+Modulus Symbolic (Modulus Sym) provides pythonic APIs, algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes symbolic APIs for PDEs, domain sampling and PDE-based residuals.  
+
+It also provides higher level abstraction to compose a training loop from specification of the geometry, PDEs and constraints like boundary conditions using simple symbolic APIs. 
+Please refer to the [Lid Driven cavity](https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/basics/lid_driven_cavity_flow.html) that illustrates the concept.
+Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
+
 Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html)
 for updating to the latest version.
 
 ## Modulus Packages
 
-- [Modulus (Beta)](https://github.com/NVIDIA/modulus)
-- [Modulus Launch (Beta)](https://github.com/NVIDIA/modulus-launch)
-- [Modulus Symbolic (Beta)](https://github.com/NVIDIA/modulus-sym)
-- [Modulus Tool-Chain (Beta)](https://github.com/NVIDIA/modulus-toolchain)
+- [Modulus (Beta)](https://github.com/NVIDIA/modulus): Open-source deep-learning framework for building, training, and fine-tuning deep learning models using state-of-the-art Physics-ML methods.
+- [Modulus Symbolic (Beta)](https://github.com/NVIDIA/modulus-sym): Framework providing pythonic APIs, algorithms and utilities to be used with Modulus core to physics inform model training as well as higher level abstraction for domain experts.
+
+### Domain Specific Packages
+
+- [Earth-2 MIP (Beta)](https://github.com/NVIDIA/earth2mip): Python framework to enable climate researchers and scientists to explore and experiment with AI models for weather and climate.
 
 ## Installation
 
@@ -34,8 +40,8 @@ Install VTK from source as shown [here](https://gitlab.kitware.com/vtk/vtk/-/blo
 ```bash
 pip install nvidia-modulus.sym --no-deps
 pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
-    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.5.1" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
-    "typing==3.7.4.3" "pillow==9.3.0" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.12" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==10.0.1" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
 ```
 
 ### Container
@@ -43,7 +49,7 @@ pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.2
 The recommended Modulus docker image can be pulled from the [NVIDIA Container Registry](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/containers/modulus):
 
 ```bash
-docker pull nvcr.io/nvidia/modulus/modulus:23.09
+docker pull nvcr.io/nvidia/modulus/modulus:23.11
 ```
 
 ## From Source

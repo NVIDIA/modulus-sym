@@ -6,15 +6,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2023-11-xx
+## [1.4.0a0] - 2024-01-XX
 
 ### Added
 
-- Added instructions for docker build on ARM architecture.
-
 ### Changed
-
-- Integrated the network architecture layers into Modulus-Core.
 
 ### Deprecated
 
@@ -22,11 +18,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+### Security
+
+### Dependencies
+
+## [1.3.0] - 2023-11-20
+
+### Added
+
+- Added instructions for docker build on ARM architecture.
+- Added domain decomposition examples using X-PINN and FB-PINN style.
+
+### Changed
+
+- Integrated the network architecture layers into Modulus-Core.
+
+### Fixed
+
 - Fixed Gradient Aggregation bug.
 
 ### Security
 
+- Upgrade Pillow and Sympy to their latest versions.
+
 ### Dependencies
+
+- Updated base PyTorch container to 23.10 and Optix version to 7.3.0
 
 ## [1.2.0] - 2023-09-21
 

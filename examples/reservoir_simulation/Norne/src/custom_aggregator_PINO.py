@@ -1,27 +1,23 @@
-"""
-//////////////////////////////////////////////////////////////////////////////
-Copyright (C) NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-NVIDIA Sample Code
-
-Please refer to the NVIDIA end user license agreement (EULA) associated
-
-with this source code for terms and conditions that govern your use of
-
-this software. Any use, reproduction, disclosure, or distribution of
-
-this software and related documentation outside the terms of the EULA
-
-is strictly prohibited.
-
-//////////////////////////////////////////////////////////////////////////////
-@Author: Clement Etienam
-"""
 import torch
 from typing import Dict
 
 # Import from Modulus
 from modulus.loss.aggregator import Aggregator
+
 
 class CustomSum(Aggregator):
     """
@@ -61,14 +57,14 @@ class CustomSum(Aggregator):
         lambda_saturation = 1.0
         lambda_pressured = 0.1
         lambda_saturationd = 0.1
-# # Add losses
+        # # Add losses
         for key in losses.keys():
             if "pressure" in key:
-                loss += lambda_pressure*(1-decay_weight1)*((losses[key]))
-            if "water_sat" in key : 
-                loss += lambda_saturation*(1-decay_weight1)*((losses[key]))
-            if "pressured" in key : 
-                loss += lambda_pressured*(1-decay_weight1)*((losses[key]))
-            if "saturationd" in key : 
-                loss += lambda_saturationd*(1-decay_weight1)*((losses[key]))
+                loss += lambda_pressure * (1 - decay_weight1) * ((losses[key]))
+            if "water_sat" in key:
+                loss += lambda_saturation * (1 - decay_weight1) * ((losses[key]))
+            if "pressured" in key:
+                loss += lambda_pressured * (1 - decay_weight1) * ((losses[key]))
+            if "saturationd" in key:
+                loss += lambda_saturationd * (1 - decay_weight1) * ((losses[key]))
         return loss

@@ -1,25 +1,22 @@
-"""
-//////////////////////////////////////////////////////////////////////////////
-Copyright (C) NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-NVIDIA Sample Code
-
-Please refer to the NVIDIA end user license agreement (EULA) associated
-
-with this source code for terms and conditions that govern your use of
-
-this software. Any use, reproduction, disclosure, or distribution of
-
-this software and related documentation outside the terms of the EULA
-
-is strictly prohibited.
-
-//////////////////////////////////////////////////////////////////////////////
-"""
 import os
 import zipfile
 import gzip
 import pickle
+
 try:
     import gdown
 except:
@@ -83,7 +80,10 @@ def load_FNO_dataset(path, input_keys, output_keys, n_examples=None):
 
     return (invar, outvar)
 
-def load_FNO_dataset2(path, input_keys, output_keys1,output_keys2,output_keys3, n_examples=None):
+
+def load_FNO_dataset2(
+    path, input_keys, output_keys1, output_keys2, output_keys3, n_examples=None
+):
     "Loads a FNO dataset"
 
     if not path.endswith(".hdf5"):
@@ -98,8 +98,13 @@ def load_FNO_dataset2(path, input_keys, output_keys1,output_keys2,output_keys3, 
     print(f"loaded: {path}\navaliable keys: {_ks}")
 
     # parse data
-    invar, outvar1,outvar2,outvar3 = dict(), dict(),dict(),dict()
-    for d, keys in [(invar, input_keys), (outvar1, output_keys1), (outvar2, output_keys2), (outvar3, output_keys3) ]:
+    invar, outvar1, outvar2, outvar3 = dict(), dict(), dict(), dict()
+    for d, keys in [
+        (invar, input_keys),
+        (outvar1, output_keys1),
+        (outvar2, output_keys2),
+        (outvar3, output_keys3),
+    ]:
         for k in keys:
 
             # get data
@@ -116,7 +121,8 @@ def load_FNO_dataset2(path, input_keys, output_keys1,output_keys2,output_keys3, 
             d[k] = x
     del data
 
-    return (invar, outvar1,outvar2,outvar3)
+    return (invar, outvar1, outvar2, outvar3)
+
 
 def load_FNO_dataset2a(path, input_keys, output_keys1, n_examples=None):
     "Loads a FNO dataset"
@@ -134,7 +140,7 @@ def load_FNO_dataset2a(path, input_keys, output_keys1, n_examples=None):
 
     # parse data
     invar, outvar1 = dict(), dict()
-    for d, keys in [(invar, input_keys), (outvar1, output_keys1) ]:
+    for d, keys in [(invar, input_keys), (outvar1, output_keys1)]:
         for k in keys:
 
             # get data
@@ -152,7 +158,6 @@ def load_FNO_dataset2a(path, input_keys, output_keys1, n_examples=None):
     del data
 
     return (invar, outvar1)
-
 
 
 def load_FNO_dataset4(path, input_keys, n_examples=None):
@@ -188,7 +193,9 @@ def load_FNO_dataset4(path, input_keys, n_examples=None):
             d[k] = x
     del data
 
-    return (invar)
+    return invar
+
+
 def load_deeponet_dataset(
     path, input_keys, output_keys, n_examples=None, filter_size=8
 ):
@@ -203,7 +210,7 @@ def load_deeponet_dataset(
     for key, value in outvar.items():
         outvar[key] = value[:, :, ::filter_size, ::filter_size]
     res = next(iter(invar.values())).shape[-1]
-    nr_points_per_sample = res ** 2
+    nr_points_per_sample = res**2
 
     # tile invar
     tiled_invar = {
@@ -280,23 +287,25 @@ def _download_file_from_google_drive(id, path):
 
     # use gdown library to download file
     gdown.download(id=id, output=path)
-    
+
+
 def preprocess_FNO_mat2(path):
     "Convert a FNO .gz file to a hdf5 file, adding extra dimension to data arrays"
 
     assert path.endswith(".gz")
-    #data = scipy.io.loadmat(path)
-    with gzip.open(path, 'rb') as f1:
-         data = pickle.load(f1)    
+    # data = scipy.io.loadmat(path)
+    with gzip.open(path, "rb") as f1:
+        data = pickle.load(f1)
 
     ks = [k for k in data.keys() if not k.startswith("__")]
     with h5py.File(path[:-4] + ".hdf5", "w") as f:
         for k in ks:
-            #x = np.expand_dims(data[k], axis=1)  # N, C, H, W
+            # x = np.expand_dims(data[k], axis=1)  # N, C, H, W
             x = data[k]
             f.create_dataset(
-                k, data=x, dtype="float16",compression="gzip",compression_opts=9 
+                k, data=x, dtype="float16", compression="gzip", compression_opts=9
             )  # note h5 files larger than .mat because no compression used
+
 
 def preprocess_FNO_mat(path):
     "Convert a FNO .mat file to a hdf5 file, adding extra dimension to data arrays"
@@ -306,9 +315,9 @@ def preprocess_FNO_mat(path):
     ks = [k for k in data.keys() if not k.startswith("__")]
     with h5py.File(path[:-4] + ".hdf5", "w") as f:
         for k in ks:
-            #x = np.expand_dims(data[k], axis=1)  # N, C, H, W
+            # x = np.expand_dims(data[k], axis=1)  # N, C, H, W
             x = data[k]
             x = x.astype(np.float16)
             f.create_dataset(
-                k, data=x, dtype="float16",compression="gzip",compression_opts=9 
+                k, data=x, dtype="float16", compression="gzip", compression_opts=9
             )  # note h5 files larger than .mat because no compression used

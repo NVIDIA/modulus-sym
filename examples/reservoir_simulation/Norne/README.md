@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # Automatic History Matching with a coupled Mixture of experts - Weighted adaptive Regularised Ensemble Kalman Inversion ($`\alpha`$REKI) scheme and a Physics Informed Neural Operator (PINO) based surrogate forward model on the Norne Field 
 ![alt text](Visuals/All1.png)
 
@@ -479,7 +480,7 @@ sudo chmod +x ./scripts/docker/docker-run.sh
 
 
 ### Run
-**OPM Flow ** is a fully CPU based Black oil reservoir simulator.
+**OPM Flow** is a fully CPU based Black oil reservoir simulator.
 
 [link](https://opm-project.org/?page_id=19 )
 
@@ -494,11 +495,17 @@ cd **work folder**
 ```
 - where **work folder** is the location you downloaded the code base to.
 
+- Download the supplemental material.
+
 - Run the Forward Problem surrogation with PINO  via the **src** folder.
 
 ##### Bare Metal
 ```bash
 conda activate MDLO 
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Execute_POC.py
 cd ..
@@ -507,6 +514,10 @@ conda deactivate
 
 ##### Docker
 ```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Execute_POC.py
 cd ..
@@ -522,6 +533,10 @@ cd ..
 ##### Bare Metal
 ```bash
 conda activate MDLO
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Compare_FVM_Surrogate.py
 cd ..
@@ -530,6 +545,10 @@ conda deactivate
 
 ##### Docker
 ```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Compare_FVM_Surrogate.py
 cd ..
@@ -543,6 +562,10 @@ cd ..
 ##### Bare Metal
 ```bash
 conda activate MDLO
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Inverse_problem.py
 cd ..
@@ -551,6 +574,10 @@ conda deactivate
 
 ##### Docker
 ```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Inverse_problem.py
 cd ..
@@ -836,3 +863,4 @@ Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agree
 
 [55] Zongyi Li, Hongkai Zheng, Nikola Kovachki, David Jin, Haoxuan Chen, Burigede Liu, Kamyar Azizzadenesheli, Anima Anandkumar.Physics-Informed Neural Operator for Learning Partial Differential Equations. https://arxiv.org/pdf/2111.03794.pdf
 
+<!-- markdownlint-enable -->

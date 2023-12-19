@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.models.fully_connected import FullyConnectedArch
-import torch
 import numpy as np
 from pathlib import Path
 from modulus.sym.key import Key
@@ -36,35 +36,32 @@ def make_dict(nr_layers):
     return _dict
 
 
-@pytest.mark.parametrize("jit", [True, False])
+@pytest.mark.parametrize("jit", [False])
 def test_fully_connected(jit):
     filename = dir_path / "data/test_fully_connected.npz"
     test_data = np.load(filename, allow_pickle=True)
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]
     params = test_data["params"][()]
-    # create graph
     arch = FullyConnectedArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
         layer_size=params["layer_size"],
         nr_layers=params["nr_layers"],
     )
-    if jit:
-        arch = torch.jit.script(arch)
     name_dict = make_dict(params["nr_layers"])
     for _name, _tensor in arch.named_parameters():
-        if _tensor.requires_grad:
-            _tensor.data = torch.from_numpy(Wbs[name_dict[_name]].T)
-
+        if not _tensor.stop_gradient:
+            _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]].T)
     data_out2 = arch(
-        {"x": torch.from_numpy(data_in[:, 0:1]), "y": torch.from_numpy(data_in[:, 1:2])}
+        {
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
+        }
     )
     data_out2 = data_out2["u"].detach().numpy()
-    # load outputs
     data_out1 = test_data["data_out"]
-    # verify
-    assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
+    assert np.allclose(data_out1, data_out2, rtol=0.001), "Test failed!"
     print("Success!")
 
 
@@ -85,61 +82,46 @@ def validate_func_arch_fully_connected(
     "input_keys",
     [
         [Key("x"), Key("y")],
-        [Key("x"), Key("y", scale=(1.0, 2.0))],  # input scale
-        [Key("x"), Key("z", size=100), Key("y")],  # input size larger than 1
+        [Key("x"), Key("y", scale=(1.0, 2.0))],
+        [Key("x"), Key("z", size=100), Key("y")],
     ],
 )
 @pytest.mark.parametrize(
     "output_keys",
     [
         [Key("u"), Key("v"), Key("p")],
-        # output scale and output size larger than 1
         [Key("u"), Key("v"), Key("p", scale=(1.0, 2.0)), Key("w", size=100)],
     ],
 )
 @pytest.mark.parametrize(
     "periodicity",
-    [
-        {},
-        {"x": (0.0, 2 * torch.pi)},
-        {"x": (0.0, 2 * torch.pi), "y": (torch.pi, 4 * torch.pi)},
-    ],
+    [{}, {"x": (0.0, 2 * np.pi)}, {"x": (0.0, 2 * np.pi), "y": (np.pi, 4 * np.pi)}],
 )
 @pytest.mark.parametrize("validate_with_dict_forward", [True, False])
 def test_func_arch_fully_connected(
     input_keys, output_keys, periodicity, validate_with_dict_forward
 ):
-    # need full jacobian
-    deriv_keys = [
-        Key.from_str("u__x"),
-        Key.from_str("v__y"),
-        Key.from_str("p__x"),
-    ]
+    deriv_keys = [Key.from_str("u__x"), Key.from_str("v__y"), Key.from_str("p__x")]
     ft_net = validate_func_arch_fully_connected(
         input_keys, output_keys, periodicity, deriv_keys, validate_with_dict_forward
     )
-    assert torch.allclose(ft_net.needed_output_dims, torch.tensor([0, 1, 2]))
-
-    # need partial jacobian
-    deriv_keys = [
-        Key.from_str("u__x"),
-        Key.from_str("p__x"),
-    ]
+    assert paddle.allclose(
+        x=ft_net.needed_output_dims, y=paddle.to_tensor(data=[0, 1, 2])
+    ).item()
+    deriv_keys = [Key.from_str("u__x"), Key.from_str("p__x")]
     ft_net = validate_func_arch_fully_connected(
         input_keys, output_keys, periodicity, deriv_keys, validate_with_dict_forward
     )
-    assert torch.allclose(ft_net.needed_output_dims, torch.tensor([0, 2]))
-
-    # need partial jacobian
-    deriv_keys = [
-        Key.from_str("v__y"),
-    ]
+    assert paddle.allclose(
+        x=ft_net.needed_output_dims, y=paddle.to_tensor(data=[0, 2])
+    ).item()
+    deriv_keys = [Key.from_str("v__y")]
     ft_net = validate_func_arch_fully_connected(
         input_keys, output_keys, periodicity, deriv_keys, validate_with_dict_forward
     )
-    assert torch.allclose(ft_net.needed_output_dims, torch.tensor([1]))
-
-    # need full hessian
+    assert paddle.allclose(
+        x=ft_net.needed_output_dims, y=paddle.to_tensor(data=[1])
+    ).item()
     deriv_keys = [
         Key.from_str("u__x__x"),
         Key.from_str("v__y__y"),
@@ -148,9 +130,9 @@ def test_func_arch_fully_connected(
     ft_net = validate_func_arch_fully_connected(
         input_keys, output_keys, periodicity, deriv_keys, validate_with_dict_forward
     )
-    assert torch.allclose(ft_net.needed_output_dims, torch.tensor([0, 1, 2]))
-
-    # need full hessian
+    assert paddle.allclose(
+        x=ft_net.needed_output_dims, y=paddle.to_tensor(data=[0, 1, 2])
+    ).item()
     deriv_keys = [
         Key.from_str("u__x__x"),
         Key.from_str("v__y__y"),
@@ -159,17 +141,16 @@ def test_func_arch_fully_connected(
     ft_net = validate_func_arch_fully_connected(
         input_keys, output_keys, periodicity, deriv_keys, validate_with_dict_forward
     )
-    assert torch.allclose(ft_net.needed_output_dims, torch.tensor([0, 1, 2]))
-
-    # need partial hessian
-    deriv_keys = [
-        Key.from_str("u__x__x"),
-        Key.from_str("p__x__x"),
-    ]
+    assert paddle.allclose(
+        x=ft_net.needed_output_dims, y=paddle.to_tensor(data=[0, 1, 2])
+    ).item()
+    deriv_keys = [Key.from_str("u__x__x"), Key.from_str("p__x__x")]
     ft_net = validate_func_arch_fully_connected(
         input_keys, output_keys, periodicity, deriv_keys, validate_with_dict_forward
     )
-    assert torch.allclose(ft_net.needed_output_dims, torch.tensor([0, 2]))
+    assert paddle.allclose(
+        x=ft_net.needed_output_dims, y=paddle.to_tensor(data=[0, 2])
+    ).item()
 
 
 if __name__ == "__main__":

@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 import modulus
 from modulus.sym.hydra import to_yaml, instantiate_arch
 from modulus.sym.hydra.config import ModulusConfig
 from modulus.sym.models.afno.distributed import DistributedAFNONet
 from modulus.sym.distributed.manager import DistributedManager
-
 import os
-import torch
 
-# Set model parallel size to 2
 os.environ["MODEL_PARALLEL_SIZE"] = "2"
 
 
@@ -32,20 +30,15 @@ def run(cfg: ModulusConfig) -> None:
     in_chans = 3
     out_chans = 10
     embed_dim = 768
-
     manager = DistributedManager()
-
-    # Check that GPUs are available
     if not manager.cuda:
         print("WARNING: No GPUs available. Exiting...")
         return
-    # Check that world_size is a multiple of model parallel size
     if manager.world_size % 2 != 0:
         print(
             "WARNING: Total world size not a multiple of model parallel size (2). Exiting..."
         )
         return
-
     model = DistributedAFNONet(
         img_size=(720, 1440),
         patch_size=(4, 4),
@@ -54,47 +47,33 @@ def run(cfg: ModulusConfig) -> None:
         embed_dim=embed_dim,
         input_is_matmul_parallel=input_is_matmul_parallel,
         output_is_matmul_parallel=output_is_matmul_parallel,
-    ).to(manager.device)
-
+    ).to(manager.place)
     model_rank = manager.group_rank(name="model_parallel")
     model_size = manager.group_size(name="model_parallel")
-
-    # Check that model is using the correct local embedding size
     expected_embed_dim_local = embed_dim // model_size
     assert (
         model.embed_dim_local == expected_embed_dim_local
     ), f"Incorrect local embedding size. Expected {expected_embed_dim_local}, got {model.embed_dim_local}"
-
-    sample = torch.randn(1, in_chans, 720, 1440)
-
+    sample = paddle.randn(shape=[1, in_chans, 720, 1440])
     local_in_chans_start = 0
     local_in_chans_end = in_chans
     if input_is_matmul_parallel:
         chunk = (in_chans + model_size - 1) // model_size
         local_in_chans_start = model_rank * chunk
         local_in_chans_end = min(in_chans, local_in_chans_start + chunk)
-
-    # Get sample and run through the model
-    local_sample = (sample[:, local_in_chans_start:local_in_chans_end, :, :]).to(
-        manager.device
+    local_sample = sample[:, local_in_chans_start:local_in_chans_end, :, :].to(
+        manager.place
     )
-
-    # Run model in a loop
     for i in range(4):
-        # Forward pass
         local_result = model(local_sample)
-        # Compute loss
-        loss = torch.square(local_result).sum()
-        # Backward pass
+        loss = paddle.square(x=local_result).sum()
         loss.backward()
-
     local_out_chans = out_chans
     if output_is_matmul_parallel:
         chunk = (out_chans + model_size - 1) // model_size
         local_out_chans_start = model_rank * chunk
         local_out_chans_end = min(out_chans, local_out_chans_start + chunk)
         local_out_chans = local_out_chans_end - local_out_chans_start
-
     expected_result_shape = [1, local_out_chans, 720, 1440]
     local_result_shape = list(local_result.shape)
     assert (

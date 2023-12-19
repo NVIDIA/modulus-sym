@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.eq.pdes.basic import GradNormal, Curl
-import torch
 import numpy as np
 import os
 
 
 def test_normal_gradient_equation():
-    # test data for normal gradient
     x = np.random.rand(1024, 1)
     y = np.random.rand(1024, 1)
     z = np.random.rand(1024, 1)
@@ -27,40 +26,32 @@ def test_normal_gradient_equation():
     normal_x = np.random.rand(1024, 1)
     normal_y = np.random.rand(1024, 1)
     normal_z = np.random.rand(1024, 1)
-
     u = np.exp(2 * x + y + z + t)
     u__x = 2 * np.exp(2 * x + y + z + t)
     u__y = 1 * np.exp(2 * x + y + z + t)
     u__z = 1 * np.exp(2 * x + y + z + t)
-
     normal_gradient_u_true = normal_x * u__x + normal_y * u__y + normal_z * u__z
-
     normal_gradient_eq = GradNormal(T="u", dim=3, time=True)
     evaluations = normal_gradient_eq.make_nodes()[0].evaluate(
         {
-            "u__x": torch.tensor(u__x, dtype=torch.float32),
-            "u__y": torch.tensor(u__y, dtype=torch.float32),
-            "u__z": torch.tensor(u__z, dtype=torch.float32),
-            "normal_x": torch.tensor(normal_x, dtype=torch.float32),
-            "normal_y": torch.tensor(normal_y, dtype=torch.float32),
-            "normal_z": torch.tensor(normal_z, dtype=torch.float32),
+            "u__x": paddle.to_tensor(data=u__x, dtype="float32"),
+            "u__y": paddle.to_tensor(data=u__y, dtype="float32"),
+            "u__z": paddle.to_tensor(data=u__z, dtype="float32"),
+            "normal_x": paddle.to_tensor(data=normal_x, dtype="float32"),
+            "normal_y": paddle.to_tensor(data=normal_y, dtype="float32"),
+            "normal_z": paddle.to_tensor(data=normal_z, dtype="float32"),
         }
     )
-
     normal_gradient_u_eval_pred = evaluations["normal_gradient_u"].numpy()
-
-    # verify PDE computation
     assert np.allclose(
         normal_gradient_u_eval_pred, normal_gradient_u_true
     ), "Test Failed!"
 
 
 def test_curl():
-    # test data for curl equation
     x = np.random.rand(1024, 1)
     y = np.random.rand(1024, 1)
     z = np.random.rand(1024, 1)
-
     a = np.exp(2 * x + y + z)
     b = np.exp(x + 2 * y + z)
     c = np.exp(x + y + 2 * z)
@@ -73,39 +64,34 @@ def test_curl():
     c__x = 1 * np.exp(x + y + 2 * z)
     c__y = 1 * np.exp(x + y + 2 * z)
     c__z = 2 * np.exp(x + y + 2 * z)
-
     u_true = c__y - b__z
     v_true = a__z - c__x
     w_true = b__x - a__y
-
     curl_eq = Curl(("a", "b", "c"), ("u", "v", "w"))
     evaluations_u = curl_eq.make_nodes()[0].evaluate(
         {
-            "c__y": torch.tensor(c__y, dtype=torch.float32),
-            "b__z": torch.tensor(b__z, dtype=torch.float32),
+            "c__y": paddle.to_tensor(data=c__y, dtype="float32"),
+            "b__z": paddle.to_tensor(data=b__z, dtype="float32"),
         }
     )
     evaluations_v = curl_eq.make_nodes()[1].evaluate(
         {
-            "a__z": torch.tensor(a__z, dtype=torch.float32),
-            "c__x": torch.tensor(c__x, dtype=torch.float32),
+            "a__z": paddle.to_tensor(data=a__z, dtype="float32"),
+            "c__x": paddle.to_tensor(data=c__x, dtype="float32"),
         }
     )
     evaluations_w = curl_eq.make_nodes()[2].evaluate(
         {
-            "b__x": torch.tensor(b__x, dtype=torch.float32),
-            "a__y": torch.tensor(a__y, dtype=torch.float32),
+            "b__x": paddle.to_tensor(data=b__x, dtype="float32"),
+            "a__y": paddle.to_tensor(data=a__y, dtype="float32"),
         }
     )
-
     u_eval_pred = evaluations_u["u"].numpy()
     v_eval_pred = evaluations_v["v"].numpy()
     w_eval_pred = evaluations_w["w"].numpy()
-
-    # verify PDE computation
-    assert np.allclose(u_eval_pred, u_true, atol=1e-4), "Test Failed!"
-    assert np.allclose(v_eval_pred, v_true, atol=1e-4), "Test Failed!"
-    assert np.allclose(w_eval_pred, w_true, atol=1e-4), "Test Failed!"
+    assert np.allclose(u_eval_pred, u_true, atol=0.0001), "Test Failed!"
+    assert np.allclose(v_eval_pred, v_true, atol=0.0001), "Test Failed!"
+    assert np.allclose(w_eval_pred, w_true, atol=0.0001), "Test Failed!"
 
 
 if __name__ == "__main__":

@@ -17,12 +17,12 @@ from typing import Dict, List, Union, Optional, Tuple
 import paddle
 import paddle.nn as nn
 from paddle import Tensor
-import F as F
+import paddle.nn.functional as F
 import numpy as np
 import logging
 
 import modulus.sym.models.layers as layers
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation
 from modulus.sym.models.layers.spectral_layers import (
     calc_latent_derivatives,
     first_order_pino_grads,
@@ -32,7 +32,8 @@ from modulus.sym.models.arch import Arch
 from modulus.sym.models.fully_connected import ConvFullyConnectedArch
 from modulus.sym.key import Key
 from modulus.sym.node import Node
-from modulus.sym.constants import JIT_PYTORCH_VERSION
+
+# from modulus.sym.constants import JIT_PYTORCH_VERSION
 
 logger = logging.getLogger(__name__)
 

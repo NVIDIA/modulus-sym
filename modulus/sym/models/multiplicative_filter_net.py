@@ -19,9 +19,9 @@ import paddle
 import paddle.nn as nn
 from paddle import Tensor
 
-import modulus.sym.models.layers as layers
+from modulus.models.layers import FCLayer, FourierFilter, GaborFilter
 from modulus.sym.models.arch import Arch
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation
 from modulus.sym.key import Key
 from modulus.sym.constants import NO_OP_NORM
 

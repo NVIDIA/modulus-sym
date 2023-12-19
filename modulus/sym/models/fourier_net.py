@@ -18,7 +18,7 @@ from typing import Dict, List, Tuple
 
 import modulus.sym.models.fully_connected as fully_connected
 import modulus.sym.models.layers as layers
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 

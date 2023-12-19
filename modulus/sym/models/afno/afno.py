@@ -310,7 +310,7 @@ class AFNONet(nn.Layer):
         self.patch_size = patch_size
         self.num_features = self.embed_dim = embed_dim
         self.num_blocks = num_blocks
-        norm_layer = partial(nn.LayerNorm, eps=1e-06)
+        norm_layer = partial(nn.LayerNorm, epsilon=1e-06)
 
         self.patch_embed = PatchEmbed(
             img_size=img_size,
@@ -351,12 +351,12 @@ class AFNONet(nn.Layer):
             out_features=self.out_chans * self.patch_size[0] * self.patch_size[1],
             bias_attr=False,
         )
-        nn.initializer.TruncNormal(std=0.02)(self.pos_embed)
+        nn.initializer.TruncatedNormal(std=0.02)(self.pos_embed)
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
-            nn.initializer.TruncNormal(std=0.02)(m.weight)
+            nn.initializer.TruncatedNormal(std=0.02)(m.weight)
             if isinstance(m, nn.Linear) and m.bias is not None:
                 init_Constant = nn.initializer.Constant(0)
                 init_Constant(m.bias)

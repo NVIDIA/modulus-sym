@@ -41,7 +41,7 @@ from .domain.constraint import Constraint
 from .domain import Domain
 from .loss.aggregator import Sum
 from .utils.training.stop_criterion import StopCriterion
-from .constants import TF_SUMMARY, JIT_PYTORCH_VERSION
+from .constants import TF_SUMMARY
 from .hydra import (
     instantiate_optim,
     instantiate_agg,

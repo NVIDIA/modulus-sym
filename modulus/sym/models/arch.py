@@ -25,10 +25,11 @@ from typing import Optional, Callable, List, Dict, Union, Tuple
 from modulus.sym.constants import NO_OP_SCALE
 from modulus.sym.key import Key
 from modulus.sym.node import Node
-from modulus.sym.constants import JIT_PYTORCH_VERSION
+
+# from modulus.sym.constants import JIT_PYTORCH_VERSION
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.manager import JitManager, JitArchMode
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation
 
 logger = logging.getLogger(__name__)
 
@@ -154,15 +155,15 @@ class Arch(nn.Layer):
                 "jit is not supported in paddle backend now, please set 'jit: False' "
                 "in config yaml."
             )
-            if not paddle.__version__ == JIT_PYTORCH_VERSION:
-                logger.warning(
-                    f"Installed Paddle version {paddle.__version__} is not TorchScript"
-                    + f" supported in Modulus. Version {JIT_PYTORCH_VERSION} is officially supported."
-                )
+            # if not paddle.__version__ == JIT_PYTORCH_VERSION:
+            #     logger.warning(
+            #         f"Installed Paddle version {paddle.__version__} is not TorchScript"
+            #         + f" supported in Modulus. Version {JIT_PYTORCH_VERSION} is officially supported."
+            #     )
 
-            arch = paddle.jit.to_static(self)
-            node_name = "Arch Node (jit): " + ("" if name is None else str(name))
-            logger.info("Jit compiling network arch")
+            # arch = paddle.jit.to_static(self)
+            # node_name = "Arch Node (jit): " + ("" if name is None else str(name))
+            # logger.info("Jit compiling network arch")
         else:
             arch = self
             node_name = "Arch Node: " + ("" if name is None else str(name))

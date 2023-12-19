@@ -12,28 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.eq.pdes.navier_stokes import NavierStokes
-import torch
 import numpy as np
 import os
 
 
 def test_navier_stokes_equation():
-    # test data for navier stokes equation
     x = np.random.rand(1024, 1)
     y = np.random.rand(1024, 1)
     z = np.random.rand(1024, 1)
     t = np.random.rand(1024, 1)
-
     u = np.exp(2 * x + y + z + t)
     v = np.exp(x + 2 * y + z + t)
     w = np.exp(x + y + 2 * z + t)
     p = np.exp(x + y + z + t)
-
     rho = 1.0
-
     nu = 0.2
-
     u__t = 1 * np.exp(2 * x + y + z + t)
     u__x = 2 * np.exp(2 * x + y + z + t)
     u__y = 1 * np.exp(2 * x + y + z + t)
@@ -47,7 +42,6 @@ def test_navier_stokes_equation():
     u__y__x = u__x__y
     u__z__x = u__x__z
     u__z__y = u__y__z
-
     v__t = 1 * np.exp(x + 2 * y + z + t)
     v__x = 1 * np.exp(x + 2 * y + z + t)
     v__y = 2 * np.exp(x + 2 * y + z + t)
@@ -61,7 +55,6 @@ def test_navier_stokes_equation():
     v__y__x = v__x__y
     v__z__x = v__x__z
     v__z__y = v__y__z
-
     w__t = 1 * np.exp(x + y + 2 * z + t)
     w__x = 1 * np.exp(x + y + 2 * z + t)
     w__y = 1 * np.exp(x + y + 2 * z + t)
@@ -75,11 +68,9 @@ def test_navier_stokes_equation():
     w__y__x = w__x__y
     w__z__x = w__x__z
     w__z__y = w__y__z
-
     p__x = 1 * np.exp(x + y + z + t)
     p__y = 1 * np.exp(x + y + z + t)
     p__z = 1 * np.exp(x + y + z + t)
-
     continuity_equation_true = 0 + rho * u__x + rho * v__y + rho * w__z
     momentum_x_equation_true = (
         rho * u__t
@@ -111,67 +102,63 @@ def test_navier_stokes_equation():
         - rho * nu * w__y__y
         - rho * nu * w__z__z
     )
-
     navier_stokes_eq = NavierStokes(nu=nu, rho=rho, dim=3, time=True)
     evaluations_continuity = navier_stokes_eq.make_nodes()[0].evaluate(
         {
-            "u__x": torch.tensor(u__x, dtype=torch.float32),
-            "v__y": torch.tensor(v__y, dtype=torch.float32),
-            "w__z": torch.tensor(w__z, dtype=torch.float32),
+            "u__x": paddle.to_tensor(data=u__x, dtype="float32"),
+            "v__y": paddle.to_tensor(data=v__y, dtype="float32"),
+            "w__z": paddle.to_tensor(data=w__z, dtype="float32"),
         }
     )
     evaluations_momentum_x = navier_stokes_eq.make_nodes()[1].evaluate(
         {
-            "u__t": torch.tensor(u__t, dtype=torch.float32),
-            "u__x": torch.tensor(u__x, dtype=torch.float32),
-            "u__y": torch.tensor(u__y, dtype=torch.float32),
-            "u__z": torch.tensor(u__z, dtype=torch.float32),
-            "u__x__x": torch.tensor(u__x__x, dtype=torch.float32),
-            "u__y__y": torch.tensor(u__y__y, dtype=torch.float32),
-            "u__z__z": torch.tensor(u__z__z, dtype=torch.float32),
-            "p__x": torch.tensor(p__x, dtype=torch.float32),
-            "u": torch.tensor(u, dtype=torch.float32),
-            "v": torch.tensor(v, dtype=torch.float32),
-            "w": torch.tensor(w, dtype=torch.float32),
+            "u__t": paddle.to_tensor(data=u__t, dtype="float32"),
+            "u__x": paddle.to_tensor(data=u__x, dtype="float32"),
+            "u__y": paddle.to_tensor(data=u__y, dtype="float32"),
+            "u__z": paddle.to_tensor(data=u__z, dtype="float32"),
+            "u__x__x": paddle.to_tensor(data=u__x__x, dtype="float32"),
+            "u__y__y": paddle.to_tensor(data=u__y__y, dtype="float32"),
+            "u__z__z": paddle.to_tensor(data=u__z__z, dtype="float32"),
+            "p__x": paddle.to_tensor(data=p__x, dtype="float32"),
+            "u": paddle.to_tensor(data=u, dtype="float32"),
+            "v": paddle.to_tensor(data=v, dtype="float32"),
+            "w": paddle.to_tensor(data=w, dtype="float32"),
         }
     )
     evaluations_momentum_y = navier_stokes_eq.make_nodes()[2].evaluate(
         {
-            "v__t": torch.tensor(v__t, dtype=torch.float32),
-            "v__x": torch.tensor(v__x, dtype=torch.float32),
-            "v__y": torch.tensor(v__y, dtype=torch.float32),
-            "v__z": torch.tensor(v__z, dtype=torch.float32),
-            "v__x__x": torch.tensor(v__x__x, dtype=torch.float32),
-            "v__y__y": torch.tensor(v__y__y, dtype=torch.float32),
-            "v__z__z": torch.tensor(v__z__z, dtype=torch.float32),
-            "p__y": torch.tensor(p__y, dtype=torch.float32),
-            "u": torch.tensor(u, dtype=torch.float32),
-            "v": torch.tensor(v, dtype=torch.float32),
-            "w": torch.tensor(w, dtype=torch.float32),
+            "v__t": paddle.to_tensor(data=v__t, dtype="float32"),
+            "v__x": paddle.to_tensor(data=v__x, dtype="float32"),
+            "v__y": paddle.to_tensor(data=v__y, dtype="float32"),
+            "v__z": paddle.to_tensor(data=v__z, dtype="float32"),
+            "v__x__x": paddle.to_tensor(data=v__x__x, dtype="float32"),
+            "v__y__y": paddle.to_tensor(data=v__y__y, dtype="float32"),
+            "v__z__z": paddle.to_tensor(data=v__z__z, dtype="float32"),
+            "p__y": paddle.to_tensor(data=p__y, dtype="float32"),
+            "u": paddle.to_tensor(data=u, dtype="float32"),
+            "v": paddle.to_tensor(data=v, dtype="float32"),
+            "w": paddle.to_tensor(data=w, dtype="float32"),
         }
     )
     evaluations_momentum_z = navier_stokes_eq.make_nodes()[3].evaluate(
         {
-            "w__t": torch.tensor(w__t, dtype=torch.float32),
-            "w__x": torch.tensor(w__x, dtype=torch.float32),
-            "w__y": torch.tensor(w__y, dtype=torch.float32),
-            "w__z": torch.tensor(w__z, dtype=torch.float32),
-            "w__x__x": torch.tensor(w__x__x, dtype=torch.float32),
-            "w__y__y": torch.tensor(w__y__y, dtype=torch.float32),
-            "w__z__z": torch.tensor(w__z__z, dtype=torch.float32),
-            "p__z": torch.tensor(p__z, dtype=torch.float32),
-            "u": torch.tensor(u, dtype=torch.float32),
-            "v": torch.tensor(v, dtype=torch.float32),
-            "w": torch.tensor(w, dtype=torch.float32),
+            "w__t": paddle.to_tensor(data=w__t, dtype="float32"),
+            "w__x": paddle.to_tensor(data=w__x, dtype="float32"),
+            "w__y": paddle.to_tensor(data=w__y, dtype="float32"),
+            "w__z": paddle.to_tensor(data=w__z, dtype="float32"),
+            "w__x__x": paddle.to_tensor(data=w__x__x, dtype="float32"),
+            "w__y__y": paddle.to_tensor(data=w__y__y, dtype="float32"),
+            "w__z__z": paddle.to_tensor(data=w__z__z, dtype="float32"),
+            "p__z": paddle.to_tensor(data=p__z, dtype="float32"),
+            "u": paddle.to_tensor(data=u, dtype="float32"),
+            "v": paddle.to_tensor(data=v, dtype="float32"),
+            "w": paddle.to_tensor(data=w, dtype="float32"),
         }
     )
-
     continuity_eq_eval_pred = evaluations_continuity["continuity"].numpy()
     momentum_x_eq_eval_pred = evaluations_momentum_x["momentum_x"].numpy()
     momentum_y_eq_eval_pred = evaluations_momentum_y["momentum_y"].numpy()
     momentum_z_eq_eval_pred = evaluations_momentum_z["momentum_z"].numpy()
-
-    # verify PDE computation
     assert np.allclose(
         continuity_eq_eval_pred, continuity_equation_true
     ), "Test Failed!"

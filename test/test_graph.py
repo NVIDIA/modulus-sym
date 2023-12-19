@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+import paddle
 import time
-import torch
 from typing import Dict, List, Optional
 from modulus.sym.key import Key
 from modulus.sym.constants import diff
@@ -22,65 +23,68 @@ from modulus.sym.graph import Graph
 from modulus.sym.eq.derivatives import MeshlessFiniteDerivative
 
 
-class Model(torch.nn.Module):
+class Model(paddle.nn.Layer):
     def __init__(self):
         super().__init__()
 
-    def forward(self, inputs: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, inputs: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
         x, y, z = inputs["x"], inputs["y"], inputs["z"]
         return {
-            "u": 1.5 * x * x + torch.sin(y) + torch.exp(z),
-            "v": 2 * x * x + torch.cos(y) + torch.exp(-z),
-            "w": 1.5 * x * x + torch.sin(y) + torch.exp(z),
-            "p": 2 * x * x + torch.cos(y) + torch.exp(-z),
+            "u": 1.5 * x * x + paddle.sin(x=y) + paddle.exp(x=z),
+            "v": 2 * x * x + paddle.cos(x=y) + paddle.exp(x=-z),
+            "w": 1.5 * x * x + paddle.sin(x=y) + paddle.exp(x=z),
+            "p": 2 * x * x + paddle.cos(x=y) + paddle.exp(x=-z),
         }
 
 
-class Loss(torch.nn.Module):
+class Loss(paddle.nn.Layer):
     def __init__(self):
         super().__init__()
         self.input_keys: List[str] = [diff("u", "x"), diff("v", "y"), diff("w", "z")]
 
-    def forward(self, inputs: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, inputs: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
         divergence = (
             inputs[self.input_keys[0]]
             + inputs[self.input_keys[1]]
             + inputs[self.input_keys[2]]
         )
-        return {"divergence_loss": torch.square(divergence).mean()}
+        return {"divergence_loss": paddle.square(x=divergence).mean()}
 
 
-def validate_divergence_loss(x, y, z, divergence_loss, rtol=1e-5, atol=1e-8):
+def validate_divergence_loss(x, y, z, divergence_loss, rtol=1e-05, atol=1e-08):
     dudx = 3 * x
-    dvdy = -torch.sin(y)
-    dwdz = torch.exp(z)
-    divergence_loss_exact = torch.square(dudx + dvdy + dwdz).mean()
-    assert torch.allclose(divergence_loss, divergence_loss_exact, rtol, atol)
+    dvdy = -paddle.sin(x=y)
+    dwdz = paddle.exp(x=z)
+    divergence_loss_exact = paddle.square(x=dudx + dvdy + dwdz).mean()
+    assert paddle.allclose(
+        x=divergence_loss, y=divergence_loss_exact, rtol=rtol, atol=atol
+    ).item()
 
 
 def test_graph():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    # Set up input coordinates
+    device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
+        "cuda", "gpu"
+    )
     batch_size = 128
-    x = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    y = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    z = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-
-    # Instantiate the model and compute outputs
-    model = torch.jit.script(Model()).to(device)
+    out_0 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_0.stop_gradient = not True
+    x = out_0.to(device)
+    out_1 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_1.stop_gradient = not True
+    y = out_1.to(device)
+    out_2 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_2.stop_gradient = not True
+    z = out_2.to(device)
+    model = Model()
     model_node = Node(["x", "y", "z"], ["u", "v", "w", "p"], model, name="Model")
-
-    loss = torch.jit.script(Loss()).to(device)
+    loss = Loss()
     loss_node = Node(
         [diff("u", "x"), diff("v", "y"), diff("w", "z")],
         ["divergence_loss"],
         loss,
         name="Loss",
     )
-
     nodes = [model_node, loss_node]
-
     input_vars = [Key.from_str("x"), Key.from_str("y"), Key.from_str("z")]
     output_vars = [
         Key.from_str("u"),
@@ -89,80 +93,70 @@ def test_graph():
         Key.from_str("p"),
         Key.from_str("divergence_loss"),
     ]
-
     graph = Graph(nodes, input_vars, output_vars)
-
     input_dict = dict(zip((str(v) for v in input_vars), [x, y, z]))
     output_dict = graph(input_dict)
-
     validate_divergence_loss(x, y, z, output_dict["divergence_loss"])
 
 
 def test_graph_no_loss_node():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    # Set up input coordinates
+    device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
+        "cuda", "gpu"
+    )
     batch_size = 128
-    x = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    y = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    z = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-
-    # Instantiate the model and compute outputs
-    model = torch.jit.script(Model()).to(device)
+    out_3 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_3.stop_gradient = not True
+    x = out_3.to(device)
+    out_4 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_4.stop_gradient = not True
+    y = out_4.to(device)
+    out_5 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_5.stop_gradient = not True
+    z = out_5.to(device)
+    model = Model()
     model_node = Node(["x", "y", "z"], ["u", "v", "w", "p"], model, name="Model")
-
-    loss = torch.jit.script(Loss()).to(device)
+    loss = Loss()
     loss_node = Node(
         [diff("u", "x"), diff("v", "y"), diff("w", "z")],
         ["divergence_loss"],
         loss,
         name="Loss",
     )
-
     nodes = [model_node]
-
     input_vars = [Key.from_str("x"), Key.from_str("y"), Key.from_str("z")]
-    output_vars = [
-        Key.from_str("u__x"),
-        Key.from_str("v__y"),
-        Key.from_str("w__z"),
-    ]
-
+    output_vars = [Key.from_str("u__x"), Key.from_str("v__y"), Key.from_str("w__z")]
     graph = Graph(nodes, input_vars, output_vars)
-
     input_dict = dict(zip((str(v) for v in input_vars), [x, y, z]))
     output_dict = graph(input_dict)
-
-    # Calc loss manually
     loss = Loss()
     output_dict.update(loss(output_dict))
-
     validate_divergence_loss(x, y, z, output_dict["divergence_loss"])
 
 
 def test_mfd_graph():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    # Set up input coordinates
+    device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
+        "cuda", "gpu"
+    )
     batch_size = 32
-    x = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    y = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    z = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-
-    # Instantiate the model and compute outputs
-    model = torch.jit.script(Model()).to(device)
+    out_6 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_6.stop_gradient = not True
+    x = out_6.to(device)
+    out_7 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_7.stop_gradient = not True
+    y = out_7.to(device)
+    out_8 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_8.stop_gradient = not True
+    z = out_8.to(device)
+    model = Model()
     model_node = Node(["x", "y", "z"], ["u", "v", "w", "p"], model, name="Model")
-
-    loss = torch.jit.script(Loss()).to(device)
+    loss = Loss()
     loss_node = Node(
         [diff("u", "x"), diff("v", "y"), diff("w", "z")],
         ["divergence_loss"],
         loss,
         name="Loss",
     )
-
     nodes = [model_node, loss_node]
-
     input_vars = [Key.from_str("x"), Key.from_str("y"), Key.from_str("z")]
     output_vars = [
         Key.from_str("u"),
@@ -171,8 +165,6 @@ def test_mfd_graph():
         Key.from_str("p"),
         Key.from_str("divergence_loss"),
     ]
-
-    # Test meshless finite derivative node in graph
     mfd_node = MeshlessFiniteDerivative.make_node(
         node_model=model,
         derivatives=[
@@ -182,13 +174,10 @@ def test_mfd_graph():
         ],
         dx=0.001,
     )
-
     graph = Graph(nodes + [mfd_node], input_vars, output_vars)
-
     input_dict = dict(zip((str(v) for v in input_vars), [x, y, z]))
     output_dict = graph(input_dict)
-    # Need to raise allclose atol here because finite diff is approximate
-    validate_divergence_loss(x, y, z, output_dict["divergence_loss"], atol=1e-3)
+    validate_divergence_loss(x, y, z, output_dict["divergence_loss"], atol=0.001)
 
 
 if __name__ == "__main__":

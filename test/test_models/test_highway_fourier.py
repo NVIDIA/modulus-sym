@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.models.highway_fourier_net import HighwayFourierNetArch
 from pathlib import Path
-import torch
 import numpy as np
 from modulus.sym.key import Key
 import pytest
@@ -47,7 +47,6 @@ def test_highway_fourier_net():
     params = test_data["params"][()]
     frequencies = test_data["frequencies"]
     frequencies_params = test_data["frequencies_params"]
-    # create graph
     arch = HighwayFourierNetArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -58,20 +57,20 @@ def test_highway_fourier_net():
     )
     name_dict = make_dict(params["nr_layers"])
     for _name, _tensor in arch.named_parameters():
-        if _tensor.requires_grad:
-            _tensor.data = torch.from_numpy(Wbs[name_dict[_name]].T)
-
-    arch.fourier_layer_xyzt.frequencies = torch.from_numpy(
-        Wbs["fourier_layer_xyzt:0"].T
+        if not _tensor.stop_gradient:
+            _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]].T)
+    arch.fourier_layer_xyzt.frequencies = paddle.to_tensor(
+        data=Wbs["fourier_layer_xyzt:0"].T
     )
     data_out2 = arch(
-        {"x": torch.from_numpy(data_in[:, 0:1]), "y": torch.from_numpy(data_in[:, 1:2])}
+        {
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
+        }
     )
     data_out2 = data_out2["u"].detach().numpy()
-    # load outputs
     data_out1 = test_data["data_out"]
-    # verify
-    assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
+    assert np.allclose(data_out1, data_out2, rtol=0.001), "Test failed!"
     print("Success!")
 
 
@@ -87,8 +86,7 @@ def test_func_arch_highway_fourier(input_keys, validate_with_dict_forward):
         Key.from_str("v__y__y"),
     ]
     ref_net = HighwayFourierNetArch(
-        input_keys=input_keys,
-        output_keys=[Key("u"), Key("v")],
+        input_keys=input_keys, output_keys=[Key("u"), Key("v")]
     )
     validate_func_arch_net(ref_net, deriv_keys, validate_with_dict_forward)
 

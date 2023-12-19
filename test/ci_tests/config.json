@@ -5,7 +5,8 @@
       "../../build/",
       "../../docs/",
       "../../deps/",
-      "../../modulus/sym/utils_aux/"
+      "../../examples/",
+      "../../modulus/sym/utils_aux"
     ],
   "include-ext": [
       ".py",

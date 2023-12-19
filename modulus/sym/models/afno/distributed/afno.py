@@ -13,20 +13,28 @@
 # limitations under the License.
 
 from functools import partial
+from collections import OrderedDict
+from copy import Error, deepcopy
+from numpy.lib.arraypad import pad
+import numpy as np
 import paddle
 import paddle.nn as nn
+import paddle.nn.functional as F
 import paddle.fft
 from paddle import Tensor
-from typing import Tuple, Union, Any
+from paddle.nn import Sequential
+from typing import Optional, Dict, List, Tuple
+import math
 
 # distributed stuff
 import paddle.distributed as dist
 
-import modulus
-from modulus.distributed.manager import DistributedManager
+from modulus.sym.distributed.manager import DistributedManager
 
-from modulus.models.afno.distributed.mappings import copy_to_matmul_parallel_region
-from modulus.models.afno.distributed.mappings import (
+from modulus.sym.key import Key
+from modulus.sym.models.arch import Arch
+from modulus.sym.models.afno.distributed.mappings import copy_to_matmul_parallel_region
+from modulus.sym.models.afno.distributed.mappings import (
     scatter_to_matmul_parallel_region,
     gather_from_matmul_parallel_region,
 )
@@ -150,7 +158,7 @@ class DistributedAFNONet(nn.Layer):
         self.num_blocks = num_blocks
         self.input_is_matmul_parallel = input_is_matmul_parallel
         self.output_is_matmul_parallel = output_is_matmul_parallel
-        norm_layer = partial(nn.LayerNorm, eps=1e-6)
+        norm_layer = partial(nn.LayerNorm, epsilon=1e-6)
 
         self.patch_embed = DistributedPatchEmbed(
             img_size=img_size,

@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 import modulus
 from modulus.sym.key import Key
 from modulus.sym.hydra import to_yaml, instantiate_arch
 from modulus.sym.hydra.config import ModulusConfig
 from modulus.sym.models.afno.distributed import DistributedAFNONet
 from modulus.sym.distributed.manager import DistributedManager
-
 import os
-import torch
 
-# Set model parallel size to 2
 os.environ["MODEL_PARALLEL_SIZE"] = "2"
 
 
@@ -31,23 +29,17 @@ def run(cfg: ModulusConfig) -> None:
     manager = DistributedManager()
     model_rank = manager.group_rank(name="model_parallel")
     model_size = manager.group_size(name="model_parallel")
-
-    # Check that GPUs are available
     if not manager.cuda:
         print("WARNING: No GPUs available. Exiting...")
         return
-    # Check that world_size is a multiple of model parallel size
     if manager.world_size % 2 != 0:
         print(
             "WARNING: Total world size not a multiple of model parallel size (2). Exiting..."
         )
         return
-
-    input_keys = [Key("coeff", scale=(7.48360e00, 4.49996e00))]
-    output_keys = [Key("sol", scale=(5.74634e-03, 3.88433e-03))]
-    img_shape = (720, 1440)
-
-    # make list of nodes to unroll graph on
+    input_keys = [Key("coeff", scale=(7.4836, 4.49996))]
+    output_keys = [Key("sol", scale=(0.00574634, 0.00388433))]
+    img_shape = 720, 1440
     model = instantiate_arch(
         input_keys=input_keys,
         output_keys=output_keys,
@@ -55,22 +47,15 @@ def run(cfg: ModulusConfig) -> None:
         img_shape=img_shape,
     )
     nodes = [model.make_node(name="Distributed AFNO", jit=cfg.jit)]
-
-    model = model.to(manager.device)
+    model = model.to(manager.place)
     sample = {
-        str(k): torch.randn(1, k.size, *img_shape).to(manager.device)
+        str(k): paddle.randn(shape=[1, k.size, *img_shape]).to(manager.place)
         for k in input_keys
     }
-
-    # Run model in a loop
     for i in range(4):
-        # Forward pass
         result = model(sample)
-        # Compute loss
-        loss = torch.square(result["sol"]).sum()
-        # Backward pass
+        loss = paddle.square(x=result["sol"]).sum()
         loss.backward()
-
     expected_result_shape = [1, output_keys[0].size, *img_shape]
     result_shape = list(result["sol"].shape)
     assert (

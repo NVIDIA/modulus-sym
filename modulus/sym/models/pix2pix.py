@@ -61,7 +61,7 @@ import numpy as np
 
 from modulus.sym.key import Key
 import modulus.sym.models.layers as layers
-from modulus.sym.models.layers import Activation
+from modulus.sym.models.activation import Activation
 from modulus.sym.models.arch import Arch
 
 Tensor = paddle.Tensor

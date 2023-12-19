@@ -20,7 +20,8 @@ from typing import Dict, List, Union
 from enum import Enum
 import paddle
 from packaging import version
-from modulus.sym.constants import JIT_PADDLE_VERSION
+
+# from modulus.sym.constants import JIT_PADDLE_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +40,7 @@ class JitManager(object):
 
         # Set the defaults
         if not hasattr(obj, "_enabled"):
-            obj._enabled = JIT_PADDLE_VERSION is not None and version.parse(
-                paddle.__version__
-            ) >= version.parse(JIT_PADDLE_VERSION)
+            obj._enabled = False
         if not hasattr(obj, "_arch_mode"):
             obj._arch_mode = JitArchMode.ONLY_ACTIVATION
         if not hasattr(obj, "_use_nvfuser"):

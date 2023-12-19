@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 from modulus.sym.loss import (
     PointwiseLossNorm,
     DecayedPointwiseLossNorm,
@@ -22,63 +22,54 @@ from modulus.sym.loss import (
 
 
 def test_loss_norm():
-    # make pointwise test values
-    invar = {"x": torch.arange(10)[:, None], "area": torch.ones(10)[:, None] / 10}
-    pred_outvar = {"u": torch.arange(10)[:, None]}
-    true_outvar = {"u": torch.arange(10)[:, None] + 2}
-    lambda_weighting = {"u": torch.ones(10)[:, None]}
-
-    # Test Pointwise l2
+    invar = {
+        "x": paddle.arange(end=10)[:, None],
+        "area": paddle.ones(shape=[10])[:, None] / 10,
+    }
+    pred_outvar = {"u": paddle.arange(end=10)[:, None]}
+    true_outvar = {"u": paddle.arange(end=10)[:, None] + 2}
+    lambda_weighting = {"u": paddle.ones(shape=[10])[:, None]}
     loss = PointwiseLossNorm(2)
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=0)
-    assert torch.isclose(l["u"], torch.tensor(4.0))
-
-    # Test Pointwise l1
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
     loss = PointwiseLossNorm(1)
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=0)
-    assert torch.isclose(l["u"], torch.tensor(2.0))
-
-    # Test Decayed Pointwise l2
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))
     loss = DecayedPointwiseLossNorm(2, 1, decay_steps=1000, decay_rate=0.5)
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=0)
-    assert torch.isclose(l["u"], torch.tensor(4.0))
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=1000)
-    assert torch.isclose(l["u"], torch.tensor(2.82842712))
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.82842712))
     l = loss.forward(invar, pred_outvar, true_outvar, lambda_weighting, step=1000000)
-    assert torch.isclose(l["u"], torch.tensor(2.0))
-
-    # make Integral test values
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))
     list_invar = [
-        {"x": torch.arange(10)[:, None], "area": torch.ones(10)[:, None] / 10}
+        {
+            "x": paddle.arange(end=10)[:, None],
+            "area": paddle.ones(shape=[10])[:, None] / 10,
+        }
     ]
-    list_pred_outvar = [{"u": torch.arange(10)[:, None]}]
-    list_true_outvar = [{"u": torch.tensor(2.5)[None, None]}]
-    list_lambda_weighting = [{"u": torch.ones(1)[None, None]}]
-
-    # Test Integral l2
+    list_pred_outvar = [{"u": paddle.arange(end=10)[:, None]}]
+    list_true_outvar = [{"u": paddle.to_tensor(data=2.5)[None, None]}]
+    list_lambda_weighting = [{"u": paddle.ones(shape=[1])[None, None]}]
     loss = IntegralLossNorm(2)
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=0
     )
-    assert torch.isclose(l["u"], torch.tensor(4.0))
-
-    # Test Integral l1
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
     loss = IntegralLossNorm(1)
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=0
     )
-    assert torch.isclose(l["u"], torch.tensor(2.0))
-
-    # Test Decayed Integral l2
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))
     loss = DecayedIntegralLossNorm(2, 1, decay_steps=1000, decay_rate=0.5)
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=0
     )
-    assert torch.isclose(l["u"], torch.tensor(4.0))
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=4.0))
     l = loss.forward(
         list_invar, list_pred_outvar, list_true_outvar, list_lambda_weighting, step=1000
     )
-    assert torch.isclose(l["u"], torch.tensor(2.82842712))
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.82842712))
     l = loss.forward(
         list_invar,
         list_pred_outvar,
@@ -86,4 +77,4 @@ def test_loss_norm():
         list_lambda_weighting,
         step=1000000,
     )
-    assert torch.isclose(l["u"], torch.tensor(2.0))
+    assert paddle.isclose(x=l["u"], y=paddle.to_tensor(data=2.0))

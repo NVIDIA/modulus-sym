@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 """A script to check that copyright headers exists"""
 
 import argparse
@@ -30,33 +29,25 @@ def get_top_comments(_data):
     """
     lines_to_extract = []
     for i, line in enumerate(_data):
-        # If empty line, skip
         if line in ["", "\n", "", "\r", "\r\n"]:
             continue
-        # If it is a comment line, we should get it
         if line.startswith("#"):
             lines_to_extract.append(i)
-        # Assume all copyright headers occur before any import or from statements
-        # and not enclosed in a comment block
         elif "import" in line:
             break
         elif "from" in line:
             break
-
     comments = []
     for line in lines_to_extract:
         comments.append(_data[line])
-
     return comments
 
 
 def main():
-
     with open(Path(__file__).parent.resolve() / Path("config.json")) as f:
         config = json.loads(f.read())
     print(f"License check config:")
     print(json.dumps(config, sort_keys=True, indent=4))
-
     current_year = int(datetime.today().year)
     starting_year = 2023
     python_header_path = Path(__file__).parent.resolve() / Path(
@@ -64,12 +55,9 @@ def main():
     )
     working_path = Path(__file__).parent.resolve() / Path(config["dir"])
     exts = config["include-ext"]
-
     with open(python_header_path, "r", encoding="utf-8") as original:
         pyheader = original.read().split("\n")
         pyheader_lines = len(pyheader)
-
-    # Build list of files to check
     exclude_paths = [
         (Path(__file__).parent / Path(path)).resolve().rglob("*")
         for path in config["exclude-dir"]
@@ -82,11 +70,9 @@ def main():
     ]
     problematic_files = []
     gpl_files = []
-
     for filename in filenames:
         with open(str(filename), "r", encoding="utf-8") as original:
             data = original.readlines()
-
         data = get_top_comments(data)
         if data and "# ignore_header_test" in data[0]:
             continue
@@ -94,12 +80,10 @@ def main():
             print(f"{filename} has less header lines than the copyright template")
             problematic_files.append(filename)
             continue
-
         found = False
         for i, line in enumerate(data):
             if re.search(re.compile("Copyright.*NVIDIA.*", re.IGNORECASE), line):
                 found = True
-                # Check 1st line manually
                 year_good = False
                 for year in range(starting_year, current_year + 1):
                     year_line = pyheader[0].format(CURRENT_YEAR=year)
@@ -117,25 +101,15 @@ def main():
                     problematic_files.append(filename)
                     print(f"{filename} had an error with the year")
                     break
-                # while "opyright" in data[i]:
-                #    i += 1
-                # for j in range(1, pyheader_lines):
-                #    if pyheader[j] not in data[i + j - 1]:
-                #        problematic_files.append(filename)
-                #        print(f"{filename} missed the line: {pyheader[j]}")
-                #        break
             if found:
                 break
         if not found:
             print(f"{filename} did not match the regex: `Copyright.*NVIDIA.*`")
             problematic_files.append(filename)
-
-        # test if GPL license exists
         for lines in data:
             if "gpl" in lines.lower():
                 gpl_files.append(filename)
                 break
-
     if len(problematic_files) > 0:
         print(
             "test_header.py found the following files that might not have a copyright header:"
@@ -148,7 +122,6 @@ def main():
             print(_file)
     assert len(problematic_files) == 0, "header test failed!"
     assert len(gpl_files) == 0, "found gpl license, header test failed!"
-
     print("Success: File headers look good!")
 
 

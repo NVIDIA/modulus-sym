@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.models.siren import SirenArch
-import torch
 import numpy as np
 from pathlib import Path
 from modulus.sym.key import Key
@@ -40,7 +40,6 @@ def test_siren():
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]
     params = test_data["params"][()]
-    # create graph
     arch = SirenArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -51,63 +50,53 @@ def test_siren():
     )
     name_dict = make_dict(params["nr_layers"])
     for _name, _tensor in arch.named_parameters():
-        if _tensor.requires_grad:
-            _tensor.data = torch.from_numpy(Wbs[name_dict[_name]].T)
-
+        if not _tensor.stop_gradient:
+            _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]].T)
     data_out2 = arch(
-        {"x": torch.from_numpy(data_in[:, 0:1]), "y": torch.from_numpy(data_in[:, 1:2])}
+        {
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
+        }
     )
     data_out2 = data_out2["u"].detach().numpy()
-    # load outputs
     data_out1 = test_data["data_out"]
-    # verify
-    assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
+    assert np.allclose(data_out1, data_out2, rtol=0.001), "Test failed!"
     print("Success!")
 
 
 def validate_tensor_normalize(input_variables, arch):
-    # expected
     expected = arch._normalize(input_variables, arch.normalization)
     expected = SirenArch.concat_input(expected, arch.input_key_dict.keys(), dim=-1)
-    # result
     result = SirenArch.concat_input(input_variables, arch.input_key_dict.keys(), dim=-1)
     result = SirenArch._tensor_normalize(result, arch.normalization_tensor)
-    # check result
-    assert torch.allclose(expected, result)
+    assert paddle.allclose(x=expected, y=result).item()
 
 
 def test_tensor_normalize():
-    # prepare inputs
-    x = torch.ones([100, 1])
-    y = torch.ones([100, 2])
-    z = torch.ones([100, 1])
+    x = paddle.ones(shape=[100, 1])
+    y = paddle.ones(shape=[100, 2])
+    z = paddle.ones(shape=[100, 1])
     input_variables = {"x": x, "y": y, "z": z}
     input_keys = [Key("x", 1), Key("y", 2), Key("z", 1)]
     output_keys = [Key("u", 1), Key("v", 1)]
-
-    # normalization is None
     normalization = None
     arch = SirenArch(input_keys, output_keys, normalization=normalization)
     validate_tensor_normalize(input_variables, arch)
     assert arch.normalization_tensor is None
-
-    # normalization for part of the inputs, z will use no_op_norm
     normalization = {"x": (-2.5, 2.5), "y": (-2.5, 2.5)}
     arch = SirenArch(input_keys, output_keys, normalization=normalization)
     validate_tensor_normalize(input_variables, arch)
-    assert torch.allclose(
-        arch.normalization_tensor,
-        torch.tensor([[-2.5, -2.5, -2.5, -1.0], [2.5, 2.5, 2.5, 1.0]]),
-    )
-
-    # normalization for all inputs
+    assert paddle.allclose(
+        x=arch.normalization_tensor,
+        y=paddle.to_tensor(data=[[-2.5, -2.5, -2.5, -1.0], [2.5, 2.5, 2.5, 1.0]]),
+    ).item()
     normalization = {"x": (-2.5, 2.5), "y": (-2.5, 2.5), "z": (-3.5, 3.5)}
     arch = SirenArch(input_keys, output_keys, normalization=normalization)
     validate_tensor_normalize(input_variables, arch)
-    assert torch.allclose(
-        arch.normalization_tensor,
-        torch.tensor([[-2.5, -2.5, -2.5, -3.5], [2.5, 2.5, 2.5, 3.5]]),
-    )
+    assert paddle.allclose(
+        x=arch.normalization_tensor,
+        y=paddle.to_tensor(data=[[-2.5, -2.5, -2.5, -3.5], [2.5, 2.5, 2.5, 3.5]]),
+    ).item()
 
 
 @pytest.mark.parametrize(

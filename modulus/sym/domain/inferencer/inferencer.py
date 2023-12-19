@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 
 
 class Inferencer:
@@ -25,7 +25,7 @@ class Inferencer:
         return pred_outvar
 
     def forward_nograd(self, invar):
-        with torch.no_grad():
+        with paddle.no_grad():
             pred_outvar = self.model(invar)
             return pred_outvar
 

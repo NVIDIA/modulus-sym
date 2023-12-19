@@ -14,9 +14,9 @@
 
 """ Domain
 """
-import torch
-import torch.nn as nn
-from torch.utils.tensorboard import SummaryWriter
+import paddle
+import paddle.nn as nn
+from tensorboardX import SummaryWriter
 import itertools
 import os
 
@@ -143,9 +143,9 @@ class Domain:
 
             for key, constraint in self.constraints.items():
                 # TODO: Test streaming here
-                torch.cuda.nvtx.range_push(f"Constraint Forward: {key}")
+                paddle.framework.core.nvprof_nvtx_push(f"Constraint Forward: {key}")
                 constraint.forward()
-                torch.cuda.nvtx.range_pop()
+                paddle.framework.core.nvprof_nvtx_pop()
 
             for key, constraint in self.constraints.items():
                 for loss_key, value in constraint.loss(step).items():
@@ -198,7 +198,7 @@ class Domain:
         assert len(set([m.name for m in models])) == len(
             models
         ), "Every model in graph needs a unique name: " + str([m.name for m in models])
-        models = nn.ModuleList(models)
+        models = nn.LayerList(models)
         return models
 
     def add_constraint(

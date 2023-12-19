@@ -85,7 +85,7 @@ class Solver(Trainer):
             self.scaler,
             self.log,
             self.manager,
-            self.device,
+            self.place,
         )
 
     def load_optimizer(self):
@@ -96,7 +96,7 @@ class Solver(Trainer):
             self.scheduler,
             self.scaler,
             self.log,
-            self.device,
+            self.place,
         )
 
     def load_model(self):
@@ -106,13 +106,13 @@ class Solver(Trainer):
             self.saveable_models,
             self.step,
             self.log,
-            self.device,
+            self.place,
         )
 
     def load_step(self):
         return Trainer._load_step(
             self.network_dir,
-            self.device,
+            self.place,
         )
 
     def save_checkpoint(self, step: int):

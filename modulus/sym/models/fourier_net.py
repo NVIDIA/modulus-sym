@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-from torch import Tensor
+import paddle
+from paddle import Tensor
 from typing import Dict, List, Tuple
 
 import modulus.sym.models.fully_connected as fully_connected
-from modulus.models.layers import FourierLayer
-from modulus.sym.models.activation import Activation
+import modulus.sym.models.layers as layers
+from modulus.sym.models.layers import Activation
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -134,7 +134,7 @@ class FourierNetArch(Arch):
         self.xyzt_var = [x for x in self.input_key_dict if x in ["x", "y", "z", "t"]]
         # Prepare slice index
         xyzt_slice_index = self.prepare_slice_index(self.input_key_dict, self.xyzt_var)
-        self.register_buffer("xyzt_slice_index", xyzt_slice_index, persistent=False)
+        self.register_buffer("xyzt_slice_index", xyzt_slice_index, persistable=False)
 
         self.params_var = [
             x for x in self.input_key_dict if x not in ["x", "y", "z", "t"]
@@ -142,7 +142,9 @@ class FourierNetArch(Arch):
         params_slice_index = self.prepare_slice_index(
             self.input_key_dict, self.params_var
         )
-        self.register_buffer("params_slice_index", params_slice_index, persistent=False)
+        self.register_buffer(
+            "params_slice_index", params_slice_index, persistable=False
+        )
 
         in_features_xyzt = sum(
             (v for k, v in self.input_key_dict.items() if k in self.xyzt_var)
@@ -154,7 +156,7 @@ class FourierNetArch(Arch):
         out_features = sum(self.output_key_dict.values())
 
         if in_features_xyzt > 0:
-            self.fourier_layer_xyzt = FourierLayer(
+            self.fourier_layer_xyzt = layers.FourierLayer(
                 in_features=in_features_xyzt, frequencies=frequencies
             )
             in_features += self.fourier_layer_xyzt.out_features()
@@ -162,7 +164,7 @@ class FourierNetArch(Arch):
             self.fourier_layer_xyzt = None
 
         if in_features_params > 0:
-            self.fourier_layer_params = FourierLayer(
+            self.fourier_layer_params = layers.FourierLayer(
                 in_features=in_features_params, frequencies=frequencies_params
             )
             in_features += self.fourier_layer_params.out_features()
@@ -187,12 +189,12 @@ class FourierNetArch(Arch):
         if self.fourier_layer_xyzt is not None:
             in_xyzt_var = self.slice_input(x, self.xyzt_slice_index, dim=-1)
             fourier_xyzt = self.fourier_layer_xyzt(in_xyzt_var)
-            x = torch.cat((x, fourier_xyzt), dim=-1)
+            x = paddle.concat((x, fourier_xyzt), axis=1)
 
         if self.fourier_layer_params is not None:
             in_params_var = self.slice_input(x, self.params_slice_index, dim=-1)
             fourier_params = self.fourier_layer_params(in_params_var)
-            x = torch.cat((x, fourier_params), dim=-1)
+            x = paddle.concat((x, fourier_params), axis=1)
 
         x = self.fc(x)
         x = self.process_output(x, self.output_scales_tensor)
@@ -229,7 +231,7 @@ class FourierNetArch(Arch):
                 input_scales=self.input_scales,
             )
             fourier_xyzt = self.fourier_layer_xyzt(in_xyzt_var)
-            x = torch.cat((x, fourier_xyzt), dim=-1)
+            x = paddle.concat((x, fourier_xyzt), axis=1)
 
         if self.fourier_layer_params is not None:
             in_params_var = self.prepare_input(
@@ -240,7 +242,7 @@ class FourierNetArch(Arch):
                 input_scales=self.input_scales,
             )
             fourier_params = self.fourier_layer_params(in_params_var)
-            x = torch.cat((x, fourier_params), dim=-1)
+            x = paddle.concat((x, fourier_params), axis=1)
 
         x = self.fc(x)
         return self.prepare_output(

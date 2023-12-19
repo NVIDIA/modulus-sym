@@ -17,7 +17,7 @@ Modulus main config
 """
 
 from platform import architecture
-import torch
+import paddle
 import logging
 from dataclasses import dataclass, field
 from hydra.core.config_store import ConfigStore
@@ -46,7 +46,7 @@ class ModulusConfig:
     initialization_network_dir: str = ""
     save_filetypes: str = "vtk"
     summary_histograms: bool = False
-    jit: bool = version.parse(torch.__version__) >= version.parse(JIT_PYTORCH_VERSION)
+    jit: bool = version.parse(paddle.__version__) >= version.parse(JIT_PYTORCH_VERSION)
     jit_use_nvfuser: bool = True
     jit_arch_mode: str = "only_activation"
     jit_autograd_nodes: bool = False
@@ -143,9 +143,9 @@ class ExperimentalModulusConfig(ModulusConfig):
 
 def register_modulus_configs() -> None:
 
-    if not torch.__version__ == JIT_PYTORCH_VERSION:
+    if not paddle.__version__ == JIT_PYTORCH_VERSION:
         logger.warn(
-            f"TorchScript default is being turned off due to PyTorch version mismatch."
+            f"TorchScript default is being turned off due to Paddle version mismatch."
         )
 
     cs = ConfigStore.instance()

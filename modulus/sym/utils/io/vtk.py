@@ -16,7 +16,7 @@
 """
 
 import time
-import torch
+import paddle
 import scipy
 import numpy as np
 import matplotlib
@@ -986,29 +986,21 @@ def grid_to_vtk(var_dict: Dict[str, np.array], file_path: str, batch_index: int 
     batch_index : int, optional
         Batch index to write to file, by default 0
     """
-    # convert keys to strings
     var = {str(key): value for key, value in var_dict.items()}
     shape = np.shape(next(iter(var.values())))
     assert len(shape) > 2 and len(shape) < 6, "Input variables must be dim 3, 4, 5"
-
-    # Padd for any missing dims
     bsize = shape[0]
     cdim = shape[1]
     grid_shape = list(shape[2:])
     bounds = [[0, i - 1] for i in grid_shape]
-
-    # Flatten data and select batch
     shaped_dict = {}
     for key in var_dict.keys():
         shaped_dict[key] = var_dict[key][batch_index]
         cdim = shaped_dict[key].shape[0]
         shaped_dict[key] = shaped_dict[key].reshape(cdim, -1).T
-
-    # Create 1:1 export map
     export_map = {}
     for key in shaped_dict.keys():
         export_map[key] = [key]
-
     file_path = Path(file_path)
     vtk_obj = VTKUniformGrid(
         bounds=bounds,
@@ -1017,5 +1009,4 @@ def grid_to_vtk(var_dict: Dict[str, np.array], file_path: str, batch_index: int 
         file_name=file_path.stem,
         file_dir=file_path.parents[0],
     )
-
     vtk_obj.var_to_vtk(data_vars=shaped_dict)

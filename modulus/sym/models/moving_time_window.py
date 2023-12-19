@@ -12,15 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict
+from typing import Optional, Dict, Tuple
 from modulus.sym.key import Key
 import copy
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
+import modulus.sym.models.layers as layers
+from .interpolation import smooth_step_1, smooth_step_2
 from modulus.sym.models.arch import Arch
+
+from typing import List
 
 
 class MovingTimeWindowArch(Arch):
@@ -59,11 +63,14 @@ class MovingTimeWindowArch(Arch):
 
         # store time window parameters
         self.window_size = window_size
-        self.window_location = nn.Parameter(torch.empty(1), requires_grad=False)
+        self.window_location = self.create_parameter(
+            [1],
+            default_initializer=nn.initializer.Assign(paddle.empty([1])),
+        )
         self.reset_parameters()
 
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
-        with torch.no_grad():
+        with paddle.no_grad():
             in_vars["t"] += self.window_location
         y_prev_step = self.arch_prev_step.forward(in_vars)
         y = self.arch.forward(in_vars)
@@ -80,7 +87,7 @@ class MovingTimeWindowArch(Arch):
             self.arch.parameters(), self.arch_prev_step.parameters()
         ):
             param_prev_step.data = param.detach().clone().data
-            param_prev_step.requires_grad = False
+            param_prev_step.stop_gradient = True
 
     def reset_parameters(self) -> None:
-        nn.init.constant_(self.window_location, 0)
+        nn.initializer.Constant(0)(self.window_location)

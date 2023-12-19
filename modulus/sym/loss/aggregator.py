@@ -13,10 +13,10 @@
 # limitations under the License.
 
 # Import libraries
-import torch
+import paddle
 import logging
 import numpy as np
-from torch import nn
+from paddle import nn
 from typing import Dict, List, Optional, Callable, Union
 
 # Import from Modulus
@@ -26,38 +26,38 @@ from modulus.sym.hydra import to_absolute_path, add_hydra_run_path
 logger = logging.getLogger(__name__)
 
 
-class Aggregator(nn.Module):
+class Aggregator(nn.Layer):
     """
     Base class for loss aggregators
     """
 
     def __init__(self, params, num_losses, weights):
         super().__init__()
-        self.params: List[torch.Tensor] = list(params)
+        self.params: List[paddle.Tensor] = list(params)
         self.num_losses: int = num_losses
         self.weights: Optional[Dict[str, float]] = weights
-        self.device: torch.device
-        self.device = list(set(p.device for p in self.params))[0]
-        self.init_loss: torch.Tensor = torch.tensor(0.0, device=self.device)
+        self.place: str
+        self.place = list(set(p.place for p in self.params))[0]
+        self.init_loss: paddle.Tensor = paddle.to_tensor(0.0, place=self.place)
 
         def weigh_losses_initialize(
             weights: Optional[Dict[str, float]]
         ) -> Callable[
-            [Dict[str, torch.Tensor], Optional[Dict[str, float]]],
-            Dict[str, torch.Tensor],
+            [Dict[str, paddle.Tensor], Optional[Dict[str, float]]],
+            Dict[str, paddle.Tensor],
         ]:
             if weights is None:
 
                 def weigh_losses(
-                    losses: Dict[str, torch.Tensor], weights: None
-                ) -> Dict[str, torch.Tensor]:
+                    losses: Dict[str, paddle.Tensor], weights: None
+                ) -> Dict[str, paddle.Tensor]:
                     return losses
 
             else:
 
                 def weigh_losses(
-                    losses: Dict[str, torch.Tensor], weights: Dict[str, float]
-                ) -> Dict[str, torch.Tensor]:
+                    losses: Dict[str, paddle.Tensor], weights: Dict[str, float]
+                ) -> Dict[str, paddle.Tensor]:
                     for key in losses.keys():
                         if key not in weights.keys():
                             weights.update({key: 1.0})
@@ -77,20 +77,20 @@ class Sum(Aggregator):
     def __init__(self, params, num_losses, weights=None):
         super().__init__(params, num_losses, weights)
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Aggregates the losses by summation
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses.
         step : int
             Optimizer step.
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss.
         """
 
@@ -98,7 +98,7 @@ class Sum(Aggregator):
         losses = self.weigh_losses(losses, self.weights)
 
         # Initialize loss
-        loss: torch.Tensor = torch.zeros_like(self.init_loss)
+        loss: paddle.Tensor = paddle.zeros_like(self.init_loss)
 
         # Add losses
         for key in losses.keys():
@@ -117,27 +117,28 @@ class GradNorm(Aggregator):
     def __init__(self, params, num_losses, alpha=1.0, weights=None):
         super().__init__(params, num_losses, weights)
         self.alpha: float = alpha
-        self.lmbda: torch.nn.Parameter = nn.Parameter(
-            torch.zeros(num_losses, device=self.device)
+        lmbda = self.create_parameter(
+            shape=[num_losses],
+            default_initializer=paddle.nn.initializer.Constant(0),
         )
-        self.register_buffer(
-            "init_losses", torch.zeros(self.num_losses, device=self.device)
-        )
+        lmbda.stop_gradient = False
+        self.lmbda: paddle.Tensor = lmbda
+        self.register_buffer("init_losses", paddle.zeros([self.num_losses]))
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Weights and aggregates the losses using the gradNorm algorithm
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses.
         step : int
             Optimizer step.
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss.
         """
 
@@ -149,35 +150,37 @@ class GradNorm(Aggregator):
             for i, key in enumerate(losses.keys()):
                 self.init_losses[i] = losses[key].clone().detach()
 
-        with torch.no_grad():
-            normalizer: torch.Tensor = self.num_losses / (torch.exp(self.lmbda).sum())
+        with paddle.no_grad():
+            normalizer: paddle.Tensor = self.num_losses / paddle.exp(self.lmbda).sum()
             for i in range(self.num_losses):
-                self.lmbda[i] = self.lmbda[i].clone() + torch.log(
+                self.lmbda[i] = self.lmbda[i].clone() + paddle.log(
                     normalizer.detach()
                 )  # c*exp(x) = exp(log(c)+x)
-        lmbda_exp: torch.Tensor = torch.exp(self.lmbda)
+        lmbda_exp: paddle.Tensor = paddle.exp(self.lmbda)
 
         # compute relative losses, inverse rate, and grad coefficient
-        losses_stacked: torch.Tensor = torch.stack(list(losses.values()))
-        with torch.no_grad():
-            relative_losses: torch.Tensor = torch.div(losses_stacked, self.init_losses)
-            inverse_rate: torch.Tensor = relative_losses / (relative_losses.mean())
-            gradnorm_coef: torch.Tensor = torch.pow(inverse_rate, self.alpha)
+        losses_stacked: paddle.Tensor = paddle.stack(list(losses.values()))
+        with paddle.no_grad():
+            relative_losses: paddle.Tensor = paddle.divide(
+                losses_stacked, self.init_losses
+            )
+            inverse_rate: paddle.Tensor = relative_losses / relative_losses.mean()
+            gradnorm_coef: paddle.Tensor = paddle.pow(inverse_rate, self.alpha)
 
         # compute gradient norm and average gradient norm
-        grads_norm: torch.Tensor = torch.zeros_like(self.init_losses)
-        shared_params: torch.Tensor = self.params[-2]  # TODO generalize this
+        grads_norm: paddle.Tensor = paddle.zeros_like(self.init_losses)
+        shared_params: paddle.Tensor = self.params[-2]  # TODO generalize this
         for i, key in enumerate(losses.keys()):
-            grads: torch.Tensor = gradient(losses[key], [shared_params])[0]
-            grads_norm[i] = torch.norm(lmbda_exp[i] * grads.detach(), p=2)
-        avg_grad: torch.Tensor = grads_norm.detach().mean()
+            grads: paddle.Tensor = gradient(losses[key], [shared_params])[0]
+            grads_norm[i] = paddle.linalg.norm(lmbda_exp[i] * grads.detach(), p=2)
+        avg_grad: paddle.Tensor = grads_norm.detach().mean()
 
         # compute gradnorm & model losses
-        loss_gradnorm: torch.Tensor = torch.abs(
+        loss_gradnorm: paddle.Tensor = paddle.abs(
             grads_norm - avg_grad * gradnorm_coef
         ).sum()
-        loss_model: torch.Tensor = (lmbda_exp.detach() * losses_stacked).sum()
-        loss: torch.Tensor = loss_gradnorm + loss_model
+        loss_model: paddle.Tensor = (lmbda_exp.detach() * losses_stacked).sum()
+        loss: paddle.Tensor = loss_gradnorm + loss_model
         return loss
 
 
@@ -191,27 +194,28 @@ class ResNorm(Aggregator):
     def __init__(self, params, num_losses, alpha=1.0, weights=None):
         super().__init__(params, num_losses, weights)
         self.alpha: float = alpha
-        self.lmbda: torch.nn.Parameter = nn.Parameter(
-            torch.zeros(num_losses, device=self.device)
+        lmbda = self.create_parameter(
+            shape=[num_losses],
+            default_initializer=paddle.nn.initializer.Constant(0),
         )
-        self.register_buffer(
-            "init_losses", torch.zeros(self.num_losses, device=self.device)
-        )
+        lmbda.stop_gradient = not True
+        self.lmbda: paddle.Tensor = lmbda
+        self.register_buffer("init_losses", paddle.zeros(shape=[self.num_losses]))
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Weights and aggregates the losses using the ResNorm algorithm
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses.
         step : int
             Optimizer step.
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss.
         """
 
@@ -223,33 +227,35 @@ class ResNorm(Aggregator):
             for i, key in enumerate(losses.keys()):
                 self.init_losses[i] = losses[key].clone().detach()
 
-        with torch.no_grad():
-            normalizer: torch.Tensor = self.num_losses / (torch.exp(self.lmbda).sum())
+        with paddle.no_grad():
+            normalizer: paddle.Tensor = self.num_losses / paddle.exp(self.lmbda).sum()
             for i in range(self.num_losses):
-                self.lmbda[i] = self.lmbda[i].clone() + torch.log(
+                self.lmbda[i] = self.lmbda[i].clone() + paddle.log(
                     normalizer.detach()
                 )  # c*exp(x) = exp(log(c)+x)
-        lmbda_exp: torch.Tensor = torch.exp(self.lmbda)
+        lmbda_exp: paddle.Tensor = paddle.exp(self.lmbda)
 
         # compute relative losses, inverse rate, and grad coefficient
-        losses_stacked: torch.Tensor = torch.stack(list(losses.values()))
-        with torch.no_grad():
-            relative_losses: torch.Tensor = torch.div(losses_stacked, self.init_losses)
-            inverse_rate: torch.Tensor = relative_losses / (relative_losses.mean())
-            resnorm_coef: torch.Tensor = torch.pow(inverse_rate, self.alpha)
+        losses_stacked: paddle.Tensor = paddle.stack(list(losses.values()))
+        with paddle.no_grad():
+            relative_losses: paddle.Tensor = paddle.divide(
+                losses_stacked, paddle.to_tensor(self.init_losses)
+            )
+            inverse_rate: paddle.Tensor = relative_losses / relative_losses.mean()
+            resnorm_coef: paddle.Tensor = paddle.pow(inverse_rate, self.alpha)
 
         # compute residual norm and average residual norm
-        residuals: torch.Tensor = torch.zeros_like(self.init_losses)
+        residuals: paddle.Tensor = paddle.zeros_like(self.init_losses)
         for i, key in enumerate(losses.keys()):
             residuals[i] = lmbda_exp[i] * losses[key].detach()
-        avg_residuals: torch.Tensor = losses_stacked.detach().mean()
+        avg_residuals: paddle.Tensor = losses_stacked.detach().mean()
 
         # compute ResNorm & model losses
-        loss_resnorm: torch.Tensor = torch.abs(
+        loss_resnorm: paddle.Tensor = paddle.abs(
             residuals - avg_residuals * resnorm_coef
         ).sum()
-        loss_model: torch.Tensor = (lmbda_exp.detach() * losses_stacked).sum()
-        loss: torch.Tensor = loss_resnorm + loss_model
+        loss_model: paddle.Tensor = (lmbda_exp.detach() * losses_stacked).sum()
+        loss: paddle.Tensor = loss_resnorm + loss_model
         return loss
 
 
@@ -263,24 +269,27 @@ class HomoscedasticUncertainty(Aggregator):
 
     def __init__(self, params, num_losses, weights=None):
         super().__init__(params, num_losses, weights)
-        self.log_var: torch.nn.Parameter = nn.Parameter(
-            torch.zeros(self.num_losses, device=self.device)
+        log_var = self.create_parameter(
+            shape=[self.num_losses],
+            default_initializer=paddle.nn.initializer.Constant(0),
         )
+        log_var.stop_gradient = not True
+        self.log_var: paddle.Tensor = log_var
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Weights and aggregates the losses using homoscedastic task uncertainty
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses.
         step : int
             Optimizer step.
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss.
         """
 
@@ -288,10 +297,10 @@ class HomoscedasticUncertainty(Aggregator):
         losses = self.weigh_losses(losses, self.weights)
 
         # Initialize loss
-        loss: torch.Tensor = torch.zeros_like(self.init_loss)
+        loss: paddle.Tensor = paddle.zeros_like(self.init_loss)
 
         # Compute precision
-        precision: torch.Tensor = torch.exp(-self.log_var)
+        precision: paddle.Tensor = paddle.exp(-self.log_var)
 
         # Aggregate losses
         for i, key in enumerate(losses.keys()):
@@ -327,24 +336,22 @@ class LRAnnealing(Aggregator):
         self.alpha: float = alpha
         self.ref_key: Union[str, None] = ref_key
         self.eps: float = eps
-        self.register_buffer(
-            "lmbda_ema", torch.ones(self.num_losses, device=self.device)
-        )
+        self.register_buffer("lmbda_ema", paddle.ones([self.num_losses]))
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Weights and aggregates the losses using the learning rate annealing algorithm
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses.
         step : int
             Optimizer step.
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss.
         """
 
@@ -352,7 +359,7 @@ class LRAnnealing(Aggregator):
         losses = self.weigh_losses(losses, self.weights)
 
         # Initialize loss
-        loss: torch.Tensor = torch.zeros_like(self.init_loss)
+        loss: paddle.Tensor = paddle.zeros_like(self.init_loss)
 
         # Determine reference loss
         if self.ref_key is None:
@@ -365,20 +372,20 @@ class LRAnnealing(Aggregator):
 
         # Update loss weights and aggregate losses
         if step % self.update_freq == 0:
-            grads_mean: List[torch.Tensor] = []
+            grads_mean: List[paddle.Tensor] = []
 
             # Compute the mean of each loss gradients
             for key in losses.keys():
-                grads: List[torch.Tensor] = gradient(losses[key], self.params)
-                grads_flattened: List[torch.Tensor] = []
+                grads: List[paddle.Tensor] = gradient(losses[key], self.params)
+                grads_flattened: List[paddle.Tensor] = []
                 for i in range(len(grads)):
                     if grads[i] is not None:
-                        grads_flattened.append(torch.abs(torch.flatten(grads[i])))
-                grads_mean.append((torch.mean(torch.cat(grads_flattened))))
+                        grads_flattened.append(paddle.abs(paddle.flatten(grads[i])))
+                grads_mean.append(paddle.mean(paddle.concat(grads_flattened)))
 
             # Compute the exponential moving average of weights and aggregate losses
             for i, key in enumerate(losses.keys()):
-                with torch.no_grad():
+                with paddle.no_grad():
                     self.lmbda_ema[i] *= 1.0 - self.alpha
                     self.lmbda_ema[i] += (
                         self.alpha * grads_mean[ref_idx] / (grads_mean[i] + self.eps)
@@ -400,27 +407,25 @@ class SoftAdapt(Aggregator):
     arXiv preprint arXiv: 1912.12355."
     """
 
-    def __init__(self, params, num_losses, eps=1e-8, weights=None):
+    def __init__(self, params, num_losses, eps=1e-08, weights=None):
         super().__init__(params, num_losses, weights)
         self.eps: float = eps
-        self.register_buffer(
-            "prev_losses", torch.zeros(self.num_losses, device=self.device)
-        )
+        self.register_buffer("prev_losses", paddle.zeros([self.num_losses]))
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Weights and aggregates the losses using the original variant of the softadapt algorithm
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses.
         step : int
             Optimizer step.
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss.
         """
 
@@ -428,7 +433,7 @@ class SoftAdapt(Aggregator):
         losses = self.weigh_losses(losses, self.weights)
 
         # Initialize loss
-        loss: torch.Tensor = torch.zeros_like(self.init_loss)
+        loss: paddle.Tensor = paddle.zeros_like(self.init_loss)
 
         # Aggregate losses by summation at step 0
         if step == 0:
@@ -438,13 +443,13 @@ class SoftAdapt(Aggregator):
 
         # Aggregate losses using SoftAdapt for step > 0
         else:
-            lmbda: torch.Tensor = torch.ones_like(self.prev_losses)
-            lmbda_sum: torch.Tensor = torch.zeros_like(self.init_loss)
-            losses_stacked: torch.Tensor = torch.stack(list(losses.values()))
-            normalizer: torch.Tensor = (losses_stacked / self.prev_losses).max()
+            lmbda: paddle.Tensor = paddle.ones_like(self.prev_losses)
+            lmbda_sum: paddle.Tensor = paddle.zeros_like(self.init_loss)
+            losses_stacked: paddle.Tensor = paddle.stack(list(losses.values()))
+            normalizer: paddle.Tensor = (losses_stacked / self.prev_losses).max()
             for i, key in enumerate(losses.keys()):
-                with torch.no_grad():
-                    lmbda[i] = torch.exp(
+                with paddle.no_grad():
+                    lmbda[i] = paddle.exp(
                         losses[key] / (self.prev_losses[i] + self.eps) - normalizer
                     )
                     lmbda_sum += lmbda[i]
@@ -470,30 +475,24 @@ class Relobralo(Aggregator):
         self.beta: float = beta
         self.tau: float = tau
         self.eps: float = eps
-        self.register_buffer(
-            "init_losses", torch.zeros(self.num_losses, device=self.device)
-        )
-        self.register_buffer(
-            "prev_losses", torch.zeros(self.num_losses, device=self.device)
-        )
-        self.register_buffer(
-            "lmbda_ema", torch.ones(self.num_losses, device=self.device)
-        )
+        self.register_buffer("init_losses", paddle.zeros([self.num_losses]))
+        self.register_buffer("prev_losses", paddle.zeros([self.num_losses]))
+        self.register_buffer("lmbda_ema", paddle.ones([self.num_losses]))
 
-    def forward(self, losses: Dict[str, torch.Tensor], step: int) -> torch.Tensor:
+    def forward(self, losses: Dict[str, paddle.Tensor], step: int) -> paddle.Tensor:
         """
         Weights and aggregates the losses using the ReLoBRaLo algorithm
 
         Parameters
         ----------
-        losses : Dict[str, torch.Tensor]
+        losses : Dict[str, paddle.Tensor]
             A dictionary of losses.
         step : int
             Optimizer step.
 
         Returns
         -------
-        loss : torch.Tensor
+        loss : paddle.Tensor
             Aggregated loss.
         """
 
@@ -501,7 +500,7 @@ class Relobralo(Aggregator):
         losses = self.weigh_losses(losses, self.weights)
 
         # Initialize loss
-        loss: torch.Tensor = torch.zeros_like(self.init_loss)
+        loss: paddle.Tensor = paddle.zeros_like(self.init_loss)
 
         # Aggregate losses by summation at step 0
         if step == 0:
@@ -512,20 +511,20 @@ class Relobralo(Aggregator):
 
         # Aggregate losses using ReLoBRaLo for step > 0
         else:
-            losses_stacked: torch.Tensor = torch.stack(list(losses.values()))
-            normalizer_prev: torch.Tensor = (
+            losses_stacked: paddle.Tensor = paddle.stack(list(losses.values()))
+            normalizer_prev: paddle.Tensor = (
                 losses_stacked / (self.tau * self.prev_losses)
             ).max()
-            normalizer_init: torch.Tensor = (
+            normalizer_init: paddle.Tensor = (
                 losses_stacked / (self.tau * self.init_losses)
             ).max()
-            rho: torch.Tensor = torch.bernoulli(torch.tensor(self.beta))
-            with torch.no_grad():
-                lmbda_prev: torch.Tensor = torch.exp(
+            rho: paddle.Tensor = paddle.bernoulli(paddle.to_tensor(self.beta))
+            with paddle.no_grad():
+                lmbda_prev: paddle.Tensor = paddle.exp(
                     losses_stacked / (self.tau * self.prev_losses + self.eps)
                     - normalizer_prev
                 )
-                lmbda_init: torch.Tensor = torch.exp(
+                lmbda_init: paddle.Tensor = paddle.exp(
                     losses_stacked / (self.tau * self.init_losses + self.eps)
                     - normalizer_init
                 )
@@ -534,7 +533,7 @@ class Relobralo(Aggregator):
 
             # Compute the exponential moving average of weights and aggregate losses
             for i, key in enumerate(losses.keys()):
-                with torch.no_grad():
+                with paddle.no_grad():
                     self.lmbda_ema[i] = self.alpha * (
                         rho * self.lmbda_ema[i].clone() + (1.0 - rho) * lmbda_init[i]
                     )
@@ -544,7 +543,7 @@ class Relobralo(Aggregator):
         return loss
 
 
-class NTK(nn.Module):
+class NTK(nn.Layer):
     def __init__(self, run_per_step: int = 1000, save_name: Union[str, None] = None):
         super(NTK, self).__init__()
         self.run_per_step = run_per_step
@@ -563,17 +562,17 @@ class NTK(nn.Module):
         # The item in this losses should scalar loss values after MSE, etc.
         ntk_value = dict()
         for key, loss in losses.items():
-            grad = torch.autograd.grad(
-                torch.sqrt(torch.abs(loss)),
+            grad = paddle.grad(
+                paddle.sqrt(paddle.abs(loss)),
                 model.parameters(),
                 retain_graph=True,
                 allow_unused=True,
             )
-            ntk_value[key] = torch.sqrt(
-                torch.sum(
-                    torch.stack(
-                        [torch.sum(t.detach() ** 2) for t in grad if t is not None],
-                        dim=0,
+            ntk_value[key] = paddle.sqrt(
+                paddle.sum(
+                    paddle.stack(
+                        [paddle.sum(t.detach() ** 2) for t in grad if t is not None],
+                        axis=0,
                     )
                 )
             )
@@ -596,9 +595,9 @@ class NTK(nn.Module):
         # Execute constraint forward passes
         for key, constraint in constraints.items():
             # TODO: Test streaming here
-            torch.cuda.nvtx.range_push(f"Running Constraint {key}")
+            paddle.framework.core.nvprof_nvtx_push(f"Running Constraint {key}")
             constraint.forward()
-            torch.cuda.nvtx.range_pop()
+            paddle.framework.core.nvprof_nvtx_pop()
 
         for key, constraint in constraints.items():
             # compute losses
@@ -610,8 +609,8 @@ class NTK(nn.Module):
             if ntk_dict is not None:
                 ntk_weights[key] = ntk_dict
             if ntk_weights.get(key) is not None:
-                ntk_sum += torch.sum(
-                    torch.stack(list(ntk_weights[key].values()), dim=0)
+                ntk_sum += paddle.sum(
+                    paddle.stack(list(ntk_weights[key].values()), axis=0)
                 )
             dict_constraint_losses[key] = constraint_losses
 

@@ -13,11 +13,14 @@
 # limitations under the License.
 
 import logging
-from typing import List, Dict, Union
+from typing import List, Dict, Tuple, Union
 
-import torch
+import paddle
+import logging
+import paddle.nn as nn
+from paddle import Tensor
+from typing import Optional, Dict, Union, List
 
-from torch import Tensor
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 from modulus.sym.manager import GraphManager
@@ -99,27 +102,33 @@ class DeepONetArch(Arch):
         out_features = sum(self.output_key_dict.values())
 
         if not self.trunk_dim == self.branch_dim:
-            self.branch_linear = torch.nn.Linear(
-                self.branch_dim, self.deepo_dim, bias=False
+            self.branch_linear = paddle.nn.Linear(
+                self.branch_dim,
+                self.deepo_dim,
+                bias_attr=False,
             )
-            self.trunk_linear = torch.nn.Linear(
-                self.trunk_dim, self.deepo_dim, bias=False
+            self.trunk_linear = paddle.nn.Linear(
+                self.trunk_dim, self.deepo_dim, bias_attr=False
             )
         else:
-            self.branch_linear = torch.nn.Identity()
-            self.trunk_linear = torch.nn.Identity()
+            self.branch_linear = paddle.nn.Identity()
+            self.trunk_linear = paddle.nn.Identity()
 
-        self.output_linear = torch.nn.Linear(self.deepo_dim, out_features, bias=False)
+        self.output_linear = paddle.nn.Linear(
+            self.deepo_dim, out_features, bias_attr=False
+        )
 
         # prepare slice indices
         branch_slice_index = self.prepare_slice_index(
             self.input_key_dict, self.branch_net.input_key_dict.keys()
         )
-        self.register_buffer("branch_slice_index", branch_slice_index, persistent=False)
+        self.register_buffer(
+            "branch_slice_index", branch_slice_index, persistable=False
+        )
         trunk_slice_index = self.prepare_slice_index(
             self.input_key_dict, self.trunk_net.input_key_dict.keys()
         )
-        self.register_buffer("trunk_slice_index", trunk_slice_index, persistent=False)
+        self.register_buffer("trunk_slice_index", trunk_slice_index, persistable=False)
 
         # Because we directly call `branch_net._tensor_forward` and `trunk_net._tensor_forward`
         # method in `self._tensor_forward`, we have to redirect `self.forward` to
@@ -148,22 +157,15 @@ class DeepONetArch(Arch):
         trunk_output = self.trunk_net._tensor_forward(trunk_x)
 
         # Convert ouputs into 1D feature vectors
-        if torch._C._functorch.is_gradtrackingtensor(
-            trunk_output
-        ) or torch._C._functorch.is_batchedtensor(trunk_output):
-            # batched tensor does not have the original shape
-            branch_output = branch_output.view(-1)
-            trunk_output = trunk_output.view(-1)
-        else:
-            branch_output = branch_output.view(branch_output.shape[0], -1)
-            trunk_output = trunk_output.view(trunk_output.shape[0], -1)
+        branch_output = branch_output.reshape([branch_output.shape[0], -1])
+        trunk_output = trunk_output.reshape([trunk_output.shape[0], -1])
 
         assert (
-            branch_output.size(-1) == self.branch_dim
-        ), f"Invalid feature dimension from branch net, expected {self.branch_dim} but found {branch_output.size(-1)}"
+            branch_output.shape[-1] == self.branch_dim
+        ), f"Invalid feature dimension from branch net, expected {self.branch_dim} but found {branch_output.shape[-1]}"
         assert (
-            trunk_output.size(-1) == self.trunk_dim
-        ), f"Invalid feature dimension from trunk net, expected {self.trunk_dim} but found {trunk_output.size(-1)}"
+            trunk_output.shape[-1] == self.trunk_dim
+        ), f"Invalid feature dimension from trunk net, expected {self.trunk_dim} but found {trunk_output.shape[-1]}"
 
         # Send through final linear layers
         branch_output = self.branch_linear(branch_output)
@@ -195,11 +197,11 @@ class DeepONetArch(Arch):
         trunk_output = trunk_output.view(trunk_output.shape[0], -1)
 
         assert (
-            branch_output.size(-1) == self.branch_dim
-        ), f"Invalid feature dimension from branch net, expected {self.branch_dim} but found {branch_output.size(-1)}"
+            branch_output.shape[-1] == self.branch_dim
+        ), f"Invalid feature dimension from branch net, expected {self.branch_dim} but found {branch_output.shape[-1]}"
         assert (
-            trunk_output.size(-1) == self.trunk_dim
-        ), f"Invalid feature dimension from trunk net, expected {self.trunk_dim} but found {trunk_output.size(-1)}"
+            trunk_output.shape[-1] == self.trunk_dim
+        ), f"Invalid feature dimension from trunk net, expected {self.trunk_dim} but found {trunk_output.shape[-1]}"
 
         # Send through final linear layers
         branch_output = self.branch_linear(branch_output)

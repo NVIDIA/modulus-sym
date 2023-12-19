@@ -15,7 +15,7 @@
 """ Modulus nodes
 """
 from sympy import Add
-import torch
+import paddle
 from .constants import diff_str
 from .key import Key
 
@@ -82,8 +82,8 @@ class Node:
         node : Node
         """
 
-        from modulus.sym.utils.sympy.torch_printer import (
-            torch_lambdify,
+        from modulus.sym.utils.sympy.paddle_printer import (
+            paddle_lambdify,
             _subs_derivatives,
             SympyToTorch,
         )

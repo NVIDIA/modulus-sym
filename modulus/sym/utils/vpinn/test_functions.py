@@ -15,12 +15,12 @@
 """ Helper functions for and classes for making test functions used in VPINNs
 """
 
-import torch
+import paddle
 import numpy as np
 import sympy as sp
 from sympy import I
 import random, itertools
-from modulus.sym.utils.sympy.torch_printer import torch_lambdify
+from modulus.sym.utils.sympy.paddle_printer import paddle_lambdify
 
 x, y, z = sp.symbols("x, y ,z", real=True)
 
@@ -288,17 +288,19 @@ class Test_Function:
         dim = len(var_list)
         if f_sympy.is_number:
             if dim == 1:
-                return lambda x0, f_sympy=f_sympy: torch.zeros_like(x0) + float(f_sympy)
+                return lambda x0, f_sympy=f_sympy: paddle.zeros_like(x0) + float(
+                    f_sympy
+                )
             elif dim == 2:
-                return lambda x0, y0, f_sympy=f_sympy: torch.zeros_like(x0) + float(
+                return lambda x0, y0, f_sympy=f_sympy: paddle.zeros_like(x0) + float(
                     f_sympy
                 )
             elif dim == 3:
-                return lambda x0, y0, z0, f_sympy=f_sympy: torch.zeros_like(x0) + float(
-                    f_sympy
-                )
+                return lambda x0, y0, z0, f_sympy=f_sympy: paddle.zeros_like(
+                    x0
+                ) + float(f_sympy)
         else:
-            return torch_lambdify(f_sympy, var_list, separable=True)
+            return paddle_lambdify(f_sympy, var_list, separable=True)
 
     def lambdify_fcn_list(self):
         self.test_lambda_dict = {}
@@ -314,7 +316,7 @@ class Test_Function:
             for f_sympy in self.test_sympy_dict[k]:
                 self.test_lambda_dict[k].append(
                     Test_Function.lambdify(f_sympy, var_list)
-                )  ### use torch_lambdify
+                )  ### use paddle_lambdify
 
     def eval_test(self, ind, x, y=None, z=None):
         # return N*M tensor
@@ -333,7 +335,7 @@ class Test_Function:
                 ), "please provide tensor y and z"
                 tmp_list.append(f(x, y, z))
 
-        return torch.cat(tmp_list, 1)  ### tf.concat -> torch.cat
+        return paddle.concat(tmp_list, 1)  ### tf.concat -> paddle.cat
 
 
 class Vector_Test:
@@ -443,16 +445,17 @@ class Vector_Test:
 
         if self.num == 2:
             # Cannot use cuda graphs because of this
-            x_ind = torch.tensor([k[0] for k in self.output_ind], device=x.device)
-            y_ind = torch.tensor([k[1] for k in self.output_ind], device=x.device)
-            return v1_val.index_select(1, x_ind), v2_val.index_select(1, y_ind)
-
+            x_ind = paddle.to_tensor([k[0] for k in self.output_ind], place=x.place)
+            y_ind = paddle.to_tensor([k[1] for k in self.output_ind], place=x.place)
+            return v1_val.index_select(axis=1, index=x_ind), v2_val.index_select(
+                1, y_ind
+            )
         else:
             # Cannot use cuda graphs because of this
             v3_val = self.v3.eval_test(ind, *var_list)
-            x_ind = torch.tensor([k[0] for k in self.output_ind], device=x.device)
-            y_ind = torch.tensor([k[1] for k in self.output_ind], device=x.device)
-            z_ind = torch.tensor([k[2] for k in self.output_ind], device=x.device)
+            x_ind = paddle.to_tensor([k[0] for k in self.output_ind], place=x.place)
+            y_ind = paddle.to_tensor([k[1] for k in self.output_ind], place=x.place)
+            z_ind = paddle.to_tensor([k[2] for k in self.output_ind], place=x.place)
             return (
                 v1_val.index_select(1, x_ind),
                 v2_val.index_select(1, y_ind),
@@ -595,7 +598,9 @@ class RBF_Function:
 
         for k in self.test_sympy_dict.keys():
             f_sympy = self.test_sympy_dict[k]
-            self.test_lambda_dict[k] = torch_lambdify(f_sympy, var_list, separable=True)
+            self.test_lambda_dict[k] = paddle_lambdify(
+                f_sympy, var_list, separable=True
+            )
 
     def eval_test(
         self,
@@ -615,31 +620,45 @@ class RBF_Function:
         # all input tensors are column vectors
         assert x_center is not None, "please provide x_center"
         if eps is None:
-            eps = torch.full(
-                [1, x_center.shape[0]], 10.0, device=x.device
-            )  ### tf.fill -> torch.full
+            eps = paddle.full([1, x_center.shape[0]], 10.0)  ### tf.fill -> paddle.full
         elif isinstance(eps, int) or isinstance(eps, float):
-            eps = torch.full([1, x_center.shape[0]], np.float32(eps), device=x.device)
-        elif isinstance(eps, torch.Tensor):
-            eps = torch.reshape(eps, [1, -1])
-        x_center_t = torch.transpose(
-            x_center, 0, 1
-        )  ### tf.transpose -> torch.transpose
+            eps = paddle.full([1, x_center.shape[0]], np.float32(eps))
+        elif isinstance(eps, paddle.Tensor):
+            eps = paddle.reshape(eps, [1, -1])
+        x = x_center
+        perm_0 = list(range(x.ndim))
+        perm_0[0] = 1
+        perm_0[1] = 0
+        x_center_t = paddle.transpose(
+            x, perm=perm_0
+        )  ### tf.transpose -> paddle.transpose
         if self.dim == 1:
             x_new = eps * (x - x_center_t)
         elif self.dim == 2:
-            y_center_t = torch.transpose(
-                y_center, 0, 1
-            )  ### tf.transpose -> torch.transpose
+            x = y_center
+            perm_1 = list(range(x.ndim))
+            perm_1[0] = 1
+            perm_1[1] = 0
+            y_center_t = paddle.transpose(
+                x, perm=perm_1
+            )  ### tf.transpose -> paddle.transpose
             x_new = eps * (x - x_center_t)
             y_new = eps * (y - y_center_t)
         else:
-            y_center_t = torch.transpose(
-                y_center, 0, 1
-            )  ### tf.transpose -> torch.transpose
-            z_center_t = torch.transpose(
-                z_center, 0, 1
-            )  ### tf.transpose -> torch.transpose
+            x = y_center
+            perm_2 = list(range(x.ndim))
+            perm_2[0] = 1
+            perm_2[1] = 0
+            y_center_t = paddle.transpose(
+                x, perm=perm_2
+            )  ### tf.transpose -> paddle.transpose
+            x = z_center
+            perm_3 = list(range(x.ndim))
+            perm_3[0] = 1
+            perm_3[1] = 0
+            z_center_t = paddle.transpose(
+                x, perm=perm_3
+            )  ### tf.transpose -> paddle.transpose
             x_new = eps * (x - x_center_t)
             y_new = eps * (y - y_center_t)
             z_new = eps * (z - z_center_t)
@@ -647,8 +666,10 @@ class RBF_Function:
         fcn = self.test_lambda_dict[ind]
         p = self.pow_dict[ind]
         if self.dim == 1:
-            return fcn(x_new) * torch.pow(eps, p)  ### tf.pow -> torch.pow
+            return fcn(x_new) * paddle.pow(eps, p)  ### tf.pow -> paddle.pow
         elif self.dim == 2:
-            return fcn(x_new, y_new) * torch.pow(eps, p)  ### tf.pow -> torch.pow
+            return fcn(x_new, y_new) * paddle.pow(eps, p)  ### tf.pow -> paddle.pow
         else:
-            return fcn(x_new, y_new, z_new) * torch.pow(eps, p)  ### tf.pow -> torch.pow
+            return fcn(x_new, y_new, z_new) * paddle.pow(
+                eps, p
+            )  ### tf.pow -> paddle.pow

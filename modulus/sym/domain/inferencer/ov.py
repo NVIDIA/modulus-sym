@@ -15,7 +15,7 @@
 import inspect
 import logging
 import tarfile
-import torch
+import paddle
 import numpy as np
 import gc
 
@@ -67,7 +67,7 @@ class OVVoxelInferencer(Inferencer):
         eco: bool = False,
         progress_bar=None,
     ):
-        self.requires_grad = requires_grad
+        self.stop_gradient = not requires_grad
         self._eco = eco
         self.mask_value = mask_value
         self.mask_index = None
@@ -82,7 +82,7 @@ class OVVoxelInferencer(Inferencer):
             output_keys,
         )
         self.manager = DistributedManager()
-        self.device = self.manager.device
+        self.place = self.manager.place
 
     def setup_voxel_domain(
         self,
@@ -166,33 +166,32 @@ class OVVoxelInferencer(Inferencer):
         Parameters
         ----------
         memory_fraction : float, optional
-            Fraction of GPU memory to let PyTorch allocate, by default 1.0
+            Fraction of GPU memory to let Paddle allocate, by default 1.0
 
         Returns:
             Tuple[Dict[str, np.array]]: Dictionary of input and output arrays
         """
-        torch.cuda.set_per_process_memory_fraction(memory_fraction)
-
         invar_cpu = {key: [] for key in self.dataset.invar_keys}
         predvar_cpu = {key: [] for key in self.dataset.outvar_keys}
         # Eco mode on/off loads model every query
-        if self.eco or not next(self.model.parameters()).is_cuda:
-            self.model = self.model.to(self.device)
-
+        if self.eco or not "gpu" in str(next(self.model.parameters()).place):
+            self.model = self.model.to(self.place)
         # Loop through mini-batches
         for i, (invar0,) in enumerate(self.dataloader):
             # Move data to device
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
 
-            if self.requires_grad:
+            if not self.stop_gradient:
                 pred_outvar = self.model.forward(invar)
             else:
-                with torch.no_grad():
+                with paddle.no_grad():
                     pred_outvar = self.model.forward(invar)
 
-            invar_cpu = {key: value + [invar0[key]] for key, value in invar_cpu.items()}
+            invar_cpu = {
+                key: (value + [invar0[key]]) for key, value in invar_cpu.items()
+            }
             predvar_cpu = {
                 key: value + [pred_outvar[key].cpu().detach().numpy()]
                 for key, value in predvar_cpu.items()
@@ -224,8 +223,8 @@ class OVVoxelInferencer(Inferencer):
 
         # Clean up
         gc.collect()
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
+        paddle.device.cuda.empty_cache()
+        paddle.device.cuda.synchronize()
 
         return invar, predvar
 
@@ -269,7 +268,7 @@ class OVVoxelInferencer(Inferencer):
     def eco(self, e: bool):
         self._eco = e
         if e == False:
-            self.model.to(self.device)
+            self.model.to(self.place)
         else:
             self.model.cpu()
 
@@ -280,7 +279,7 @@ class OVFourCastNetInferencer(Inferencer):
 
     Parameters
     ----------
-    afno_model : Union[Arch, torch.nn.Module]
+    afno_model : Union[Arch, paddle.nn.Layer]
         AFNO model object
     n_channels : int
         Number of input channels / fields
@@ -294,7 +293,7 @@ class OVFourCastNetInferencer(Inferencer):
 
     def __init__(
         self,
-        afno_model: Union[Arch, torch.nn.Module],
+        afno_model: Union[Arch, paddle.nn.Layer],
         n_channels: int,
         img_shape: Tuple[int, int] = (720, 1440),
         eco: bool = False,
@@ -308,14 +307,14 @@ class OVFourCastNetInferencer(Inferencer):
         self.mu = None
         self.std = None
 
-        # Get PyTorch model out of node if a Modulus Node
+        # Get Paddle model out of node if a Modulus Node
         if hasattr(afno_model, "_impl"):
             self.model = afno_model._impl
         else:
             self.model = afno_model
 
         self.manager = DistributedManager()
-        self.device = self.manager.device
+        self.place = self.manager.place
 
     def load_initial_state_npy(
         self,
@@ -351,7 +350,7 @@ class OVFourCastNetInferencer(Inferencer):
             and init_np.shape[2] == self.img_shape[1]
         ), "Incorrect field/image shape"
 
-        self.init_state = torch.Tensor(init_np).unsqueeze(0)
+        self.init_state = paddle.to_tensor(init_np).unsqueeze(0)
 
     def load_stats_npz(
         self,
@@ -390,10 +389,10 @@ class OVFourCastNetInferencer(Inferencer):
             std.shape[0] == self.n_channels
         ), f"Incorrect channel size; expected {self.n_channels}, got {std.shape[0]}"
 
-        self.mu = torch.Tensor(mu).unsqueeze(0)
-        self.std = torch.Tensor(std).unsqueeze(0)
+        self.mu = paddle.to_tensor(mu).unsqueeze(0)
+        self.std = paddle.to_tensor(std).unsqueeze(0)
 
-    @torch.no_grad()
+    @paddle.no_grad()
     def query(self, tsteps: int, memory_fraction: float = 1.0) -> np.array:
         """Query the inference model, only a batch size of 1 is supported
 
@@ -402,28 +401,25 @@ class OVFourCastNetInferencer(Inferencer):
         tsteps : int
             Number of timesteps to forecast
         memory_fraction : float, optional
-            Fraction of GPU memory to let PyTorch allocate, by default 1.0
+            Fraction of GPU memory to let Paddle allocate, by default 1.0
 
         Returns
         -------
         np.array
             [tsteps+1, channels, height, width] output prediction fields
         """
-        torch.cuda.set_per_process_memory_fraction(memory_fraction)
-
-        # Create ouput prediction tensor [Tsteps, C, H, W]
         shape = self.init_state.shape
-        outputs = torch.zeros(shape[0] + tsteps, shape[1], shape[2], shape[3])
+        outputs = paddle.zeros([shape[0] + tsteps, shape[1], shape[2], shape[3]])
         outputs[0] = (self.init_state - self.mu) / self.std
 
         # Eco mode on/off loads model every query
-        if self.eco or not next(self.model.parameters()).is_cuda:
-            self.model = self.model.to(self.device)
+        if self.eco or not "gpu" in str(next(self.model.parameters()).place):
+            self.model = self.model.to(self.place)
 
         # Loop through time-steps
         for t in range(tsteps):
             # Get input time-step
-            invar = outputs[t : t + 1].to(self.device)
+            invar = outputs[t : t + 1].to(self.place)
             # Predict
             outvar = self.model.forward(invar)
             # Store
@@ -443,9 +439,8 @@ class OVFourCastNetInferencer(Inferencer):
 
         # Clean up
         gc.collect()
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
-
+        paddle.device.cuda.empty_cache()
+        paddle.device.cuda.synchronize()
         return outputs
 
     def get_array_from_tar(self, tar_file_path: str, np_file_path: str):
@@ -491,6 +486,6 @@ class OVFourCastNetInferencer(Inferencer):
     def eco(self, e: bool):
         self._eco = e
         if e == False:
-            self.model.to(self.device)
+            self.model.to(self.place)
         else:
             self.model.cpu()

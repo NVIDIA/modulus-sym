@@ -167,24 +167,22 @@ def _xor_np(x):
     return np.logical_xor(x)
 
 
-def _min_np(x, axis=None):
+def _min_np(x):
     return_value = x[0]
     for value in x:
         return_value = np.minimum(return_value, value)
     return return_value
 
 
-def _max_np(x, axis=None):
+def _max_np(x):
     return_value = x[0]
     for value in x:
         return_value = np.maximum(return_value, value)
     return return_value
 
 
-def _heaviside_np(x, x2=0):
-    # force x2 to 0
-    x2 = 0
-    return np.heaviside(x, x2)
+def _heaviside_np(x):
+    return np.heaviside(x, 0)
 
 
 def _equal_np(x, y):

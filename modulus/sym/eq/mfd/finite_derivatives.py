@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import numpy as np
 
 from .functions import *
 from modulus.sym.key import Key
 from typing import Dict, List, Set, Optional, Union, Callable
 
-Tensor = torch.Tensor
+Tensor = paddle.Tensor
 
 
-class FirstDerivO2(torch.nn.Module):
+class FirstDerivO2(paddle.nn.Layer):
     def __init__(self, derivative_key: Key) -> None:
         super().__init__()
         assert (
@@ -42,7 +42,7 @@ class FirstDerivO2(torch.nn.Module):
         return outputs
 
 
-class FirstDerivO4(torch.nn.Module):
+class FirstDerivO4(paddle.nn.Layer):
     def __init__(self, derivative_key: Key) -> None:
         super().__init__()
         assert (
@@ -64,7 +64,7 @@ class FirstDerivO4(torch.nn.Module):
         return outputs
 
 
-class SecondDerivO2(torch.nn.Module):
+class SecondDerivO2(paddle.nn.Layer):
     def __init__(self, derivative_key: Key) -> None:
         super().__init__()
         assert (
@@ -88,7 +88,7 @@ class SecondDerivO2(torch.nn.Module):
         return outputs
 
 
-class SecondDerivO4(torch.nn.Module):
+class SecondDerivO4(paddle.nn.Layer):
     def __init__(self, derivative_key: Key) -> None:
         super().__init__()
         assert (
@@ -114,7 +114,7 @@ class SecondDerivO4(torch.nn.Module):
         return outputs
 
 
-class MixedSecondDerivO2(torch.nn.Module):
+class MixedSecondDerivO2(paddle.nn.Layer):
     def __init__(self, derivative_key: Key) -> None:
         super().__init__()
         assert (
@@ -125,7 +125,7 @@ class MixedSecondDerivO2(torch.nn.Module):
             str(derivative_key.derivatives[0]),
             str(derivative_key.derivatives[1]),
         ]
-        self.indep_vars.sort()
+        paddle.sort(self.indep_vars)
         self.out_name = str(derivative_key)
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
@@ -140,7 +140,7 @@ class MixedSecondDerivO2(torch.nn.Module):
         return outputs
 
 
-class ThirdDerivO2(torch.nn.Module):
+class ThirdDerivO2(paddle.nn.Layer):
     def __init__(self, derivative_key: Key) -> None:
         super().__init__()
         assert (
@@ -167,7 +167,7 @@ class ThirdDerivO2(torch.nn.Module):
         return outputs
 
 
-class ForthDerivO2(torch.nn.Module):
+class ForthDerivO2(paddle.nn.Layer):
     def __init__(self, derivative_key: Key) -> None:
         super().__init__()
         assert (
@@ -184,8 +184,8 @@ class ForthDerivO2(torch.nn.Module):
         self.out_name = str(derivative_key)
         self.register_buffer(
             "coeff",
-            torch.Tensor([1.0, -4.0, 6.0, -4.0, 1.0]).double().unsqueeze(-1),
-            persistent=False,
+            paddle.to_tensor([1.0, -4.0, 6.0, -4.0, 1.0], "float64").unsqueeze(-1),
+            persistable=False,
         )
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
@@ -201,7 +201,7 @@ class ForthDerivO2(torch.nn.Module):
         return outputs
 
 
-class DerivBase(torch.nn.Module):
+class DerivBase(paddle.nn.Layer):
     def __init__(
         self, derivative_keys: List[Key], dx: float, order: int = 2, jit: bool = True
     ) -> None:
@@ -282,7 +282,7 @@ class FirstDeriv(DerivBase):
                 )
                 eval_list.append(FirstDerivO4(key))
 
-        self._eval = torch.nn.ModuleList(eval_list)
+        self._eval = paddle.nn.LayerList(eval_list)
 
 
 class SecondDeriv(DerivBase):
@@ -328,7 +328,9 @@ class SecondDeriv(DerivBase):
             else:
                 if order == 2:
                     indep_vars = [str(var) for var in indep_vars]
-                    indep_vars.sort()  # Avoid redundent points like (z::-1&&y::1 and y::1&&z::-1)
+                    paddle.sort(
+                        indep_vars
+                    )  # Avoid redundent points like (z::-1&&y::1 and y::1&&z::-1)
                     self._stencil = self._stencil.union(
                         {
                             f"{indep_vars[0]}::-1&&{indep_vars[1]}::-1",
@@ -343,7 +345,7 @@ class SecondDeriv(DerivBase):
                         "Fourth order mixed second derivatives not supported"
                     )
 
-        self._eval = torch.nn.ModuleList(eval_list)
+        self._eval = paddle.nn.LayerList(eval_list)
 
 
 class ThirdDeriv(DerivBase):
@@ -378,7 +380,7 @@ class ThirdDeriv(DerivBase):
                 )
                 eval_list.append(ThirdDerivO2(key))
 
-        self._eval = torch.nn.ModuleList(eval_list)
+        self._eval = paddle.nn.LayerList(eval_list)
 
 
 class ForthDeriv(DerivBase):
@@ -417,4 +419,4 @@ class ForthDeriv(DerivBase):
                 )
                 eval_list.append(ForthDerivO2(key))
 
-        self._eval = torch.nn.ModuleList(eval_list)
+        self._eval = paddle.nn.LayerList(eval_list)

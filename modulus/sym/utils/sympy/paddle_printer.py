@@ -13,12 +13,12 @@
 # limitations under the License.
 
 """
-Helper functions for converting sympy equations to pytorch
+Helper functions for converting sympy equations to paddle
 """
 
 from sympy import lambdify, Symbol, Derivative, Function, Basic, Add, Max, Min
 from sympy.printing.str import StrPrinter
-import torch
+import paddle
 import numpy as np
 import functools
 from typing import List, Dict
@@ -26,14 +26,14 @@ from typing import List, Dict
 from modulus.sym.constants import diff_str, tf_dt
 
 
-def torch_lambdify(f, r, separable=False):
+def paddle_lambdify(f, r, separable=False):
     """
-    generates a PyTorch function from a sympy equation
+    generates a Paddle function from a sympy equation
 
     Parameters
     ----------
     f : Sympy Exp, float, int, bool
-      the equation to convert to torch.
+      the equation to convert to paddle.
       If float, int, or bool this gets converted
       to a constant function of value `f`.
     r : list, dict
@@ -42,7 +42,7 @@ def torch_lambdify(f, r, separable=False):
 
     Returns
     -------
-    torch_f : PyTorch function
+    paddle_f : Paddle function
     """
 
     try:
@@ -52,153 +52,167 @@ def torch_lambdify(f, r, separable=False):
     if isinstance(f, (float, int, bool)):  # constant function
 
         def loop_lambda(constant):
-            return lambda **x: torch.zeros_like(next(iter(x.items()))[1]) + constant
+            return lambda **x: paddle.zeros_like(next(iter(x.items()))[1]) + constant
 
         lambdify_f = loop_lambda(f)
     else:
         vars = [k for k in r] if separable else [[k for k in r]]
         try:  # NOTE this fixes a very odd bug in SymPy TODO add issue to SymPy
-            lambdify_f = lambdify(vars, f, [TORCH_SYMPY_PRINTER])
+            lambdify_f = lambdify(vars, f, [PADDLE_SYMPY_PRINTER])
         except:
-            lambdify_f = lambdify(vars, f, [TORCH_SYMPY_PRINTER])
+            lambdify_f = lambdify(vars, f, [PADDLE_SYMPY_PRINTER])
     return lambdify_f
 
 
-def _where_torch(conditions, x, y):
+def _where_paddle(conditions, x, y):
     if isinstance(x, (int, float)):
-        x = float(x) * torch.ones(*conditions.get_shape())
+        x = float(x) * paddle.ones(conditions.get_shape())
     if isinstance(y, (int, float)):
-        y = float(y) * torch.ones(*conditions.get_shape())
-    return torch.where(conditions, x, y)
+        y = float(y) * paddle.ones(conditions.get_shape())
+    return paddle.where(conditions, x, y)
 
 
-def _heaviside_torch(x, values=0):
-    return torch.maximum(torch.sign(x), torch.zeros(1, device=x.device))
+def _heaviside_paddle(x):
+    return paddle.maximum(paddle.sign(x), paddle.zeros([1]))
 
 
-def _sqrt_torch(x):
-    return torch.sqrt((x - 1e-6) * _heaviside_torch(x - 1e-6) + 1e-6)
+def _sqrt_paddle(x):
+    return paddle.sqrt((x - 1e-6) * _heaviside_paddle(x - 1e-6) + 1e-6)
 
 
-# TODO: Add jit version here
-def _or_torch(*x):
+def _or_paddle(*x):
     return_value = x[0]
     for value in x:
-        return_value = torch.logical_or(return_value, value)
+        return_value = paddle.logical_or(return_value, value)
     return return_value
 
 
-# TODO: Add jit version here
-def _and_torch(*x):
+def _and_paddle(*x):
     return_value = x[0]
     for value in x:
-        return_value = torch.logical_and(return_value, value)
+        return_value = paddle.logical_and(return_value, value)
     return return_value
 
 
-@torch.jit.script
-def _min_jit(x: List[torch.Tensor]):
+def _min_jit(x: List[paddle.Tensor]):
     assert len(x) > 0
     min_tensor = x[0]
     for i in range(1, len(x)):
-        min_tensor = torch.minimum(min_tensor, x[i])
+        min_tensor = paddle.minimum(min_tensor, y=x[i])
     return min_tensor
 
 
-def _min_torch(*x):
+def _min_paddle(*x):
+    # method 1
+    assert isinstance(x[0], (int, float))
+    result = paddle.clip(x[1], max=x[0])
+    return result
+
+    # method 2
     # get tensor shape
     for value in x:
         if not isinstance(value, (int, float)):
             tensor_shape = list(map(int, value.shape))
-            device = value.device
 
     # convert all floats and ints to tensor
     x_only_tensors = []
     for value in x:
         if isinstance(value, (int, float)):
-            value = torch.zeros(tensor_shape, device=device) + value
+            value = paddle.zeros(tensor_shape) + value
         x_only_tensors.append(value)
 
-    # reduce min
-    min_tensor, _ = torch.min(torch.stack(x_only_tensors, -1), -1)
-    return min_tensor
+    min_tensor = x_only_tensors[0]
+    for tmp in x_only_tensors[1:]:
+        min_tensor = paddle.minimum(min_tensor, tmp)
 
     # jit option
     # return _min_jit(x_only_tensors)
 
-    # TODO: benchmark this other option that avoids stacking and extra memory movement
-    # Update: cannot jit this because TorchScript doesn't support functools.reduce
-    # return functools.reduce(torch.minimum, x)
+    # method 3
+    # min_tensor = paddle.min(x=paddle.stack(x=x_only_tensors, axis=-1), axis=-1)
+
+    return min_tensor
 
 
-@torch.jit.script
-def _max_jit(x: List[torch.Tensor]):
+def _max_jit(x: List[paddle.Tensor]):
     assert len(x) > 0
     max_tensor = x[0]
     for i in range(1, len(x)):
-        max_tensor = torch.maximum(max_tensor, x[i])
+        max_tensor = paddle.maximum(max_tensor, x[i])
     return max_tensor
 
 
-def _max_torch(*x):
+def _max_paddle(*x):
+    # method 1
+    return paddle.clip(x[1], min=x[0])
+
+    # method 2
     # get tensor shape
     for value in x:
         if not isinstance(value, (int, float)):
             tensor_shape = list(map(int, value.shape))
-            device = value.device
 
     # convert all floats and ints to tensor
     x_only_tensors = []
     for value in x:
         if isinstance(value, (int, float)):
-            value = (torch.zeros(tensor_shape) + value).to(device)
+            value = paddle.zeros(tensor_shape) + value
         x_only_tensors.append(value)
 
-    # reduce max
-    max_tensor, _ = torch.max(torch.stack(x_only_tensors, -1), -1)
+    max_tensor = x_only_tensors[0]
+    for tmp in x_only_tensors[1:]:
+        max_tensor = paddle.maximum(max_tensor, tmp)
+
+    # method 3
+    # paddle.max 高阶微分不支持
+    # max_tensor = paddle.max(x=paddle.stack(x=x_only_tensors, axis=-1), axis=-1)
     return max_tensor
 
     # jit option
     # return _max_jit(x_only_tensors)
 
 
-def _dirac_delta_torch(x):
-    return torch.eq(x, 0.0).to(tf_dt)
+def custom_exp(x, e=paddle.to_tensor(np.e)):
+    return paddle.pow(e, x)
 
 
-TORCH_SYMPY_PRINTER = {
-    "abs": torch.abs,
-    "Abs": torch.abs,
-    "sign": torch.sign,
-    "ceiling": torch.ceil,
-    "floor": torch.floor,
-    "log": torch.log,
-    "exp": torch.exp,
-    "sqrt": _sqrt_torch,
-    "cos": torch.cos,
-    "acos": torch.acos,
-    "sin": torch.sin,
-    "asin": torch.asin,
-    "tan": torch.tan,
-    "atan": torch.atan,
-    "atan2": torch.atan2,
-    "cosh": torch.cosh,
-    "acosh": torch.acosh,
-    "sinh": torch.sinh,
-    "asinh": torch.asinh,
-    "tanh": torch.tanh,
-    "atanh": torch.atanh,
-    "erf": torch.erf,
-    "loggamma": torch.lgamma,
-    "Min": _min_torch,
-    "Max": _max_torch,
-    "Heaviside": _heaviside_torch,
-    "DiracDelta": _dirac_delta_torch,
-    "logical_or": _or_torch,
-    "logical_and": _and_torch,
-    "where": _where_torch,
+def _dirac_delta_paddle(x):
+    return paddle.equal(x=x, y=0.0)
+
+
+PADDLE_SYMPY_PRINTER = {
+    "abs": paddle.abs,
+    "Abs": paddle.abs,
+    "sign": paddle.sign,
+    "ceiling": paddle.ceil,
+    "floor": paddle.floor,
+    "log": paddle.log,
+    "exp": paddle.exp,
+    "sqrt": _sqrt_paddle,
+    "cos": paddle.cos,
+    "acos": paddle.acos,
+    "sin": paddle.sin,
+    "asin": paddle.asin,
+    "tan": paddle.tan,
+    "atan": paddle.atan,
+    "atan2": paddle.atan2,
+    "cosh": paddle.cosh,
+    "acosh": paddle.acosh,
+    "sinh": paddle.sinh,
+    "asinh": paddle.asinh,
+    "tanh": paddle.tanh,
+    "atanh": paddle.atanh,
+    "erf": paddle.erf,
+    "loggamma": paddle.lgamma,
+    "Min": _min_paddle,
+    "Max": _max_paddle,
+    "Heaviside": _heaviside_paddle,
+    "DiracDelta": _dirac_delta_paddle,
+    "logical_or": _or_paddle,
+    "logical_and": _and_paddle,
+    "where": _where_paddle,
     "pi": np.pi,
-    "conjugate": torch.conj,
+    "conjugate": paddle.conj,
 }
 
 
@@ -251,9 +265,9 @@ def _subs_derivatives(expr):
 Basic.__str__ = lambda self: CustomDerivativePrinter().doprint(self)
 
 
-# Class to compile and evaluate a sympy expression in PyTorch
-# Cannot currently script this module because self.torch_expr is unknown
-class SympyToTorch(torch.nn.Module):
+# Class to compile and evaluate a sympy expression in Paddle
+# Cannot currently script this module because self.paddle_expr is unknown
+class SympyToTorch(paddle.nn.Layer):
     def __init__(
         self,
         sympy_expr,
@@ -266,29 +280,29 @@ class SympyToTorch(torch.nn.Module):
         self.keys = sorted([k.name for k in sympy_expr.free_symbols])
         self.freeze_terms = freeze_terms
         if not self.freeze_terms:
-            self.torch_expr = torch_lambdify(sympy_expr, self.keys)
+            self.paddle_expr = paddle_lambdify(sympy_expr, self.keys)
         else:
             assert all(
                 x < len(Add.make_args(sympy_expr)) for x in freeze_terms
             ), "The freeze term index cannot be larger than the total terms in the expression"
-            self.torch_expr = []
+            self.paddle_expr = []
             for i in range(len(Add.make_args(sympy_expr))):
-                self.torch_expr.append(
-                    torch_lambdify(Add.make_args(sympy_expr)[i], self.keys)
+                self.paddle_expr.append(
+                    paddle_lambdify(Add.make_args(sympy_expr)[i], self.keys)
                 )
-            self.freeze_list = list(self.torch_expr[i] for i in freeze_terms)
+            self.freeze_list = list(self.paddle_expr[i] for i in freeze_terms)
         self.name = name
         self.detach_names = detach_names
 
-    def forward(self, var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, var: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
         args = [
             var[k].detach() if k in self.detach_names else var[k] for k in self.keys
         ]
         if not self.freeze_terms:
-            output = self.torch_expr(args)
+            output = self.paddle_expr(args)
         else:
-            output = torch.zeros_like(var[self.keys[0]])
-            for i, expr in enumerate(self.torch_expr):
+            output = paddle.zeros_like(var[self.keys[0]])
+            for i, expr in enumerate(self.paddle_expr):
                 if expr in self.freeze_list:
                     output += expr(args).detach()
                 else:

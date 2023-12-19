@@ -1,29 +1,262 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# ignore_header_test
+
+""""""
+"""
+Pix2Pix model. This code was modified from, https://github.com/NVIDIA/pix2pixHD
+
+The following license is provided from their source,
+
+Copyright (C) 2019 NVIDIA Corporation. Ting-Chun Wang, Ming-Yu Liu, Jun-Yan Zhu.
+BSD License. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR ANY PARTICULAR PURPOSE.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
-import torch
+--------------------------- LICENSE FOR pytorch-CycleGAN-and-pix2pix ----------------
+Copyright (c) 2017, Jun-Yan Zhu and Taesung Park
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+
+import paddle
+import paddle.nn as nn
+import functools
 from typing import List, Dict
 import numpy as np
 
 from modulus.sym.key import Key
-from modulus.sym.models.activation import Activation, get_activation_fn
+import modulus.sym.models.layers as layers
+from modulus.sym.models.layers import Activation
 from modulus.sym.models.arch import Arch
 
-from modulus.models.pix2pix import Pix2Pix
+Tensor = paddle.Tensor
 
-Tensor = torch.Tensor
+
+class Pix2PixModelCore(nn.Layer):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        dimension: int,
+        conv_layer_size: int = 64,
+        n_downsampling: int = 3,
+        n_upsampling: int = 3,
+        n_blocks: int = 3,
+        batch_norm: bool = False,
+        padding_type: str = "reflect",
+        activation_fn: Activation = Activation.RELU,
+    ):
+        assert (
+            n_blocks >= 0 and n_downsampling >= 0 and n_upsampling >= 0
+        ), "Invalid arch params"
+        assert padding_type in ["reflect", "zero", "replicate"], "Invalid padding type"
+        super().__init__()
+
+        activation = layers.get_activation_fn(activation_fn, module=True, inplace=True)
+        # set padding and convolutions
+        if dimension == 1:
+            padding = nn.Pad1D(padding=3, mode="reflect")
+            conv = nn.Conv1D
+            trans_conv = nn.Conv1DTranspose
+            norm = nn.BatchNorm1D
+        elif dimension == 2:
+            padding = nn.Pad2D(padding=3, mode="reflect")
+            conv = nn.Conv2D
+            trans_conv = nn.Conv2DTranspose
+            norm = nn.BatchNorm2D
+        elif dimension == 3:
+            padding = nn.Pad3D(padding=3, mode="reflect")
+            conv = nn.Conv3D
+            trans_conv = nn.Conv3DTranspose
+            norm = nn.BatchNorm3D
+        else:
+            raise ValueError(
+                f"Pix2Pix only supported dimensions 1, 2, 3. Got {dimension}"
+            )
+
+        model = [
+            padding,
+            conv(in_channels, conv_layer_size, kernel_size=7, padding=0),
+        ]
+        if batch_norm:
+            model.append(norm(conv_layer_size))
+        model.append(activation)
+
+        ### downsample
+        for i in range(n_downsampling):
+            mult = 2**i
+            model.append(
+                conv(
+                    conv_layer_size * mult,
+                    conv_layer_size * mult * 2,
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                )
+            )
+            if batch_norm:
+                model.append(norm(conv_layer_size * mult * 2))
+            model.append(activation)
+
+        ### resnet blocks
+        mult = 2**n_downsampling
+        for i in range(n_blocks):
+            model += [
+                ResnetBlock(
+                    dimension,
+                    conv_layer_size * mult,
+                    padding_type=padding_type,
+                    activation=activation,
+                    use_batch_norm=batch_norm,
+                )
+            ]
+
+        ### upsample
+        for i in range(n_downsampling):
+            mult = 2 ** (n_downsampling - i)
+            model.append(
+                trans_conv(
+                    int(conv_layer_size * mult),
+                    int(conv_layer_size * mult / 2),
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                    output_padding=1,
+                )
+            )
+            if batch_norm:
+                model.append(norm(int(conv_layer_size * mult / 2)))
+            model.append(activation)
+
+        # super-resolution layers
+        for i in range(max([0, n_upsampling - n_downsampling])):
+            model.append(
+                trans_conv(
+                    int(conv_layer_size),
+                    int(conv_layer_size),
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                    output_padding=1,
+                )
+            )
+            if batch_norm:
+                model.append(norm(conv_layer_size))
+            model.append(activation)
+
+        model += [
+            padding,
+            conv(conv_layer_size, out_channels, kernel_size=7, padding=0),
+        ]
+        self.model = nn.Sequential(*model)
+
+    def forward(self, input: Tensor) -> Tensor:
+        y = self.model(input)
+        return y
+
+
+# Define a resnet block
+class ResnetBlock(nn.Layer):
+    def __init__(
+        self,
+        dimension: int,
+        channels: int,
+        padding_type: str = "zero",
+        activation: nn.Layer = nn.ReLU(),
+        use_batch_norm: bool = False,
+        use_dropout: bool = False,
+    ):
+        super().__init__()
+
+        if dimension == 1:
+            conv = nn.Conv1D
+            if padding_type == "reflect":
+                padding = nn.Pad1D(padding=1, mode="reflect")
+            elif padding_type == "replicate":
+                padding = nn.Pad1D(padding=1, mode="replicate")
+            elif padding_type == "zero":
+                padding = 1
+            norm = nn.BatchNorm1D
+        elif dimension == 2:
+            conv = nn.Conv2D
+            if padding_type == "reflect":
+                padding = nn.Pad2D(padding=1, mode="reflect")
+            elif padding_type == "replicate":
+                padding = nn.Pad2D(padding=1, mode="replicate")
+            elif padding_type == "zero":
+                padding = 1
+            norm = nn.BatchNorm2D
+        elif dimension == 3:
+            conv = nn.Conv3D
+            if padding_type == "reflect":
+                padding = nn.Pad3D(padding=1, mode="reflect")
+            elif padding_type == "replicate":
+                padding = nn.Pad3D(padding=1, mode="replicate")
+            elif padding_type == "zero":
+                padding = 1
+            norm = nn.BatchNorm3D
+
+        conv_block = []
+        p = 0
+        if padding_type != "zero":
+            conv_block += [padding]
+
+        conv_block.append(conv(channels, channels, kernel_size=3, padding=p))
+        if use_batch_norm:
+            conv_block.append(norm(channels))
+        conv_block.append(activation)
+
+        if use_dropout:
+            conv_block += [nn.Dropout(0.5)]
+
+        if padding_type != "zero":
+            conv_block += [padding]
+        conv_block += [
+            conv(channels, channels, kernel_size=3, padding=p),
+        ]
+        if use_batch_norm:
+            conv_block.append(norm(channels))
+
+        self.conv_block = nn.Sequential(*conv_block)
+
+    def forward(self, x: Tensor) -> Tensor:
+        out = x + self.conv_block(x)
+        return out
 
 
 class Pix2PixArch(Arch):
@@ -110,7 +343,6 @@ class Pix2PixArch(Arch):
         in_channels = sum(self.input_key_dict.values())
         out_channels = sum(self.output_key_dict.values())
         self.var_dim = 1
-        activation_fn = get_activation_fn(activation_fn, module=True, inplace=True)
 
         # Scaling factor must be 1, 2, 4, or 8
         scaling_factor = int(scaling_factor)
@@ -122,7 +354,7 @@ class Pix2PixArch(Arch):
         }, "The scaling factor must be 1, 2, 4, or 8!"
         n_upsampling = n_downsampling + int(np.log2(scaling_factor))
 
-        self._impl = Pix2Pix(
+        self._impl = Pix2PixModelCore(
             in_channels,
             out_channels,
             dimension,
@@ -130,9 +362,9 @@ class Pix2PixArch(Arch):
             n_downsampling,
             n_upsampling,
             n_blocks,
-            activation_fn,
             batch_norm,
             padding_type,
+            activation_fn,
         )
 
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:

@@ -14,13 +14,12 @@
 
 from typing import List, Dict
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
 
-from modulus.models.layers import FCLayer, DGMLayer
-from modulus.sym.models.activation import Activation, get_activation_fn
+import modulus.sym.models.layers as layers
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -46,7 +45,7 @@ class DGMArch(Arch):
         Number of hidden layers of the model.
     skip_connections : bool = False
         If true then apply skip connections every 2 hidden layers.
-    activation_fn : Activation = Activation.SILU
+    activation_fn : layers.Activation = layers.Activation.SILU
         Activation function used by network.
     adaptive_activations : bool = False
         If True then use an adaptive activation function as described here
@@ -62,7 +61,7 @@ class DGMArch(Arch):
         detach_keys: List[Key] = [],
         layer_size: int = 512,
         nr_layers: int = 6,
-        activation_fn=Activation.SIN,
+        activation_fn=layers.Activation.SIN,
         adaptive_activations: bool = False,
         weight_norm: bool = True,
     ) -> None:
@@ -74,38 +73,39 @@ class DGMArch(Arch):
         out_features = sum(self.output_key_dict.values())
 
         if adaptive_activations:
-            activation_par = nn.Parameter(torch.ones(1))
+            activation_par = self.create_parameter(
+                [1],
+                default_initializer=nn.initializer.Constant(1),
+            )
         else:
             activation_par = None
 
-        self.fc_start = FCLayer(
+        self.fc_start = layers.FCLayer(
             in_features=in_features,
             out_features=layer_size,
-            activation_fn=get_activation_fn(activation_fn, out_features=out_features),
+            activation_fn=activation_fn,
             weight_norm=weight_norm,
         )
 
-        self.dgm_layers = nn.ModuleList()
+        self.dgm_layers = nn.LayerList()
 
         for _ in range(nr_layers - 1):
             single_layer = {}
             for key in ["z", "g", "r", "h"]:
-                single_layer[key] = DGMLayer(
+                single_layer[key] = layers.DGMLayer(
                     in_features_1=in_features,
                     in_features_2=layer_size,
                     out_features=layer_size,
-                    activation_fn=get_activation_fn(
-                        activation_fn, out_features=out_features
-                    ),
+                    activation_fn=activation_fn,
                     weight_norm=weight_norm,
                     activation_par=activation_par,
                 )
-            self.dgm_layers.append(nn.ModuleDict(single_layer))
+            self.dgm_layers.append(nn.LayerDict(single_layer))
 
-        self.fc_end = FCLayer(
+        self.fc_end = layers.FCLayer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=None,
+            activation_fn=layers.Activation.IDENTITY,
             weight_norm=False,
             activation_par=None,
         )

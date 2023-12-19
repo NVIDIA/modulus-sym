@@ -12,16 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.nn.functional as F
-import torch.distributed as dist
+import paddle
+import paddle.nn.functional as F
+import paddle.distributed as dist
 
 
 def get_memory_format(tensor):
-    if tensor.is_contiguous(memory_format=torch.channels_last):
-        return torch.channels_last
-    else:
-        return torch.contiguous_format
+    raise NotImplementedError("get_memory_format is not implemented")
 
 
 def pad_helper(tensor, dim, new_size, mode="zero"):
@@ -42,8 +39,8 @@ def pad_helper(tensor, dim, new_size, mode="zero"):
             slice(0, x) if idx != dim else slice(1, output_shape[1] + 1)
             for idx, x in enumerate(tensor.shape)
         ]
-        tensor_pad[lhs_slice] = torch.flip(
-            torch.conj(tensor_pad[rhs_slice]), dims=[dim]
+        tensor_pad[lhs_slice] = paddle.flip(
+            paddle.conj(tensor_pad[rhs_slice]), axis=[dim]
         )
 
     return tensor_pad
@@ -57,7 +54,7 @@ def truncate_helper(tensor, dim, new_size):
         slice(0, x) if idx != dim else slice(0, new_size)
         for idx, x in enumerate(tensor.shape)
     ]
-    tensor_trunc = tensor[output_slice].contiguous(memory_format=input_format)
+    tensor_trunc = tensor[output_slice].contiguous()
 
     return tensor_trunc
 
@@ -71,7 +68,9 @@ def split_tensor_along_dim(tensor, dim, num_chunks):
     ), f"Error, cannot split dim {dim} evenly. Dim size is \
                                                   {tensor.shape[dim]} and requested numnber of splits is {num_chunks}"
     chunk_size = tensor.shape[dim] // num_chunks
-    tensor_list = torch.split(tensor, chunk_size, dim=dim)
+    tensor_list = paddle.split(
+        tensor, num_or_sections=tensor.shape[dim] // chunk_size, axis=dim
+    )
 
     return tensor_list
 
@@ -87,13 +86,13 @@ def _transpose(tensor, dim0, dim1, group=None, async_op=False):
     # split and local transposition
     split_size = tensor.shape[dim0] // comm_size
     x_send = [
-        y.contiguous(memory_format=input_format)
-        for y in torch.split(tensor, split_size, dim=dim0)
+        y.contiguous()
+        for y in paddle.split(tensor, tensor.shape[dim0] // split_size, axis=dim0)
     ]
-    x_recv = [torch.empty_like(x_send[0]) for _ in range(comm_size)]
+    x_recv = [paddle.empty_like(x_send[0]) for _ in range(comm_size)]
 
     # global transposition
-    req = dist.all_to_all(x_recv, x_send, group=group, async_op=async_op)
+    req = dist.alltoall(x_send, x_recv, group=group, sync_op=not async_op)
 
     return x_recv, req
 
@@ -108,7 +107,7 @@ def _reduce(input_, use_fp32=True, group=None):
     # All-reduce.
     if use_fp32:
         dtype = input_.dtype
-        inputf_ = input_.float()
+        inputf_ = input_.astype(dtype="float32")
         dist.all_reduce(inputf_, group=group)
         input_ = inputf_.to(dtype)
     else:
@@ -130,9 +129,8 @@ def _split(input_, dim_, group=None):
     # Split along last dimension.
     input_list = split_tensor_along_dim(input_, dim_, comm_size)
 
-    # Note: torch.split does not create contiguous tensors by default.
     rank = dist.get_rank(group=group)
-    output = input_list[rank].contiguous(memory_format=input_format)
+    output = input_list[rank].contiguous()
 
     return output
 
@@ -155,11 +153,10 @@ def _gather(input_, dim_, group=None):
     # Size and dimension.
     comm_rank = dist.get_rank(group=group)
 
-    tensor_list = [torch.empty_like(input_) for _ in range(comm_size)]
+    tensor_list = [paddle.empty_like(input_) for _ in range(comm_size)]
     tensor_list[comm_rank] = input_
     dist.all_gather(tensor_list, input_, group=group)
 
-    # Note: torch.cat already creates a contiguous tensor.
-    output = torch.cat(tensor_list, dim=dim_).contiguous(memory_format=input_format)
+    output = paddle.concat(tensor_list, axis=dim_).contiguous()
 
     return output

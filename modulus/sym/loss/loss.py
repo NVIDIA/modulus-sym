@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import pathlib
-import torch.nn as nn
-from torch import Tensor
+import paddle.nn as nn
+from paddle import Tensor
 
 from typing import Dict, Tuple, List, Union
-from torch.autograd import Function
+from paddle.autograd import PyLayer
 
 
-class LossL2(Function):
+class LossL2(PyLayer):
     @staticmethod
     def forward(
         ctx,
@@ -44,7 +44,7 @@ class LossL2(Function):
         return outputs[0], None, None, None
 
 
-class Loss(nn.Module):
+class Loss(paddle.nn.Layer):
     """
     Base class for all loss functions
     """
@@ -89,7 +89,7 @@ class PointwiseLossNorm(Loss):
     ) -> Dict[str, Tensor]:
         losses = {}
         for key, value in pred_outvar.items():
-            l = lambda_weighting[key] * torch.abs(
+            l = lambda_weighting[key] * paddle.abs(
                 pred_outvar[key] - true_outvar[key]
             ).pow(ord)
             if "area" in invar.keys():
@@ -143,7 +143,7 @@ class IntegralLossNorm(Loss):
             for key in pred_outvar.keys():
                 losses[key] += (
                     lambda_weighting[key]
-                    * torch.abs(
+                    * paddle.abs(
                         true_outvar[key] - (invar["area"] * pred_outvar[key]).sum()
                     ).pow(ord)
                 ).sum()
@@ -151,7 +151,7 @@ class IntegralLossNorm(Loss):
 
         losses = {}
         for key, value in pred_outvar.items():
-            l = lambda_weighting[key] * torch.abs(
+            l = lambda_weighting[key] * paddle.abs(
                 pred_outvar[key] - true_outvar[key]
             ).pow(ord)
             if "area" in invar.keys():
@@ -302,7 +302,7 @@ class CausalLossNorm(Loss):
     ) -> Dict[str, Tensor]:
         losses = {}
         for key, value in pred_outvar.items():
-            l = lambda_weighting[key] * torch.abs(
+            l = lambda_weighting[key] * paddle.abs(
                 pred_outvar[key] - true_outvar[key]
             ).pow(ord)
 
@@ -318,8 +318,8 @@ class CausalLossNorm(Loss):
             l = l.reshape(n_chunks, -1)
             l = l.sum(axis=-1)
             # compute causal temporal weights
-            with torch.no_grad():
-                w = torch.exp(-eps * torch.cumsum(l, dim=0))
+            with paddle.no_grad():
+                w = paddle.exp(-eps * paddle.cumsum(l, axis=0))
                 w = w / w[0]
 
             l = w * l

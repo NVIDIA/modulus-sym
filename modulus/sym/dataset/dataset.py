@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import paddle
 
 """ Dataset classes
 """
@@ -18,7 +19,6 @@
 from typing import Dict
 
 import numpy as np
-import torch.utils.data
 
 from modulus.sym.constants import tf_dt
 from modulus.sym.distributed import DistributedManager
@@ -61,14 +61,14 @@ class _BaseDataset:
 
         # convert to torch
         tensor_dict = {
-            key: torch.as_tensor(value, dtype=tf_dt, device=device)
+            key: paddle.to_tensor(value, dtype=tf_dt, place=device)
             for key, value in var_dict.items()
         }
 
         return tensor_dict
 
 
-class Dataset(_BaseDataset, torch.utils.data.Dataset):
+class Dataset(_BaseDataset, paddle.io.Dataset):
     "For defining map-style datasets, can be subclassed by user"
 
     auto_collation = False
@@ -84,7 +84,7 @@ class Dataset(_BaseDataset, torch.utils.data.Dataset):
         raise NotImplementedError("subclass must implement this")
 
 
-class IterableDataset(_BaseDataset, torch.utils.data.IterableDataset):
+class IterableDataset(_BaseDataset, paddle.io.IterableDataset):
     "For defining iterable-style datasets, can be subclassed by user"
 
     def __iter__(self):
@@ -107,10 +107,10 @@ class _DictDatasetMixin:
         if lambda_weighting is None:
             lambda_weighting = {key: np.ones_like(x) for key, x in outvar.items()}
 
-        # convert dataset arrays to tensors
-        self.invar = Dataset._to_tensor_dict(invar)
-        self.outvar = Dataset._to_tensor_dict(outvar)
-        self.lambda_weighting = Dataset._to_tensor_dict(lambda_weighting)
+        # assign given data arrays to class attributes(no need to convert to tensors)
+        self.invar = invar
+        self.outvar = outvar
+        self.lambda_weighting = lambda_weighting
 
         # get length
         self.length = len(next(iter(self.invar.values())))

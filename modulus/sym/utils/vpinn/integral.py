@@ -15,7 +15,7 @@
 """ Helper functions and classes for integration
 """
 
-import torch
+import paddle
 import quadpy as qd
 import numpy as np
 
@@ -29,9 +29,9 @@ def tensor_int(w, v, u=None):
     # return: 1*M tensor: integrals of u*v[i] if u is not None
     # return: 1*M tensor: integrals of v[i] if u is None
     if u is None:
-        return torch.einsum("ik,ij->jk", v, w)
+        return paddle.einsum("ik,ij->jk", v, w)
     else:
-        return torch.einsum("ij,ik,ij->jk", u, v, w)
+        return paddle.einsum("ij,ik,ij->jk", u, v, w)
 
 
 # class template for the quadrature
@@ -61,9 +61,9 @@ class Quadrature:
 
     def make_tensor(self):
         # points_tensor and weights_tensor are N*d tf tensors, where N is the # of points and d is the dimension
-        self.points_tensor = torch.tensor(self.points_numpy, dtype=torch.float32)
-        self.weights_tensor = torch.tensor(
-            self.weights_numpy.reshape((-1, 1)), dtype=torch.float32
+        self.points_tensor = paddle.to_tensor(self.points_numpy, dtype="float32")
+        self.weights_tensor = paddle.to_tensor(
+            self.weights_numpy.reshape((-1, 1)), dtype="float32"
         )
 
 
@@ -75,9 +75,9 @@ class Quadrature_Data:
 
     def make_tensor(self):
         # points_tensor and weights_tensor are N*d tf tensors, where N is the # of points and d is the dimension
-        self.points_tensor = torch.tensor(self.points_numpy, dtype=torch.float32)
-        self.weights_tensor = torch.tensor(
-            self.weights_numpy.reshape((-1, 1)), dtype=torch.float32
+        self.points_tensor = paddle.to_tensor(self.points_numpy, dtype="float32")
+        self.weights_tensor = paddle.to_tensor(
+            self.weights_numpy.reshape((-1, 1)), dtype="float32"
         )
 
 

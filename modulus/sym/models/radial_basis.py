@@ -15,12 +15,12 @@
 from typing import Dict
 from typing import List
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
 
-from modulus.models.layers import FCLayer
+import modulus.sym.models.layers as layers
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -62,21 +62,23 @@ class RadialBasisArch(Arch):
 
         self.nr_centers = nr_centers
         self.sigma = sigma
-
-        self.centers = nn.Parameter(
-            torch.empty(nr_centers, len(bounds)), requires_grad=False
+        self.centers = self.create_parameter(
+            [nr_centers, len(bounds)],
+            default_initializer=paddle.nn.initializer.Assign(
+                paddle.empty([nr_centers, len(bounds)])
+            ),
         )
-        with torch.no_grad():
+        with paddle.no_grad():
             for idx, bound in enumerate(bounds.values()):
                 self.centers[:, idx].uniform_(bound[0], bound[1])
 
-        self.fc_layer = FCLayer(
+        self.fc_layer = layers.FCLayer(
             nr_centers,
             out_features,
-            activation_fn=None,
+            activation_fn=layers.Activation.IDENTITY,
         )
 
-    def _tensor_forward(self, x: Tensor) -> Tensor:
+    def _tensor_forward(self, x: paddle.Tensor) -> paddle.Tensor:
         # no op since no scales
         x = self.process_input(x, input_dict=self.input_key_dict, dim=-1)
         x = x.unsqueeze(-2)
@@ -84,8 +86,9 @@ class RadialBasisArch(Arch):
         # make BatchedTensor work
         centers = self.centers
 
-        radial_activation = torch.exp(
-            -0.5 * torch.square(torch.norm(centers - x, p=2, dim=-1) / self.sigma)
+        radial_activation = paddle.exp(
+            -0.5
+            * paddle.square(paddle.linalg.norm(centers - x, p=2, axis=-1) / self.sigma)
         )
         x = self.fc_layer(radial_activation)
         x = self.process_output(x)  # no op
@@ -108,12 +111,13 @@ class RadialBasisArch(Arch):
         x = self.prepare_input(
             in_vars, self.input_key_dict.keys(), self.detach_key_dict, -1
         )
-        shape = (x.size(0), self.nr_centers, x.size(1))
+        shape = [x.shape[0], self.nr_centers, x.shape[1]]
         x = x.unsqueeze(1).expand(shape)
         centers = self.centers.expand(shape)
 
-        radial_activation = torch.exp(
-            -0.5 * torch.square(torch.norm(centers - x, p=2, dim=-1) / self.sigma)
+        radial_activation = paddle.exp(
+            -0.5
+            * paddle.square(paddle.linalg.norm(centers - x, p=2, axis=-1) / self.sigma)
         )
 
         x = self.fc_layer(radial_activation)

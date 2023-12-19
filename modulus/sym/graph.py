@@ -16,7 +16,7 @@
 """
 
 from copy import copy
-import torch
+import paddle
 import logging
 from typing import Dict, List, Optional
 
@@ -30,15 +30,15 @@ from .manager import JitManager, GraphManager
 logger = logging.getLogger(__name__)
 
 
-class Graph(torch.nn.Module):
+class Graph(paddle.nn.Layer):
     """
-    Torch Module that is constructed by unrolling a computational graph given
+    Paddle Module that is constructed by unrolling a computational graph given
     desired inputs, outputs, and evaluatable nodes.
 
     Examples
     ========
     Here is a simple example of using `Graph` to unroll a two node graph.
-    >>> import torch
+    >>> import paddle
     >>> from sympy import Symbol
     >>> from modulus.sym.node import Node
     >>> from modulus.sym.key import Key
@@ -46,7 +46,7 @@ class Graph(torch.nn.Module):
     >>> node_1 = Node.from_sympy(Symbol('x') + Symbol('y'), 'u')
     >>> node_2 = Node.from_sympy(Symbol('u') + 1.0, 'v')
     >>> graph = Graph([node_1, node_2], [Key('x'), Key('y')], [Key('v')])
-    >>> graph.forward({'x': torch.tensor([1.0]), 'y': torch.tensor([2.0])})
+    >>> graph.forward({'x': paddle.to_tensor([1.0]), 'y': paddle.to_tensor([2.0])})
     {'v': tensor([4.])}
 
     Parameters
@@ -92,6 +92,10 @@ class Graph(torch.nn.Module):
         # get configs from the graph manager
         graph_manager = GraphManager()
         func_arch = func_arch if func_arch is not None else graph_manager.func_arch
+        if func_arch:
+            raise NotImplementedError(
+                "func_arch is not supported yet, please set it to True in config yaml."
+            )
         func_arch_allow_partial_hessian = (
             func_arch_allow_partial_hessian
             if func_arch_allow_partial_hessian is not None
@@ -216,23 +220,23 @@ class Graph(torch.nn.Module):
                 # return Variables({key: value for key, value in outvar.items() if key in req_names})
                 break
 
-        self.evaluation_order = torch.nn.ModuleList(
+        self.evaluation_order = paddle.nn.LayerList(
             [n.evaluate for n in self.node_evaluation_order]
         )
         self.node_names: List[str] = [n.name for n in self.node_evaluation_order]
-        self.optimizer_list = torch.nn.ModuleList(
+        self.optimizer_list = paddle.nn.LayerList(
             [n.evaluate for n in self.node_evaluation_order if n.optimize]
         )
 
         if graph_manager.debug:
             print(self)
 
-    def forward(self, invar: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, invar: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
         outvar = invar
         for i, e in enumerate(self.evaluation_order):
-            torch.cuda.nvtx.range_push(self.node_names[i])
+            paddle.framework.core.nvprof_nvtx_push(self.node_names[i])
             outvar.update(e(outvar))
-            torch.cuda.nvtx.range_pop()
+            paddle.framework.core.nvprof_nvtx_pop()
         outvar = {
             key: value for key, value in outvar.items() if Key(key) in self.req_names
         }

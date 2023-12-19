@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.nn as nn
+import paddle
+import paddle.nn as nn
 import numpy as np
-from torch import Tensor
+from paddle import Tensor
 from typing import Dict, List, Tuple
 import itertools
 
 import modulus.sym.models.fully_connected as fully_connected
-from modulus.sym.models.activation import Activation
-from modulus.models.layers.interpolation import (
+import modulus.sym.models.layers as layers
+from modulus.sym.models.interpolation import (
     _grid_knn_idx,
     _hyper_cube_weighting,
     smooth_step_2,
@@ -46,7 +46,7 @@ class MultiresolutionHashNetArch(Arch):
         Output key list
     detach_keys : List[Key], optional
         List of keys to detach gradients, by default []
-    activation_fn : Activation = Activation.SILU
+    activation_fn : layers.Activation = layers.Activation.SILU
         Activation function used by network.
     layer_size : int = 64
         Layer size for every hidden layer of the model.
@@ -79,7 +79,7 @@ class MultiresolutionHashNetArch(Arch):
         input_keys: List[Key],
         output_keys: List[Key],
         detach_keys: List[Key] = [],
-        activation_fn=Activation.SILU,
+        activation_fn=layers.Activation.SILU,
         layer_size: int = 64,
         nr_layers: int = 3,
         skip_connections: bool = False,
@@ -113,21 +113,22 @@ class MultiresolutionHashNetArch(Arch):
             self.params_var = None
 
         # get device for torch constants used in inference
-        self.device = DistributedManager().device
+        self.place = DistributedManager().device
 
         # store hash grid parameters
         self.bounds = bounds
         self.log2_hashmap_size = log2_hashmap_size
-        self.base_resolution = Tensor([base_resolution])
-        self.finest_resolution = Tensor([finest_resolution])
+        self.base_resolution = paddle.to_tensor([base_resolution], dtype="float32")
+        self.finest_resolution = paddle.to_tensor([finest_resolution], dtype="float32")
         self.nr_levels = nr_levels
         self.nr_features_per_level = nr_features_per_level
 
         # make embeddings
-        self.embedding = nn.Embedding(
-            self.nr_levels * 2**self.log2_hashmap_size, self.nr_features_per_level
+        self.embedding = paddle.nn.Embedding(
+            num_embeddings=self.nr_levels * 2**self.log2_hashmap_size,
+            embedding_dim=self.nr_features_per_level,
         )
-        nn.init.uniform_(self.embedding.weight, a=-0.001, b=0.001)
+        nn.initializer.Uniform(a=-0.001, b=0.001)(self.embedding.weight)
         self.b = np.exp(
             (np.log(self.finest_resolution) - np.log(self.base_resolution))
             / (nr_levels - 1)
@@ -141,14 +142,14 @@ class MultiresolutionHashNetArch(Arch):
             # calculate resolution
             resolution = int(np.floor(self.base_resolution * self.b**i))
             list_resolution.append(
-                torch.tensor([resolution]).to(self.device).view(1, 1)
+                paddle.to_tensor([resolution]).to(self.place).reshape([1, 1])
             )
 
             # make adjust factor
-            adjust_factor = ((8253729**i + 2396403) % 32767) / 32767.0
+            adjust_factor = (8253729**i + 2396403) % 32767 / 32767.0
 
             # compute grid and adjust it
-            not_adjusted_dx = [(x[1] - x[0]) / (resolution - 1) for x in self.bounds]
+            not_adjusted_dx = [((x[1] - x[0]) / (resolution - 1)) for x in self.bounds]
             grid = [
                 (
                     b[0] + (-2.0 + adjust_factor) * x,
@@ -159,39 +160,39 @@ class MultiresolutionHashNetArch(Arch):
             ]
 
             # make grid spacing size tensor
-            dx = torch.tensor([(x[1] - x[0]) / (x[2] - 1) for x in grid]).to(
-                self.device
+            dx = paddle.to_tensor([(x[1] - x[0]) / (x[2] - 1) for x in grid]).to(
+                self.place
             )
-            dx = dx.view(1, len(grid))
+            dx = dx.reshape([1, len(grid)])
             list_dx.append(dx)
 
             # make start tensor of grid
-            start = torch.tensor([val[0] for val in grid]).to(self.device)
-            start = start.view(1, len(grid))
+            start = paddle.to_tensor([val[0] for val in grid]).to(self.place)
+            start = start.reshape([1, len(grid)])
             list_start.append(start)
 
         # stack values
-        self.resolutions = torch.stack(list_resolution, dim=1)
-        self.dx = torch.stack(list_dx, dim=1)
-        self.start = torch.stack(list_start, dim=1)
+        self.resolutions = paddle.stack(list_resolution, axis=1)
+        self.dx = paddle.stack(list_dx, axis=1)
+        self.start = paddle.stack(list_start, axis=1)
 
         # hyper cube for adding to lower point index
         self.hyper_cube = (
-            torch.tensor(list(itertools.product(*(len(self.bounds) * [[0, 1]]))))
-            .to(self.device)
-            .view(1, 1, -1, len(bounds))
+            paddle.to_tensor(list(itertools.product(*(len(self.bounds) * [[0, 1]]))))
+            .to(self.place)
+            .reshape([1, 1, -1, len(bounds)])
         )
 
         # multiply factor for hash encoding to order layers
         list_mul_factor = []
-        mul_factor = torch.tensor([1], dtype=torch.int).to(self.device)
+        mul_factor = paddle.to_tensor([1], dtype="int32").to(self.place)
         for r in range(self.nr_levels):
             for d in range(len(self.bounds)):
                 list_mul_factor.append(mul_factor.clone())
                 mul_factor *= self.resolutions[0, r, 0]
                 mul_factor %= 20731370  # prevent overflow
-        self.mul_factor = torch.stack(list_mul_factor).view(
-            1, self.nr_levels, 1, len(self.bounds)
+        self.mul_factor = paddle.stack(list_mul_factor).reshape(
+            [1, self.nr_levels, 1, len(self.bounds)]
         )
 
         # make fully connected decoding network
@@ -217,22 +218,24 @@ class MultiresolutionHashNetArch(Arch):
         )
 
         # unsqueeze input to operate on all grids at once
-        unsqueezed_xyzt = torch.unsqueeze(in_xyzt_var, 1)
+        unsqueezed_xyzt = paddle.unsqueeze(in_xyzt_var, 1)
 
         # get lower and upper bounds cells
-        lower_indice = torch.floor((unsqueezed_xyzt - self.start) / self.dx).int()
-        all_indice = torch.unsqueeze(lower_indice, -2) + self.hyper_cube
+        lower_indice = paddle.floor((unsqueezed_xyzt - self.start) / self.dx).astype(
+            "int32"
+        )
+        all_indice = paddle.unsqueeze(lower_indice, -2) + self.hyper_cube
         lower_point = lower_indice * self.dx + self.start
         upper_point = lower_point + self.dx
 
         # get hash from indices and resolutions
-        key = torch.sum(all_indice * self.mul_factor, dim=-1)
-        key = 10000003 * key + 124777 * torch.bitwise_xor(
-            key, torch.tensor(3563504501)
+        key = paddle.sum(all_indice * self.mul_factor, axis=-1)
+        key = 10000003 * key + 124777 * paddle.bitwise_xor(
+            key, paddle.to_tensor(3563504501)
         )  # shuffle it
         key = (
-            torch.tensor(self.nr_levels * (1 << self.log2_hashmap_size) - 1).to(
-                key.device
+            paddle.to_tensor(self.nr_levels * (1 << self.log2_hashmap_size) - 1).to(
+                key.place
             )
             & key
         )
@@ -246,8 +249,8 @@ class MultiresolutionHashNetArch(Arch):
         weights = _hyper_cube_weighting(smoothed_lower_point, smoother_upper_point)
 
         # add embedding to list
-        hash_xyzt = torch.sum(embed * weights, dim=-2)
-        x = torch.reshape(hash_xyzt, [hash_xyzt.shape[0], -1])
+        hash_xyzt = paddle.sum(embed * weights, axis=-2)
+        x = paddle.reshape(hash_xyzt, [hash_xyzt.shape[0], -1])
 
         # add other features
         if self.params_var is not None:
@@ -258,7 +261,7 @@ class MultiresolutionHashNetArch(Arch):
                 dim=-1,
                 input_scales=self.input_scales,
             )
-            x = torch.cat((x, in_params_var), dim=-1)
+            x = paddle.concat((x, in_params_var), axis=-1)
 
         x = self.fc(x)
         return self.prepare_output(

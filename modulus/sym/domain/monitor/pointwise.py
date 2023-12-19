@@ -49,26 +49,26 @@ class PointwiseMonitor(Monitor):
     def __init__(self, invar, output_names, metrics, nodes, requires_grad=False):
 
         # construct model from nodes
-        self.requires_grad = requires_grad
+        self.stop_gradient = not requires_grad
         self.model = Graph(
             nodes, Key.convert_list(invar.keys()), Key.convert_list(output_names)
         )
         self.manager = DistributedManager()
-        self.device = self.manager.device
-        self.model.to(self.device)
+        self.place = self.manager.place
 
+        self.model.to(self.place)
         # set metrics
         self.metrics = metrics
         self.monitor_outvar_store = {}
 
         # set invar
-        self.invar = Constraint._set_device(invar, device=self.device)
+        self.invar = Constraint._set_device(invar, device=self.place)
 
     def save_results(self, name, writer, step, data_dir):
 
         # run forward inference
         invar = Constraint._set_device(
-            self.invar, device=self.device, requires_grad=self.requires_grad
+            self.invar, device=self.place, requires_grad=not self.stop_gradient
         )
         outvar = self.model(invar)
         metrics = {key: func({**invar, **outvar}) for key, func in self.metrics.items()}
@@ -76,9 +76,9 @@ class PointwiseMonitor(Monitor):
         for k, m in metrics.items():
             # add tensorboard scalars
             if TF_SUMMARY:
-                writer.add_scalar("monitor/" + name + "/" + k, m, step, new_style=True)
+                writer.add_scalar("monitor/" + name + "/" + k, float(m), step)
             else:
-                writer.add_scalar("Monitors/" + name + "/" + k, m, step, new_style=True)
+                writer.add_scalar("Monitors/" + name + "/" + k, float(m), step)
 
             # write csv files
             if k not in self.monitor_outvar_store.keys():

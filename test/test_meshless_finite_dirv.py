@@ -12,39 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-
+import paddle
 from modulus.sym.eq.derivatives import MeshlessFiniteDerivative
 from modulus.sym.node import Node
 from modulus.sym.key import Key
 from modulus.sym.graph import Graph
 
 
-class SineNet(torch.nn.Module):
+class SineNet(paddle.nn.Layer):
     def forward(self, inputs):
         return {
-            "y": (inputs["w"] ** 3) * torch.sin(inputs["x"]),
-            "z": inputs["w"] * torch.cos(inputs["x"]),
+            "y": inputs["w"] ** 3 * paddle.sin(x=inputs["x"]),
+            "z": inputs["w"] * paddle.cos(x=inputs["x"]),
         }
 
 
-class ParabolaNet(torch.nn.Module):
+class ParabolaNet(paddle.nn.Layer):
     def forward(self, inputs):
-        return {
-            "p": (inputs["nu"] ** 3) + inputs["x"],
-            "q": 2 * inputs["z"],
-        }
+        return {"p": inputs["nu"] ** 3 + inputs["x"], "q": 2 * inputs["z"]}
 
 
 def test_meshless_finite_deriv():
-    # Define sinisoidal function node
     function_node = Node(
         inputs=[Key("w"), Key("x")],
         outputs=[Key("y"), Key("z")],
         evaluate=SineNet(),
         name="Test Node",
     )
-    # Define finite derivative node
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=function_node,
         derivatives=[
@@ -58,32 +52,37 @@ def test_meshless_finite_deriv():
         order=2,
         max_batch_size=15,
     )
-
-    inputs = {"x": torch.randn(5, 1).double(), "w": torch.randn(5, 1).double()}
-    inputs.update(function_node.evaluate(inputs))  # Forward to get y
+    inputs = {
+        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+    }
+    inputs.update(function_node.evaluate(inputs))
     outputs = deriv.evaluate(inputs)
-
-    assert torch.allclose(
-        outputs["y__x"].double(), (inputs["w"] ** 3) * torch.cos(inputs["x"]), atol=1e-3
-    ), "First derivative test failed"
-    assert torch.allclose(
-        outputs["z__x__x"].double(), -inputs["w"] * torch.cos(inputs["x"]), atol=1e-3
-    ), "Second derivative test failed"
-    assert torch.allclose(
-        outputs["y__x__w"].double(),
-        3 * inputs["w"] ** 2 * torch.cos(inputs["x"]),
-        atol=1e-3,
-    ), "Mixed second derivative test failed"
-    assert torch.allclose(
-        outputs["y__w__w__w"].double(), 6 * torch.sin(inputs["x"]), atol=1e-3
-    ), "Third derivative test failed"
-    assert torch.allclose(
-        outputs["z__x__x__x__x"].double(),
-        inputs["w"] * torch.cos(inputs["x"]),
-        atol=1e-3,
-    ), "Forth derivative test failed"
-
-    # Testing forth order derivs
+    assert paddle.allclose(
+        x=outputs["y__x"].astype(dtype="float64"),
+        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "First derivative test failed"
+    assert paddle.allclose(
+        x=outputs["z__x__x"].astype(dtype="float64"),
+        y=-inputs["w"] * paddle.cos(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "Second derivative test failed"
+    assert paddle.allclose(
+        x=outputs["y__x__w"].astype(dtype="float64"),
+        y=3 * inputs["w"] ** 2 * paddle.cos(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "Mixed second derivative test failed"
+    assert paddle.allclose(
+        x=outputs["y__w__w__w"].astype(dtype="float64"),
+        y=6 * paddle.sin(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "Third derivative test failed"
+    assert paddle.allclose(
+        x=outputs["z__x__x__x__x"].astype(dtype="float64"),
+        y=inputs["w"] * paddle.cos(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "Forth derivative test failed"
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=function_node,
         derivatives=[
@@ -94,27 +93,28 @@ def test_meshless_finite_deriv():
         order=4,
         max_batch_size=20,
     )
-
-    inputs = {"x": torch.randn(5, 1).double(), "w": torch.randn(5, 1).double()}
-    inputs.update(function_node.evaluate(inputs))  # Forward to get y
+    inputs = {
+        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+    }
+    inputs.update(function_node.evaluate(inputs))
     outputs = deriv.evaluate(inputs)
-
-    assert torch.allclose(
-        outputs["y__x"].double(), (inputs["w"] ** 3) * torch.cos(inputs["x"]), atol=1e-2
-    ), "Forth order first derivative test failed"
-    assert torch.allclose(
-        outputs["z__x__x"].double(), -inputs["w"] * torch.cos(inputs["x"]), atol=1e-2
-    ), "Forth order second derivative test failed"
-
-    # Multinode checks
+    assert paddle.allclose(
+        x=outputs["y__x"].astype(dtype="float64"),
+        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
+        atol=0.01,
+    ).item(), "Forth order first derivative test failed"
+    assert paddle.allclose(
+        x=outputs["z__x__x"].astype(dtype="float64"),
+        y=-inputs["w"] * paddle.cos(x=inputs["x"]),
+        atol=0.01,
+    ).item(), "Forth order second derivative test failed"
     function_node_2 = Node(
         inputs=[Key("nu"), Key("w"), Key("z")],
         outputs=[Key("p"), Key("q")],
         evaluate=ParabolaNet(),
         name="Test Node 2",
     )
-
-    # Define finite derivative node
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=Graph(
             nodes=[function_node, function_node_2],
@@ -127,24 +127,22 @@ def test_meshless_finite_deriv():
         ],
         dx=0.01,
     )
-
     inputs = {
-        "x": torch.randn(5, 1).double(),
-        "w": torch.randn(5, 1).double(),
-        "nu": torch.randn(5, 1).double(),
+        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "nu": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
     }
     outputs = deriv.evaluate(inputs)
+    assert paddle.allclose(
+        x=outputs["p__nu"].astype(dtype="float64"), y=3 * inputs["nu"] ** 2, atol=0.001
+    ).item(), "Multi-node first derivative test failed"
+    assert paddle.allclose(
+        x=outputs["q__x__w"].astype(dtype="float64"),
+        y=2 * -paddle.sin(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "Multi-node second derivative test failed"
 
-    assert torch.allclose(
-        outputs["p__nu"].double(), 3 * (inputs["nu"] ** 2), atol=1e-3
-    ), "Multi-node first derivative test failed"
-    assert torch.allclose(
-        outputs["q__x__w"].double(), 2 * -torch.sin(inputs["x"]), atol=1e-3
-    ), "Multi-node second derivative test failed"
-
-    # Testing callable dx
     def dx_func(count: int):
-        # First pass should be inaccurate
         if count == 1:
             return 10.0
         else:
@@ -152,38 +150,35 @@ def test_meshless_finite_deriv():
 
     deriv = MeshlessFiniteDerivative.make_node(
         node_model=function_node,
-        derivatives=[
-            Key("y", derivatives=[Key("x")]),
-        ],
+        derivatives=[Key("y", derivatives=[Key("x")])],
         dx=dx_func,
         order=2,
     )
+    inputs = {
+        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "w": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+    }
+    inputs.update(function_node.evaluate(inputs))
+    outputs_1 = deriv.evaluate(inputs)
+    outputs_2 = deriv.evaluate(inputs)
+    assert not paddle.allclose(
+        x=outputs_1["y__x"].astype(dtype="float64"),
+        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "Callable dx first derivative test failed"
+    assert paddle.allclose(
+        x=outputs_2["y__x"].astype(dtype="float64"),
+        y=inputs["w"] ** 3 * paddle.cos(x=inputs["x"]),
+        atol=0.001,
+    ).item(), "Callable dx first derivative test failed"
 
-    inputs = {"x": torch.randn(5, 1).double(), "w": torch.randn(5, 1).double()}
-    inputs.update(function_node.evaluate(inputs))  # Forward to get y
-    outputs_1 = deriv.evaluate(inputs)  # Inaccruate pass
-    outputs_2 = deriv.evaluate(inputs)  # Accruate pass
 
-    assert not torch.allclose(
-        outputs_1["y__x"].double(),
-        (inputs["w"] ** 3) * torch.cos(inputs["x"]),
-        atol=1e-3,
-    ), "Callable dx first derivative test failed"
-    assert torch.allclose(
-        outputs_2["y__x"].double(),
-        (inputs["w"] ** 3) * torch.cos(inputs["x"]),
-        atol=1e-3,
-    ), "Callable dx first derivative test failed"
-
-
-class GradModel(torch.nn.Module):
+class GradModel(paddle.nn.Layer):
     def forward(self, inputs):
-        return {"u": torch.cos(inputs["x"]), "v": torch.sin(inputs["y"])}
+        return {"u": paddle.cos(x=inputs["x"]), "v": paddle.sin(x=inputs["y"])}
 
 
 def test_meshless_finite_deriv_grads():
-    # Testing gradient calcs
-    # TODO: Grad tests for every grad
     model = GradModel()
     dx = 0.01
     deriv = MeshlessFiniteDerivative.make_node(
@@ -194,51 +189,39 @@ def test_meshless_finite_deriv_grads():
         ],
         dx=dx,
     )
-
-    # == First derivative test ==
-    inputs_mfd = {"x": torch.randn(5, 1).double(), "y": torch.randn(5, 1).double()}
-    inputs_mfd["x"].requires_grad = True
-    inputs_mfd["y"].requires_grad = True
-
+    inputs_mfd = {
+        "x": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+        "y": paddle.randn(shape=[5, 1]).astype(dtype="float64"),
+    }
+    inputs_mfd["x"].stop_gradient = not True
+    inputs_mfd["y"].stop_gradient = not True
     inputs_mfd.update(model.forward(inputs_mfd))
     outputs = deriv.evaluate(inputs_mfd)
     loss = outputs["u__x"].sum()
     loss.backward()
-
-    # Auto diff calc
     inputs_auto = inputs_mfd["x"].detach().clone()
-    inputs_auto.requires_grad = True
-    inputs_up1 = torch.cos(inputs_auto + dx)
-    inputs_um1 = torch.cos(inputs_auto - dx)
+    inputs_auto.stop_gradient = not True
+    inputs_up1 = paddle.cos(x=inputs_auto + dx)
+    inputs_um1 = paddle.cos(x=inputs_auto - dx)
     grad = (inputs_up1 - inputs_um1) / (2.0 * dx)
     loss = grad.sum()
     loss.backward()
-
-    assert torch.allclose(
-        inputs_auto.grad,
-        inputs_mfd["x"].grad,
-        atol=1e-3,
-    ), "First derivative gradient test failed"
-
-    # == Second derivative test ==
+    assert paddle.allclose(
+        x=inputs_auto.grad, y=inputs_mfd["x"].grad, atol=0.001
+    ).item(), "First derivative gradient test failed"
     loss = outputs["v__y__y"].sum()
     loss.backward()
-
-    # Auto diff calc
     inputs_auto = inputs_mfd["y"].detach().clone()
-    inputs_auto.requires_grad = True
-    inputs = torch.sin(inputs_auto)
-    inputs_up1 = torch.sin(inputs_auto + dx)
-    inputs_um1 = torch.sin(inputs_auto - dx)
+    inputs_auto.stop_gradient = not True
+    inputs = paddle.sin(x=inputs_auto)
+    inputs_up1 = paddle.sin(x=inputs_auto + dx)
+    inputs_um1 = paddle.sin(x=inputs_auto - dx)
     grad = (inputs_up1 - 2 * inputs + inputs_um1) / (dx * dx)
     loss = grad.sum()
     loss.backward()
-
-    assert torch.allclose(
-        inputs_auto.grad,
-        inputs_mfd["y"].grad,
-        atol=1e-3,
-    ), "Second derivative gradient test failed"
+    assert paddle.allclose(
+        x=inputs_auto.grad, y=inputs_mfd["y"].grad, atol=0.001
+    ).item(), "Second derivative gradient test failed"
 
 
 if __name__ == "__main__":

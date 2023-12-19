@@ -14,9 +14,9 @@
 
 from typing import Dict, List, Optional
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
 from modulus.models.layers import FCLayer, FourierLayer
 from modulus.sym.models.activation import Activation, get_activation_fn
@@ -52,7 +52,7 @@ class MultiscaleFourierNetArch(Arch):
     frequencies_params : Tuple[Tuple[str, List[float]],...] = (("axis", [i for i in range(10)]),)
         Same as `frequencies` except these are used for encodings
         on any inputs not in the list `['x', 'y', 'z', 't']`.
-    activation_fn : Activation = Activation.SILU
+    activation_fn : layers.Activation = layers.Activation.SILU
         Activation function used by network.
     layer_size : int = 512
         Layer size for every hidden layer of the model.
@@ -74,7 +74,7 @@ class MultiscaleFourierNetArch(Arch):
         detach_keys: List[Key] = [],
         frequencies=(("axis", [i for i in range(10)]),),
         frequencies_params=(("axis", [i for i in range(10)]),),
-        activation_fn=Activation.SILU,
+        activation_fn=layers.Activation.SILU,
         layer_size: int = 512,
         nr_layers: int = 6,
         skip_connections: bool = False,
@@ -86,12 +86,11 @@ class MultiscaleFourierNetArch(Arch):
         )
 
         self.skip_connections = skip_connections
-        activation_fn = get_activation_fn(activation_fn)
 
         self.xyzt_var = [x for x in self.input_key_dict if x in ["x", "y", "z", "t"]]
         # Prepare slice index
         xyzt_slice_index = self.prepare_slice_index(self.input_key_dict, self.xyzt_var)
-        self.register_buffer("xyzt_slice_index", xyzt_slice_index, persistent=False)
+        self.register_buffer("xyzt_slice_index", xyzt_slice_index, persistable=False)
 
         self.params_var = [
             x for x in self.input_key_dict if x not in ["x", "y", "z", "t"]
@@ -99,7 +98,9 @@ class MultiscaleFourierNetArch(Arch):
         params_slice_index = self.prepare_slice_index(
             self.input_key_dict, self.params_var
         )
-        self.register_buffer("params_slice_index", params_slice_index, persistent=False)
+        self.register_buffer(
+            "params_slice_index", params_slice_index, persistable=False
+        )
 
         in_features_xyzt = sum(
             (v for k, v in self.input_key_dict.items() if k in self.xyzt_var)
@@ -111,7 +112,10 @@ class MultiscaleFourierNetArch(Arch):
         out_features = sum(self.output_key_dict.values())
 
         if adaptive_activations:
-            activation_par = nn.Parameter(torch.ones(1))
+            activation_par = self.create_parameter(
+                [1],
+                default_initializer=nn.initializer.Constant(1),
+            )
         else:
             activation_par = None
 
@@ -123,11 +127,11 @@ class MultiscaleFourierNetArch(Arch):
         self.num_freqs = len(frequencies)
 
         if in_features_xyzt > 0:
-            self.fourier_layers_xyzt = nn.ModuleList()
+            self.fourier_layers_xyzt = nn.LayerList()
 
             for idx in range(self.num_freqs):
                 self.fourier_layers_xyzt.append(
-                    FourierLayer(
+                    layers.FourierLayer(
                         in_features=in_features_xyzt,
                         frequencies=frequencies[idx],
                     )
@@ -137,11 +141,11 @@ class MultiscaleFourierNetArch(Arch):
             self.fourier_layers_xyzt = None
 
         if in_features_params > 0:
-            self.fourier_layers_params = nn.ModuleList()
+            self.fourier_layers_params = nn.LayerList()
 
             for idx in range(self.num_freqs):
                 self.fourier_layers_params.append(
-                    FourierLayer(
+                    layers.FourierLayer(
                         in_features=in_features_params,
                         frequencies=frequencies_params[idx],
                     )
@@ -150,12 +154,12 @@ class MultiscaleFourierNetArch(Arch):
         else:
             self.fourier_layers_params = None
 
-        self.fc_layers = nn.ModuleList()
+        self.fc_layers = nn.LayerList()
 
         layer_in_features = in_features
         for i in range(nr_layers):
             self.fc_layers.append(
-                FCLayer(
+                layers.FCLayer(
                     layer_in_features,
                     layer_size,
                     activation_fn,
@@ -165,10 +169,10 @@ class MultiscaleFourierNetArch(Arch):
             )
             layer_in_features = layer_size
 
-        self.final_layer = FCLayer(
+        self.final_layer = layers.FCLayer(
             in_features=layer_size * self.num_freqs,
             out_features=out_features,
-            activation_fn=None,
+            activation_fn=layers.Activation.IDENTITY,
             weight_norm=False,
             activation_par=None,
         )
@@ -207,10 +211,10 @@ class MultiscaleFourierNetArch(Arch):
             x = old_x
             if self.fourier_layers_xyzt is not None:
                 fourier_xyzt = fourier_layer_xyzt(in_xyzt_var)
-                x = torch.cat((x, fourier_xyzt), dim=-1)
+                x = paddle.concat((x, fourier_xyzt), axis=-1)
             if self.fourier_layers_params is not None:
                 fourier_params = fourier_layer_params(in_params_var)
-                x = torch.cat((x, fourier_params), dim=-1)
+                x = paddle.concat((x, fourier_params), axis=-1)
 
             x_skip: Optional[Tensor] = None
             for i, layer in enumerate(self.fc_layers):
@@ -223,7 +227,7 @@ class MultiscaleFourierNetArch(Arch):
 
             fc_outputs.append(x)
 
-        x = torch.cat(fc_outputs, dim=-1)
+        x = paddle.concat(fc_outputs, axis=-1)
         x = self.final_layer(x)
         x = self.process_output(x, self.output_scales_tensor)
         return x
@@ -291,10 +295,10 @@ class MultiscaleFourierNetArch(Arch):
             x = old_x
             if self.fourier_layers_xyzt is not None:
                 fourier_xyzt = fourier_layer_xyzt(in_xyzt_var)
-                x = torch.cat((x, fourier_xyzt), dim=-1)
+                x = paddle.concat((x, fourier_xyzt), axis=-1)
             if self.fourier_layers_params is not None:
                 fourier_params = fourier_layer_params(in_params_var)
-                x = torch.cat((x, fourier_params), dim=-1)
+                x = paddle.concat((x, fourier_params), axis=-1)
 
             x_skip: Optional[Tensor] = None
             for i, layer in enumerate(self.fc_layers):
@@ -306,8 +310,8 @@ class MultiscaleFourierNetArch(Arch):
                         x_skip = x
 
             fc_outputs.append(x)
+        x = paddle.concat(fc_outputs, axis=-1)
 
-        x = torch.cat(fc_outputs, dim=-1)
         x = self.final_layer(x)
         return self.prepare_output(
             x, self.output_key_dict, dim=-1, output_scales=self.output_scales

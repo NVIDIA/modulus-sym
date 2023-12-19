@@ -12,17 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 import itertools
-import torch
-
 from modulus.sym.key import Key
 from modulus.sym.models.afno import AFNOArch
 
-########################
-# load & verify
-########################
+
 def test_afno():
-    # Construct FNO model
     model = AFNOArch(
         input_keys=[Key("x", size=2)],
         output_keys=[Key("u", size=2), Key("p")],
@@ -32,18 +28,12 @@ def test_afno():
         depth=4,
         num_blocks=8,
     )
-    # Testing JIT
-    node = model.make_node(name="AFNO", jit=True)
-
+    node = model.make_node(name="AFNO", jit=False)
     bsize = 5
-    invar = {
-        "x": torch.randn(bsize, 2, 240, 240),
-    }
-    # Model forward
+    invar = {"x": paddle.randn(shape=[bsize, 2, 240, 240])}
     outvar = node.evaluate(invar)
-    # Check output size
-    assert outvar["u"].shape == (bsize, 2, 240, 240)
-    assert outvar["p"].shape == (bsize, 1, 240, 240)
+    assert outvar["u"].shape == [bsize, 2, 240, 240]
+    assert outvar["p"].shape == [bsize, 1, 240, 240]
 
 
 test_afno()

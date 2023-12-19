@@ -17,18 +17,17 @@ from collections import OrderedDict
 from copy import Error, deepcopy
 from numpy.lib.arraypad import pad
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.fft
-from torch import Tensor
-from torch.nn.modules.container import Sequential
-from torch.utils.checkpoint import checkpoint_sequential
+import paddle
+import paddle.nn as nn
+import paddle.nn.functional as F
+import paddle.fft
+from paddle import Tensor
+from paddle.nn import Sequential
 from typing import Optional, Dict, List, Tuple
 import math
 
 # distributed stuff
-import torch.distributed as dist
+import paddle.distributed as dist
 
 from modulus.sym.distributed.manager import DistributedManager
 
@@ -51,7 +50,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class DistributedBlock(nn.Module):
+class DistributedBlock(nn.Layer):
     def __init__(
         self,
         h,
@@ -128,7 +127,7 @@ class DistributedBlock(nn.Module):
         return x
 
 
-class DistributedAFNONet(nn.Module):
+class DistributedAFNONet(nn.Layer):
     def __init__(
         self,
         img_size=(720, 1440),
@@ -159,7 +158,7 @@ class DistributedAFNONet(nn.Module):
         self.num_blocks = num_blocks
         self.input_is_matmul_parallel = input_is_matmul_parallel
         self.output_is_matmul_parallel = output_is_matmul_parallel
-        norm_layer = partial(nn.LayerNorm, eps=1e-6)
+        norm_layer = partial(nn.LayerNorm, epsilon=1e-6)
 
         self.patch_embed = DistributedPatchEmbed(
             img_size=img_size,
@@ -172,13 +171,18 @@ class DistributedAFNONet(nn.Module):
         num_patches = self.patch_embed.num_patches
 
         # original: x = B, H*W, C
-        # self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, embed_dim))
+        # self.pos_embed = self.create_parameter("pos_embed", paddle.zeros([1, num_patches, embed_dim]))
         # new: x = B, C, H*W
         self.embed_dim_local = self.embed_dim // matmul_comm_size
-        self.pos_embed = nn.Parameter(torch.zeros(1, self.embed_dim_local, num_patches))
-        self.pos_drop = nn.Dropout(p=drop_rate)
+        pos_embed = self.create_parameter(
+            shape=[1, self.embed_dim_local, num_patches],
+            default_initializer=nn.initializer.Constant(0),
+        )
+        pos_embed.stop_gradient = not True
+        self.pos_embed = pos_embed
+        self.pos_drop = nn.Dropout(drop_rate)
 
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
+        dpr = [x.item() for x in paddle.linspace(0, drop_path_rate, depth)]
 
         self.h = img_size[0] // self.patch_size[0]
         self.w = img_size[1] // self.patch_size[1]
@@ -204,7 +208,7 @@ class DistributedAFNONet(nn.Module):
                     output_is_matmul_parallel=output_is_matmul_parallel,
                 )
             )
-        self.blocks = nn.ModuleList(blks)
+        self.blocks = nn.LayerList(blks)
 
         # head
         if self.output_is_matmul_parallel:
@@ -213,11 +217,11 @@ class DistributedAFNONet(nn.Module):
             ) // matmul_comm_size
         else:
             self.out_chans_local = self.out_chans
-        self.head = nn.Conv2d(
+        self.head = nn.Conv2D(
             self.embed_dim,
             self.out_chans_local * self.patch_size[0] * self.patch_size[1],
             1,
-            bias=False,
+            bias_attr=False,
         )
         self.synchronized_head = False
 
@@ -226,15 +230,14 @@ class DistributedAFNONet(nn.Module):
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
-        if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
+        if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2D):
             trunc_normal_(m.weight, std=0.02)
             if m.bias is not None:
-                nn.init.constant_(m.bias, 0)
+                nn.initializer.Constant(0)(m.bias)
         elif isinstance(m, nn.LayerNorm):
-            nn.init.constant_(m.bias, 0)
-            nn.init.constant_(m.weight, 1.0)
+            nn.initializer.Constant(0)(m.bias)
+            nn.initializer.Constant(1.0)(m.weight)
 
-    @torch.jit.ignore
     def no_weight_decay(self):
         return {"pos_embed", "cls_token"}
 
@@ -274,10 +277,10 @@ class DistributedAFNONet(nn.Module):
 
         # new: B, C, H, W
         b = x.shape[0]
-        xv = x.view(b, self.patch_size[0], self.patch_size[1], -1, self.h, self.w)
-        xvt = torch.permute(xv, (0, 3, 4, 1, 5, 2)).contiguous()
-        x = xvt.view(
-            b, -1, (self.h * self.patch_size[0]), (self.w * self.patch_size[1])
+        xv = x.reshape([b, self.patch_size[0], self.patch_size[1], -1, self.h, self.w])
+        xvt = paddle.transpose(xv, (0, 3, 4, 1, 5, 2))
+        x = xvt.reshape(
+            [b, -1, self.h * self.patch_size[0], self.w * self.patch_size[1]]
         )
 
         return x
@@ -322,7 +325,7 @@ class DistributedAFNOArch(Arch):
     -------
     >>> afno = .afno.DistributedAFNOArch([Key("x", size=2)], [Key("y", size=2)], (64, 64))
     >>> model = afno.make_node()
-    >>> input = {"x": torch.randn(20, 2, 64, 64)}
+    >>> input = {"x": paddle.randn(20, 2, 64, 64)}
     >>> output = model(input)
     """
 

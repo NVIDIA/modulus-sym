@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Optional, Dict, Tuple, Union, List
+from typing import Optional, Dict, Tuple, Union
 from modulus.sym.key import Key
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
 from modulus.models.layers import FCLayer, Conv1dFCLayer
 from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 
+from typing import List
 
-class FullyConnectedArchCore(nn.Module):
+
+class FullyConnectedArchCore(nn.Layer):
     def __init__(
         self,
         in_features: int = 512,
@@ -49,7 +51,9 @@ class FullyConnectedArchCore(nn.Module):
             fc_layer = FCLayer
 
         if adaptive_activations:
-            activation_par = nn.Parameter(torch.ones(1))
+            activation_par = paddle.create_parameter(
+                shape=[1], default_initializer=paddle.nn.initializer.Constant(1)
+            )
         else:
             activation_par = None
 
@@ -60,7 +64,7 @@ class FullyConnectedArchCore(nn.Module):
                 nr_layers - len(activation_fn)
             )
 
-        self.layers = nn.ModuleList()
+        self.layers = nn.LayerList()
 
         layer_in_features = in_features
         for i in range(nr_layers):
@@ -68,7 +72,7 @@ class FullyConnectedArchCore(nn.Module):
                 fc_layer(
                     layer_in_features,
                     layer_size,
-                    get_activation_fn(activation_fn[i], out_features=out_features),
+                    activation_fn[i],
                     weight_norm,
                     activation_par,
                 )
@@ -78,7 +82,7 @@ class FullyConnectedArchCore(nn.Module):
         self.final_layer = fc_layer(
             in_features=layer_size,
             out_features=out_features,
-            activation_fn=None,
+            activation_fn=Activation.IDENTITY,
             weight_norm=False,
             activation_par=None,
         )
@@ -148,7 +152,7 @@ class FullyConnectedArch(Arch):
     >>>    layer_size = 64,
     >>>    nr_layers = 2)
     >>> model = arch.make_node()
-    >>> input = {"x": torch.randn(64, 2)}
+    >>> input = {"x": paddle.randn([64, 2])}
     >>> output = model.evaluate(input)
 
     Fully-connected model with periodic outputs between (0,1)
@@ -295,12 +299,12 @@ class ConvFullyConnectedArch(Arch):
             input_scales=self.input_scales,
             periodicity=self.periodicity,
         )
-        x_shape = list(x.size())
-        x = x.view(x.shape[0], x.shape[1], -1)
+        x_shape = list(x.shape)
+        x = x.reshape([x.shape[0], x.shape[1], -1])
         y = self._impl(x)
 
         x_shape[1] = y.shape[1]
-        y = y.view(x_shape)
+        y = y.reshape(x_shape)
 
         return self.prepare_output(
             y, self.output_key_dict, dim=1, output_scales=self.output_scales

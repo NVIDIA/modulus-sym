@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import numpy as np
-import torch
+import paddle
 
 from typing import List, Dict
 from pathlib import Path
@@ -81,11 +81,11 @@ class PointwiseValidator(Validator):
             Key.convert_list(self.dataset.outvar_keys),
         )
         self.manager = DistributedManager()
-        self.device = self.manager.device
-        self.model.to(self.device)
+        self.place = self.manager.place
+        self.model.to(self.place)
 
         # set foward method
-        self.requires_grad = requires_grad
+        self.stop_gradient = not requires_grad
         self.forward = self.forward_grad if requires_grad else self.forward_nograd
 
         # set plotter
@@ -100,10 +100,10 @@ class PointwiseValidator(Validator):
         for i, (invar0, true_outvar0, lambda_weighting) in enumerate(self.dataloader):
             # Move data to device (may need gradients in future, if so requires_grad=True)
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
             true_outvar = Constraint._set_device(
-                true_outvar0, device=self.device, requires_grad=self.requires_grad
+                true_outvar0, device=self.place, requires_grad=not self.stop_gradient
             )
             pred_outvar = self.forward(invar)
 
@@ -122,12 +122,12 @@ class PointwiseValidator(Validator):
             }
 
         # Concat mini-batch tensors
-        invar_cpu = {key: torch.cat(value) for key, value in invar_cpu.items()}
+        invar_cpu = {key: paddle.concat(value) for key, value in invar_cpu.items()}
         true_outvar_cpu = {
-            key: torch.cat(value) for key, value in true_outvar_cpu.items()
+            key: paddle.concat(value) for key, value in true_outvar_cpu.items()
         }
         pred_outvar_cpu = {
-            key: torch.cat(value) for key, value in pred_outvar_cpu.items()
+            key: paddle.concat(value) for key, value in pred_outvar_cpu.items()
         }
         # compute losses on cpu
         # TODO add metrics specific for validation
@@ -169,11 +169,9 @@ class PointwiseValidator(Validator):
         # add tensorboard scalars
         for k, loss in losses.items():
             if TF_SUMMARY:
-                writer.add_scalar("val/" + name + "/" + k, loss, step, new_style=True)
+                writer.add_scalar("val/" + name + "/" + k, float(loss), step)
             else:
-                writer.add_scalar(
-                    "Validators/" + name + "/" + k, loss, step, new_style=True
-                )
+                writer.add_scalar("Validators/" + name + "/" + k, float(loss), step)
         return losses
 
 
@@ -253,10 +251,10 @@ class PointVTKValidator(PointwiseValidator):
         for i, (invar0, true_outvar0, lambda_weighting) in enumerate(self.dataloader):
             # Move data to device (may need gradients in future, if so requires_grad=True)
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
             true_outvar = Constraint._set_device(
-                true_outvar0, device=self.device, requires_grad=self.requires_grad
+                true_outvar0, device=self.place, requires_grad=not self.stop_gradient
             )
             pred_outvar = self.forward(invar)
 
@@ -275,12 +273,12 @@ class PointVTKValidator(PointwiseValidator):
             }
 
         # Concat mini-batch tensors
-        invar_cpu = {key: torch.cat(value) for key, value in invar_cpu.items()}
+        invar_cpu = {key: paddle.concat(value) for key, value in invar_cpu.items()}
         true_outvar_cpu = {
-            key: torch.cat(value) for key, value in true_outvar_cpu.items()
+            key: paddle.concat(value) for key, value in true_outvar_cpu.items()
         }
         pred_outvar_cpu = {
-            key: torch.cat(value) for key, value in pred_outvar_cpu.items()
+            key: paddle.concat(value) for key, value in pred_outvar_cpu.items()
         }
         # compute losses on cpu
         # TODO add metrics specific for validation
@@ -325,9 +323,7 @@ class PointVTKValidator(PointwiseValidator):
         # add tensorboard scalars
         for k, loss in losses.items():
             if TF_SUMMARY:
-                writer.add_scalar("val/" + name + "/" + k, loss, step, new_style=True)
+                writer.add_scalar("val/" + name + "/" + k, float(loss), step)
             else:
-                writer.add_scalar(
-                    "Validators/" + name + "/" + k, loss, step, new_style=True
-                )
+                writer.add_scalar("Validators/" + name + "/" + k, float(loss), step)
         return losses

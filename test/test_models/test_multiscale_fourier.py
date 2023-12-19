@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from modulus.sym.models.multiscale_fourier_net import MultiscaleFourierNetArch
-import torch
+import paddle
 import numpy as np
 from pathlib import Path
 from modulus.sym.key import Key
@@ -50,7 +50,6 @@ def test_multiscale_fourier_net():
     )
     frequencies = test_data["frequencies"]
     frequencies_params = test_data["frequencies_params"]
-    # create graph
     arch = MultiscaleFourierNetArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -61,23 +60,23 @@ def test_multiscale_fourier_net():
     )
     name_dict = make_dict(params["nr_layers"])
     for _name, _tensor in arch.named_parameters():
-        if _tensor.requires_grad:
-            _tensor.data = torch.from_numpy(Wbs[name_dict[_name]].T)
-
-    arch.fourier_layers_xyzt[0].frequencies = torch.from_numpy(
-        Wbs["fourier_layer_xyzt_0:0"].T
+        if not _tensor.stop_gradient:
+            _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]].T)
+    arch.fourier_layers_xyzt[0].frequencies = paddle.to_tensor(
+        data=Wbs["fourier_layer_xyzt_0:0"].T
     )
-    arch.fourier_layers_xyzt[1].frequencies = torch.from_numpy(
-        Wbs["fourier_layer_xyzt_1:0"].T
+    arch.fourier_layers_xyzt[1].frequencies = paddle.to_tensor(
+        data=Wbs["fourier_layer_xyzt_1:0"].T
     )
     data_out2 = arch(
-        {"x": torch.from_numpy(data_in[:, 0:1]), "y": torch.from_numpy(data_in[:, 1:2])}
+        {
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
+        }
     )
     data_out2 = data_out2["u"].detach().numpy()
-    # load outputs
     data_out1 = test_data["data_out"]
-    # verify
-    assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
+    assert np.allclose(data_out1, data_out2, rtol=0.001), "Test failed!"
     print("Success!")
 
 

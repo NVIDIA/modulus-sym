@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 import numpy as np
 import logging
 import ast
@@ -25,7 +25,8 @@ from typing import Optional, Callable, List, Dict, Union, Tuple
 from modulus.sym.constants import NO_OP_SCALE
 from modulus.sym.key import Key
 from modulus.sym.node import Node
-from modulus.sym.constants import JIT_PYTORCH_VERSION
+
+# from modulus.sym.constants import JIT_PYTORCH_VERSION
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.manager import JitManager, JitArchMode
 from modulus.sym.models.activation import Activation
@@ -33,7 +34,7 @@ from modulus.sym.models.activation import Activation
 logger = logging.getLogger(__name__)
 
 
-class Arch(nn.Module):
+class Arch(nn.Layer):
     """
     Base class for all neural networks
     """
@@ -73,12 +74,12 @@ class Arch(nn.Module):
         self.register_buffer(
             "input_scales_tensor",
             self._get_scalers_tensor(self.input_key_dict, self.input_scales),
-            persistent=False,
+            persistable=False,
         )
         self.register_buffer(
             "output_scales_tensor",
             self._get_scalers_tensor(self.output_key_dict, self.output_scales),
-            persistent=False,
+            persistable=False,
         )
 
         self.detach_keys = detach_keys
@@ -139,6 +140,7 @@ class Arch(nn.Module):
         self.checkpoint_filename = name + f".{model_parallel_rank}.pth"
 
         if jit:
+            raise NotImplementedError("jit is not supported in paddle backend now")
             logger.warning(
                 "Passing jit=true when constructing Arch Node is deprecated, "
                 "please remove it as JITManager could automatically handel it."
@@ -149,15 +151,19 @@ class Arch(nn.Module):
         # compile network
         if jit:
             # Warn user if pytorch version difference
-            if not torch.__version__ == JIT_PYTORCH_VERSION:
-                logger.warning(
-                    f"Installed PyTorch version {torch.__version__} is not TorchScript"
-                    + f" supported in Modulus. Version {JIT_PYTORCH_VERSION} is officially supported."
-                )
+            raise NotImplementedError(
+                "jit is not supported in paddle backend now, please set 'jit: False' "
+                "in config yaml."
+            )
+            # if not paddle.__version__ == JIT_PYTORCH_VERSION:
+            #     logger.warning(
+            #         f"Installed Paddle version {paddle.__version__} is not TorchScript"
+            #         + f" supported in Modulus. Version {JIT_PYTORCH_VERSION} is officially supported."
+            #     )
 
-            arch = torch.jit.script(self)
-            node_name = "Arch Node (jit): " + ("" if name is None else str(name))
-            logger.info("Jit compiling network arch")
+            # arch = paddle.jit.to_static(self)
+            # node_name = "Arch Node (jit): " + ("" if name is None else str(name))
+            # logger.info("Jit compiling network arch")
         else:
             arch = self
             node_name = "Arch Node: " + ("" if name is None else str(name))
@@ -172,15 +178,20 @@ class Arch(nn.Module):
         )
         return net_node
 
-    def save(self, directory):
-        torch.save(self.state_dict(), directory + "/" + self.checkpoint_filename)
+    def save(self, directory, step=None):
+        paddle.save(self.state_dict(), directory + "/" + self.checkpoint_filename)
 
     def load(self, directory, map_location=None):
-        self.load_state_dict(
-            torch.load(
-                directory + "/" + self.checkpoint_filename, map_location=map_location
-            )
-        )
+        # state_dict =paddle.load(directory + "/" + self.checkpoint_filename)
+        # dtype = paddle.get_default_dtype()
+        # cvt_dtype = False
+        # for k, v in state_dict.items():
+        #     if v.dtype == paddle.float32 and paddle.get_default_dtype() != "float32":
+        #         state_dict[k] = v.astype(dtype)
+        #         cvt_dtype = True
+        # if cvt_dtype:
+        #     print(f"==>> Convert dtype from {v.dtype} to {paddle.get_default_dtype()}")
+        self.set_state_dict(paddle.load(directory + "/" + self.checkpoint_filename))
 
     def set_scaling(
         self,
@@ -214,7 +225,7 @@ class Arch(nn.Module):
                 scalers_tensor[0].append(key_scales[key][0])
                 scalers_tensor[1].append(key_scales[key][1])
 
-        return torch.tensor(scalers_tensor)
+        return paddle.to_tensor(scalers_tensor)
 
     @staticmethod
     def prepare_input(
@@ -241,11 +252,11 @@ class Arch(nn.Module):
                     scaled_input = (x - periodicity[key][0]) / (
                         periodicity[key][1] - periodicity[key][0]
                     )
-                    sin_tensor = torch.sin(2.0 * np.pi * scaled_input)
-                    cos_tensor = torch.cos(2.0 * np.pi * scaled_input)
+                    sin_tensor = paddle.sin(2.0 * np.pi * scaled_input)
+                    cos_tensor = paddle.cos(2.0 * np.pi * scaled_input)
                     append_tensor = [sin_tensor, cos_tensor]
             output_tensor += append_tensor
-        return torch.cat(output_tensor, dim=dim)
+        return paddle.concat(output_tensor, axis=dim)
 
     @staticmethod
     def concat_input(
@@ -261,7 +272,7 @@ class Arch(nn.Module):
             else:
                 x = input_variables[key]
             output_tensor += [x]
-        return torch.cat(output_tensor, dim=dim)
+        return paddle.concat(output_tensor, axis=dim)
 
     @staticmethod
     def process_input(
@@ -284,12 +295,12 @@ class Arch(nn.Module):
                     scaled_input = (inputs[i] - periodicity[key][0]) / (
                         periodicity[key][1] - periodicity[key][0]
                     )
-                    sin_tensor = torch.sin(2.0 * np.pi * scaled_input)
-                    cos_tensor = torch.cos(2.0 * np.pi * scaled_input)
+                    sin_tensor = paddle.sin(2.0 * np.pi * scaled_input)
+                    cos_tensor = paddle.cos(2.0 * np.pi * scaled_input)
                     outputs += [sin_tensor, cos_tensor]
                 else:
                     outputs += [inputs[i]]
-            input_tensor = torch.cat(outputs, dim=dim)
+            input_tensor = paddle.concat(outputs, axis=dim)
         return input_tensor
 
     @staticmethod
@@ -315,7 +326,7 @@ class Arch(nn.Module):
         slice_index = []
         for key in slice_keys:
             slice_index += index_dict[key]
-        return torch.tensor(slice_index)
+        return paddle.to_tensor(slice_index)
 
     @staticmethod
     def slice_input(
@@ -326,7 +337,21 @@ class Arch(nn.Module):
         """
         Used in fourier-like architectures.
         """
-        return input_tensor.index_select(dim, slice_index)
+        channel = input_tensor.shape[-1]
+        right_mul_mat = paddle.zeros([channel, slice_index.size], input_tensor.dtype)
+        for col, keep_col in enumerate(slice_index.numpy()):
+            right_mul_mat[keep_col, col] = 1.0
+        right_mul_mat.stop_gradient = True
+        return paddle.matmul(input_tensor, right_mul_mat)
+        # if slice_index.max() >= input_tensor.shape[dim]:
+        #     raise ValueError(
+        #         f">>> slice_input: {input_tensor.shape} {slice_index.shape} {slice_index.min().item()} {slice_index.max().item()} dim={dim}"
+        #     )
+        # print(input_tensor.shape, slice_index.max().item())
+        # print("input_tensor.shape = ", input_tensor.shape)
+        # print("slice_index = ", slice_index.item())
+        # print("axis = ", input_tensor.ndim - 1)
+        # return paddle.gather(input_tensor, slice_index, axis=input_tensor.ndim - 1)
 
     @staticmethod
     def _get_normalization_tensor(
@@ -343,7 +368,7 @@ class Arch(nn.Module):
             for _ in range(size):
                 normalization_tensor[0].append(key_normalization[key][0])
                 normalization_tensor[1].append(key_normalization[key][1])
-        return torch.tensor(normalization_tensor)
+        return paddle.to_tensor(normalization_tensor)
 
     @staticmethod
     def _tensor_normalize(x: Tensor, norm_tensor: Tensor) -> Tensor:
@@ -369,7 +394,7 @@ class Arch(nn.Module):
         output = {}
         for k, v in zip(
             output_var,
-            torch.split(output_tensor, list(output_var.values()), dim=dim),
+            paddle.split(output_tensor, list(output_var.values()), axis=dim),
         ):
             output[k] = v
             if output_scales is not None:
@@ -386,7 +411,7 @@ class Arch(nn.Module):
         output = {}
         for k, v in zip(
             output_dict,
-            torch.split(output_tensor, list(output_dict.values()), dim=dim),
+            paddle.split(output_tensor, list(output_dict.values()), axis=dim),
         ):
             output[k] = v
         return output
@@ -446,11 +471,6 @@ class Arch(nn.Module):
         return sorted(compute_derivs[1]) + sorted(compute_derivs[2])
 
     @property
-    @torch.jit.unused
-    # We could not use @torch.jit.ignore when combining with @property
-    # see https://github.com/pytorch/pytorch/issues/54688 .
-    # Using @torch.jit.unused is good for us as we never call `supports_func_arch`
-    # in `forward` or `_tensor_forward` method.
     def supports_func_arch(self) -> bool:
         """
         Returns whether the instantiate arch object support FuncArch API.
@@ -554,7 +574,7 @@ class Arch(nn.Module):
         return model, params
 
 
-class FuncArch(nn.Module):
+class FuncArch(nn.Layer):
     """
     Base class for all neural networks using functorch functional API.
     FuncArch perform Jacobian and Hessian calculations during the forward pass.
@@ -607,7 +627,7 @@ class FuncArch(nn.Module):
             key for key in arch.output_keys if key in needed_output_keys
         ]
         # needed_output_dims is used to slice I_N to save some computation
-        self.needed_output_dims = torch.tensor(
+        self.needed_output_dims = paddle.to_tensor(
             [self.output_key_dim[key.name] for key in needed_output_keys]
         )
         # if partial hessian or jacobian, the final output shape has changed and so the
@@ -620,14 +640,14 @@ class FuncArch(nn.Module):
         if self.max_order == 0:
             self._tensor_forward = forward_func
         elif self.max_order == 1:
-            I_N = torch.eye(out_features)[self.needed_output_dims]
-            self.register_buffer("I_N", I_N, persistent=False)
+            I_N = paddle.eye(out_features)[self.needed_output_dims]
+            self.register_buffer("I_N", I_N, persistable=False)
             self._tensor_forward = self._jacobian_impl(forward_func)
         elif self.max_order == 2:
-            I_N1 = torch.eye(out_features)[self.needed_output_dims]
-            I_N2 = torch.eye(in_features)
-            self.register_buffer("I_N1", I_N1, persistent=False)
-            self.register_buffer("I_N2", I_N2, persistent=False)
+            I_N1 = paddle.eye(out_features)[self.needed_output_dims]
+            I_N2 = paddle.eye(in_features)
+            self.register_buffer("I_N1", I_N1, persistable=False)
+            self.register_buffer("I_N2", I_N2, persistable=False)
             self._tensor_forward = self._hessian_impl(forward_func)
         else:
             raise ValueError(
@@ -636,6 +656,7 @@ class FuncArch(nn.Module):
             )
 
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
+        raise NotImplementedError(f"Funcarch is not supported now.")
         x = self.arch.concat_input(
             in_vars,
             self.arch.input_key_dict.keys(),
@@ -771,51 +792,15 @@ class FuncArch(nn.Module):
                 max_order = order
         return deriv_key_dict, max_order
 
-    def _jacobian_impl(self, forward_func):
-        def jacobian_func(x, v):
-            pred, vjpfunc = torch.func.vjp(forward_func, x)
-            return vjpfunc(v)[0], pred
-
-        def get_jacobian(x):
-            I_N = self.I_N
-            jacobian, pred = torch.vmap(
-                torch.vmap(jacobian_func, in_dims=(None, 0)), in_dims=(0, None)
-            )(x, I_N)
-            pred = pred[:, 0, :]
-            return pred, jacobian
-
-        return get_jacobian
+    def _jacobian_impl(self, forward_func: Callable[[Tensor], Tensor]):
+        raise NotImplementedError(
+            "_jacobian_impl is not implemented for this architecture"
+        )
 
     def _hessian_impl(self, forward_func):
-        def hessian_func(x, v1, v2):
-            def jacobian_func(x):
-                pred, vjpfunc = torch.func.vjp(forward_func, x)
-                return vjpfunc(v1)[0], pred
-
-            # jvp and vjp
-            (jacobian, hessian, pred) = torch.func.jvp(
-                jacobian_func, (x,), (v2,), has_aux=True
-            )
-            # vjp and vjp is slow
-            # jacobian, hessianfunc, pred = torch.func.vjp(jacobian_func, x, has_aux=True)
-            # hessian = hessianfunc(v2)[0]
-            return hessian, jacobian, pred
-
-        def get_hessian(x):
-            I_N1 = self.I_N1  # used to slice hessian rows
-            I_N2 = self.I_N2  # used to slice hessian columns
-            hessian, jacobian, pred = torch.vmap(
-                torch.vmap(
-                    torch.vmap(hessian_func, in_dims=(None, None, 0)),  # I_N2
-                    in_dims=(None, 0, None),  # I_N1
-                ),
-                in_dims=(0, None, None),  # x
-            )(x, I_N1, I_N2)
-            pred = pred[:, 0, 0, :]
-            jacobian = jacobian[:, :, 0, :]
-            return pred, jacobian, hessian
-
-        return get_hessian
+        raise NotImplementedError(
+            "_hessian_impl is not implemented for this architecture"
+        )
 
     @staticmethod
     def prepare_jacobian(

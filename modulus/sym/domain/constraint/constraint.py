@@ -14,11 +14,17 @@
 
 from typing import Union, List
 
-import torch
+import paddle
 import logging
-from torch.utils.data import DataLoader, BatchSampler, SequentialSampler, RandomSampler
-from torch.utils.data.distributed import DistributedSampler
-from torch.nn.parallel import DistributedDataParallel
+from paddle.io import (
+    DataLoader,
+    BatchSampler,
+    RandomSampler,
+    DistributedBatchSampler,
+    SequenceSampler,
+)
+
+from paddle import DataParallel
 from typing import Union, List
 
 from modulus.sym.node import Node
@@ -30,7 +36,7 @@ from modulus.sym.graph import Graph
 from modulus.sym.key import Key
 
 logger = logging.getLogger(__name__)
-Tensor = torch.Tensor
+Tensor = paddle.Tensor
 
 
 class Constraint:
@@ -48,7 +54,7 @@ class Constraint:
     ):
         # Get DDP manager
         self.manager = DistributedManager()
-        self.device = self.manager.device
+        self.place = self.manager.place
         if not drop_last and self.manager.cuda_graphs:
             logger.info("drop_last must be true when using cuda graphs")
             drop_last = True
@@ -71,24 +77,17 @@ class Constraint:
             Key.convert_list(self.dataset.invar_keys),
             Key.convert_list(self.dataset.outvar_keys),
         )
-        self.model.to(self.device)
+        self.model.to(self.place)
         if self.manager.distributed:
             # https://pytorch.org/docs/master/notes/cuda.html#id5
-            s = torch.cuda.Stream()
-            s.wait_stream(torch.cuda.current_stream())
-            with torch.cuda.stream(s):
-                self.model = DistributedDataParallel(
+            s = paddle.device.cuda.Stream()
+            s.wait_stream(paddle.device.cuda.current_stream())
+            with paddle.device.cuda.stream_guard(s):
+                self.model = DataParallel(
                     self.model,
-                    device_ids=[self.manager.local_rank],
-                    output_device=self.device,
-                    broadcast_buffers=self.manager.broadcast_buffers,
                     find_unused_parameters=self.manager.find_unused_parameters,
-                    process_group=self.manager.group(
-                        "data_parallel"
-                    ),  # None by default
                 )
-            torch.cuda.current_stream().wait_stream(s)
-
+            paddle.device.cuda.current_stream().wait_stream(s)
         self._input_names = Key.convert_list(dataset.invar_keys)
         self._output_names = Key.convert_list(dataset.outvar_keys)
 
@@ -97,7 +96,7 @@ class Constraint:
         self._lambda_weighting = None
 
         # put loss on device
-        self._loss = loss.to(self.device)
+        self._loss = loss
 
     @property
     def input_names(self) -> List[Key]:
@@ -124,16 +123,14 @@ class Constraint:
 
         # convert np to torch if needed
         tensor_dict = {
-            key: torch.as_tensor(value, dtype=tf_dt, device=device)
+            key: paddle.to_tensor(value, dtype=tf_dt, place=device)
             for key, value in tensor_dict.items()
         }
 
         # set requires_grad if needed
         if requires_grad:
-            tensor_dict = {
-                key: value.requires_grad_(requires_grad)
-                for key, value in tensor_dict.items()
-            }
+            for k, v in tensor_dict.items():
+                v.stop_gradient = not requires_grad
 
         return tensor_dict
 
@@ -167,36 +164,26 @@ class Constraint:
             assert drop_last is not None, "error, drop_last must be specified"
 
             # if distributed, use distributed sampler
-            if distributed is not False and manager.distributed:
-                sampler = DistributedSampler(
+            if distributed is True and manager.distributed:
+                batch_sampler = DistributedBatchSampler(
                     dataset,
-                    num_replicas=manager.group_size("data_parallel"),
-                    rank=manager.group_rank("data_parallel"),
+                    batch_size=batch_size,
                     shuffle=shuffle,
                     drop_last=drop_last,
                 )
 
             # otherwise use standard sampler
             else:
-                if shuffle:
-                    sampler = RandomSampler(dataset)
-                else:
-                    sampler = SequentialSampler(dataset)
-
-            # get batch sampler
-            batch_sampler = BatchSampler(sampler, batch_size, drop_last)
-
-            # if the dataset does auto collation, turn off automatic batching in dataloader
-            # this passes batched indices directly to dataset
-            # i.e. the dataloader yields default_convert(dataset[idx])
-            # see https://github.com/pytorch/pytorch/blob/master/torch/utils/data/_utils/fetch.py
-            # note: may need to use torch.set_num_threads if array indexing tensors in dataset to avoid excessive threading
+                batch_sampler = BatchSampler(
+                    dataset=dataset,
+                    shuffle=shuffle,
+                    batch_size=batch_size,
+                    drop_last=drop_last,
+                )
             if dataset.auto_collation:
                 dataloader = DataLoader(
                     dataset,
-                    batch_size=None,
-                    sampler=batch_sampler,
-                    pin_memory=True,
+                    batch_sampler=batch_sampler,
                     num_workers=num_workers,
                     worker_init_fn=dataset.worker_init_fn,
                     persistent_workers=persistent_workers,
@@ -209,10 +196,9 @@ class Constraint:
                 dataloader = DataLoader(
                     dataset,
                     batch_sampler=batch_sampler,
-                    pin_memory=True,
                     num_workers=num_workers,
                     worker_init_fn=dataset.worker_init_fn,
-                    persistent_workers=persistent_workers,
+                    # persistent_workers=persistent_workers,
                 )
 
         # iterable-style
@@ -222,7 +208,6 @@ class Constraint:
             dataloader = DataLoader(
                 dataset,
                 batch_size=None,
-                pin_memory=True,
                 num_workers=num_workers,
                 worker_init_fn=dataset.worker_init_fn,
                 persistent_workers=persistent_workers,

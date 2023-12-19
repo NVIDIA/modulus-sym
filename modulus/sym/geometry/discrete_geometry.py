@@ -32,7 +32,7 @@ class DiscreteGeometry(Geometry):
     """
 
     def __init__(
-        self, geometries, parameterization=Parameterization(), interior_epsilon=1e-6
+        self, geometries, parameterization=Parameterization(), interior_epsilon=1e-06
     ):
 
         # make sdf function

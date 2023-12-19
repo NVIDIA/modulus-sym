@@ -16,7 +16,7 @@
 constant values used by Modulus
 """
 
-import torch
+import paddle
 import numpy as np
 
 # string used to determine derivatives
@@ -28,17 +28,17 @@ def diff(y: str, x: str, degree: int = 1) -> str:
 
 
 # for changing to float16 or float64
-tf_dt = torch.float32
+tf_dt = paddle.get_default_dtype()
 np_dt = np.float32
 
 # tensorboard naming
 TF_SUMMARY = False
 
 # Pytorch Version for which JIT will be default on
-JIT_PYTORCH_VERSION = "2.1.0a0+4136153"
+# JIT_PYTORCH_VERSION = "2.1.0a0+4136153"
+JIT_PADDLE_VERSION = None
 
 # No scaling is needed if using NO_OP_SCALE
 NO_OP_SCALE = (0.0, 1.0)
-
 # If using NO_OP_NORM, it is effectively doing no normalization
 NO_OP_NORM = (-1.0, 1.0)

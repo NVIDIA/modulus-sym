@@ -16,7 +16,7 @@ from typing import Dict, List, Union, Callable
 from pathlib import Path
 import inspect
 
-import torch
+import paddle
 import numpy as np
 
 from modulus.sym.domain.inferencer import PointwiseInferencer
@@ -157,7 +157,7 @@ class PointVTKInferencer(PointwiseInferencer):
         for i, (invar0,) in enumerate(self.dataloader):
             # Move data to device
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
             pred_outvar = self.forward(invar)
 

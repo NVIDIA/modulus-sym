@@ -12,36 +12,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional, Tuple
 
-import torch
-import torch.nn as nn
-from torch import Tensor
-import torch.nn.functional as F
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
+import paddle.nn.functional as F
+import numpy as np
 import logging
 
-from modulus.models.layers import (
-    Conv1dFCLayer,
-    Conv2dFCLayer,
-    Conv3dFCLayer,
-    SpectralConv1d,
-    SpectralConv2d,
-    SpectralConv3d,
-)
-from modulus.models.layers.spectral_layers import (
+import modulus.sym.models.layers as layers
+from modulus.sym.models.activation import Activation
+from modulus.sym.models.layers.spectral_layers import (
     calc_latent_derivatives,
     first_order_pino_grads,
     second_order_pino_grads,
 )
-from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
 from modulus.sym.models.fully_connected import ConvFullyConnectedArch
 from modulus.sym.key import Key
+from modulus.sym.node import Node
+
+# from modulus.sym.constants import JIT_PYTORCH_VERSION
 
 logger = logging.getLogger(__name__)
 
 
-class FNO1DEncoder(nn.Module):
+class FNO1DEncoder(nn.Layer):
     def __init__(
         self,
         in_channels: int = 1,
@@ -65,20 +62,20 @@ class FNO1DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 1
-        self.activation_fn = get_activation_fn(activation_fn)
+        self.activation_fn = layers.get_activation_fn(activation_fn)
 
-        self.spconv_layers = nn.ModuleList()
-        self.conv_layers = nn.ModuleList()
+        self.spconv_layers = nn.LayerList()
+        self.conv_layers = nn.LayerList()
 
         # Initial lift layer
-        self.lift_layer = Conv1dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = layers.Conv1dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                SpectralConv1d(self.fno_width, self.fno_width, fno_modes[0])
+                layers.SpectralConv1d(self.fno_width, self.fno_width, fno_modes[0])
             )
-            self.conv_layers.append(nn.Conv1d(self.fno_width, self.fno_width, 1))
+            self.conv_layers.append(nn.Conv1D(self.fno_width, self.fno_width, 1))
 
         # Padding values for spectral conv
         if isinstance(padding, int):
@@ -90,8 +87,8 @@ class FNO1DEncoder(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
 
         if self.coord_features:
-            coord_feat = self.meshgrid(list(x.shape), x.device)
-            x = torch.cat((x, coord_feat), dim=1)
+            coord_feat = self.meshgrid(list(x.shape), x.place)
+            x = paddle.concat((x, coord_feat), axis=1)
 
         x = self.lift_layer(x)
         # (left, right)
@@ -109,14 +106,16 @@ class FNO1DEncoder(nn.Module):
         x = x[..., : self.ipad[0]]
         return x
 
-    def meshgrid(self, shape: List[int], device: torch.device):
+    def meshgrid(self, shape: List[int], device: str):
         bsize, size_x = shape[0], shape[2]
-        grid_x = torch.linspace(0, 1, size_x, dtype=torch.float32, device=device)
-        grid_x = grid_x.unsqueeze(0).unsqueeze(0).repeat(bsize, 1, 1)
+        grid_x = paddle.linspace(0, 1, size_x).astype("float32")
+        grid_x = (
+            grid_x.unsqueeze(axis=0).unsqueeze(axis=0).tile(repeat_times=[bsize, 1, 1])
+        )
         return grid_x
 
 
-class FNO2DEncoder(nn.Module):
+class FNO2DEncoder(nn.Layer):
     def __init__(
         self,
         in_channels: int = 1,
@@ -140,22 +139,22 @@ class FNO2DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 2
-        self.activation_fn = get_activation_fn(activation_fn)
+        self.activation_fn = layers.get_activation_fn(activation_fn)
 
-        self.spconv_layers = nn.ModuleList()
-        self.conv_layers = nn.ModuleList()
+        self.spconv_layers = nn.LayerList()
+        self.conv_layers = nn.LayerList()
 
         # Initial lift layer
-        self.lift_layer = Conv2dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = layers.Conv2dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                SpectralConv2d(
+                layers.SpectralConv2d(
                     self.fno_width, self.fno_width, fno_modes[0], fno_modes[1]
                 )
             )
-            self.conv_layers.append(nn.Conv2d(self.fno_width, self.fno_width, 1))
+            self.conv_layers.append(nn.Conv2D(self.fno_width, self.fno_width, 1))
 
         # Padding values for spectral conv
         if isinstance(padding, int):
@@ -171,8 +170,8 @@ class FNO2DEncoder(nn.Module):
         ), "Only 4D tensors [batch, in_channels, grid_x, grid_y] accepted for 2D FNO"
 
         if self.coord_features:
-            coord_feat = self.meshgrid(list(x.shape), x.device)
-            x = torch.cat((x, coord_feat), dim=1)
+            coord_feat = self.meshgrid(list(x.shape), x.place)
+            x = paddle.concat((x, coord_feat), axis=1)
 
         x = self.lift_layer(x)
         # (left, right, top, bottom)
@@ -192,17 +191,17 @@ class FNO2DEncoder(nn.Module):
 
         return x
 
-    def meshgrid(self, shape: List[int], device: torch.device):
+    def meshgrid(self, shape: List[int], device: str):
         bsize, size_x, size_y = shape[0], shape[2], shape[3]
-        grid_x = torch.linspace(0, 1, size_x, dtype=torch.float32, device=device)
-        grid_y = torch.linspace(0, 1, size_y, dtype=torch.float32, device=device)
-        grid_x, grid_y = torch.meshgrid(grid_x, grid_y, indexing="ij")
-        grid_x = grid_x.unsqueeze(0).unsqueeze(0).repeat(bsize, 1, 1, 1)
-        grid_y = grid_y.unsqueeze(0).unsqueeze(0).repeat(bsize, 1, 1, 1)
-        return torch.cat((grid_x, grid_y), dim=1)
+        grid_x = paddle.linspace(0, 1, size_x, dtype="float32")
+        grid_y = paddle.linspace(0, 1, size_y, dtype="float32")
+        grid_x, grid_y = paddle.meshgrid(grid_x, grid_y)
+        grid_x = grid_x.unsqueeze(0).unsqueeze(0).tile([bsize, 1, 1, 1])
+        grid_y = grid_y.unsqueeze(0).unsqueeze(0).tile([bsize, 1, 1, 1])
+        return paddle.concat((grid_x, grid_y), axis=1)
 
 
-class FNO3DEncoder(nn.Module):
+class FNO3DEncoder(nn.Layer):
     def __init__(
         self,
         in_channels: int = 1,
@@ -226,18 +225,18 @@ class FNO3DEncoder(nn.Module):
         # Add relative coordinate feature
         if self.coord_features:
             self.in_channels = self.in_channels + 3
-        self.activation_fn = get_activation_fn(activation_fn)
+        self.activation_fn = layers.get_activation_fn(activation_fn)
 
-        self.spconv_layers = nn.ModuleList()
-        self.conv_layers = nn.ModuleList()
+        self.spconv_layers = nn.LayerList()
+        self.conv_layers = nn.LayerList()
 
         # Initial lift layer
-        self.lift_layer = Conv3dFCLayer(self.in_channels, self.fno_width)
+        self.lift_layer = layers.Conv3dFCLayer(self.in_channels, self.fno_width)
 
         # Build Neural Fourier Operators
         for _ in range(self.nr_fno_layers):
             self.spconv_layers.append(
-                SpectralConv3d(
+                layers.SpectralConv3d(
                     self.fno_width,
                     self.fno_width,
                     fno_modes[0],
@@ -245,7 +244,7 @@ class FNO3DEncoder(nn.Module):
                     fno_modes[2],
                 )
             )
-            self.conv_layers.append(nn.Conv3d(self.fno_width, self.fno_width, 1))
+            self.conv_layers.append(nn.Conv3D(self.fno_width, self.fno_width, 1))
 
         # Padding values for spectral conv
         if isinstance(padding, int):
@@ -258,8 +257,8 @@ class FNO3DEncoder(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
 
         if self.coord_features:
-            coord_feat = self.meshgrid(list(x.shape), x.device)
-            x = torch.cat((x, coord_feat), dim=1)
+            coord_feat = self.meshgrid(list(x.shape), x.place)
+            x = paddle.concat((x, coord_feat), axis=1)
 
         x = self.lift_layer(x)
         # (left, right, top, bottom, front, back)
@@ -281,57 +280,57 @@ class FNO3DEncoder(nn.Module):
         x = x[..., : self.ipad[2], : self.ipad[1], : self.ipad[0]]
         return x
 
-    def meshgrid(self, shape: List[int], device: torch.device):
+    def meshgrid(self, shape: List[int], device: str):
         bsize, size_x, size_y, size_z = shape[0], shape[2], shape[3], shape[4]
-        grid_x = torch.linspace(0, 1, size_x, dtype=torch.float32, device=device)
-        grid_y = torch.linspace(0, 1, size_y, dtype=torch.float32, device=device)
-        grid_z = torch.linspace(0, 1, size_z, dtype=torch.float32, device=device)
-        grid_x, grid_y, grid_z = torch.meshgrid(grid_x, grid_y, grid_z, indexing="ij")
-        grid_x = grid_x.unsqueeze(0).unsqueeze(0).repeat(bsize, 1, 1, 1, 1)
-        grid_y = grid_y.unsqueeze(0).unsqueeze(0).repeat(bsize, 1, 1, 1, 1)
-        grid_z = grid_z.unsqueeze(0).unsqueeze(0).repeat(bsize, 1, 1, 1, 1)
-        return torch.cat((grid_x, grid_y, grid_z), dim=1)
+        grid_x = paddle.linspace(0, 1, size_x, dtype="float32")
+        grid_y = paddle.linspace(0, 1, size_y, dtype="float32")
+        grid_z = paddle.linspace(0, 1, size_z, dtype="float32")
+        grid_x, grid_y, grid_z = paddle.meshgrid(grid_x, grid_y, grid_z)
+        grid_x = grid_x.unsqueeze(0).unsqueeze(0).tile([bsize, 1, 1, 1, 1])
+        grid_y = grid_y.unsqueeze(0).unsqueeze(0).tile([bsize, 1, 1, 1, 1])
+        grid_z = grid_z.unsqueeze(0).unsqueeze(0).tile([bsize, 1, 1, 1, 1])
+        return paddle.concat((grid_x, grid_y, grid_z), axis=1)
 
 
 def grid_to_points1d(vars_dict: Dict[str, Tensor]):
     for var, value in vars_dict.items():
-        value = torch.permute(value, (0, 2, 1))
-        vars_dict[var] = value.reshape(-1, value.size(-1))
+        value = paddle.transpose(value, (0, 2, 1))
+        vars_dict[var] = value.reshape(-1, value.shape[-1])
     return vars_dict
 
 
 def points_to_grid1d(vars_dict: Dict[str, Tensor], shape: List[int]):
     for var, value in vars_dict.items():
-        value = value.reshape(shape[0], shape[2], value.size(-1))
-        vars_dict[var] = torch.permute(value, (0, 2, 1))
+        value = value.reshape(shape[0], shape[2], value.shape[-1])
+        vars_dict[var] = paddle.transpose(value, (0, 2, 1))
     return vars_dict
 
 
 def grid_to_points2d(vars_dict: Dict[str, Tensor]):
     for var, value in vars_dict.items():
-        value = torch.permute(value, (0, 2, 3, 1))
-        vars_dict[var] = value.reshape(-1, value.size(-1))
+        value = paddle.transpose(value, (0, 2, 3, 1))
+        vars_dict[var] = value.reshape(-1, value.shape[-1])
     return vars_dict
 
 
 def points_to_grid2d(vars_dict: Dict[str, Tensor], shape: List[int]):
     for var, value in vars_dict.items():
-        value = value.reshape(shape[0], shape[2], shape[3], value.size(-1))
-        vars_dict[var] = torch.permute(value, (0, 3, 1, 2))
+        value = value.reshape(shape[0], shape[2], shape[3], value.shape[-1])
+        vars_dict[var] = paddle.transpose(value, (0, 3, 1, 2))
     return vars_dict
 
 
 def grid_to_points3d(vars_dict: Dict[str, Tensor]):
     for var, value in vars_dict.items():
-        value = torch.permute(value, (0, 2, 3, 4, 1))
-        vars_dict[var] = value.reshape(-1, value.size(-1))
+        value = paddle.transpose(value, (0, 2, 3, 4, 1))
+        vars_dict[var] = value.reshape(-1, value.shape[-1])
     return vars_dict
 
 
 def points_to_grid3d(vars_dict: Dict[str, Tensor], shape: List[int]):
     for var, value in vars_dict.items():
-        value = value.reshape(shape[0], shape[2], shape[3], shape[4], value.size(-1))
-        vars_dict[var] = torch.permute(value, (0, 4, 1, 2, 3))
+        value = value.reshape(shape[0], shape[2], shape[3], shape[4], value.shape[-1])
+        vars_dict[var] = paddle.transpose(value, (0, 4, 1, 2, 3))
     return vars_dict
 
 
@@ -389,7 +388,7 @@ class FNOArch(Arch):
     >>> decoder = FullyConnectedArch([Key("z", size=32)], [Key("y", size=2)])
     >>> fno_1d = FNOArch([Key("x", size=2)], dimension=1, decoder_net=decoder)
     >>> model = fno_1d.make_node()
-    >>> input = {"x": torch.randn(20, 2, 64)}
+    >>> input = {"x": paddle.randn([20, 2, 64])}
     >>> output = model.evaluate(input)
 
     2D FNO model
@@ -397,7 +396,7 @@ class FNOArch(Arch):
     >>> decoder = ConvFullyConnectedArch([Key("z", size=32)], [Key("y", size=2)])
     >>> fno_2d = FNOArch([Key("x", size=2)], dimension=2, decoder_net=decoder)
     >>> model = fno_2d.make_node()
-    >>> input = {"x": torch.randn(20, 2, 64, 64)}
+    >>> input = {"x": paddle.randn([20, 2, 64, 64])}
     >>> output = model.evaluate(input)
 
     3D FNO model
@@ -405,7 +404,7 @@ class FNOArch(Arch):
     >>> decoder = Siren([Key("z", size=32)], [Key("y", size=2)])
     >>> fno_3d = FNOArch([Key("x", size=2)], dimension=3, decoder_net=decoder)
     >>> model = fno_3d.make_node()
-    >>> input = {"x": torch.randn(20, 2, 64, 64, 64)}
+    >>> input = {"x": paddle.randn([20, 2, 64, 64, 64])}
     >>> output = model.evaluate(input)
     """
 
@@ -565,7 +564,7 @@ class FNOArch(Arch):
         )
         y_latent = self.spec_encoder(x)
 
-        y_shape = list(y_latent.size())
+        y_shape = list(y_latent.shape)
         y_input = {self.latent_key: y_latent}
         # Reshape to pointwise inputs if not a conv FC model
         if self.decoder_net.var_dim == -1:
@@ -582,7 +581,6 @@ class FNOArch(Arch):
 
         return y
 
-    @torch.jit.ignore
     def calc_pino_derivatives(self, latent: Tensor) -> Dict[str, Tensor]:
         # Calculate the gradients of latent variables
         # This is done using FFT and is the reason we need a domain size
@@ -605,8 +603,11 @@ class FNOArch(Arch):
             for d in range(len(output_dx)):  # Loop through dimensions
                 for k, v in zip(
                     self.output_keys_fno,
-                    torch.split(
-                        output_dx[d], list(self.output_key_fno_dict.values()), dim=1
+                    paddle.split(
+                        output_dx[d],
+                        num_or_sections=output_dx[d].shape[1]
+                        // list(self.output_key_fno_dict.values()),
+                        axis=1,
                     ),
                 ):  # Loop through variables
                     if f"{k}__{dims[d]}__{dims[d]}" in self.output_key_dict.keys():
@@ -631,8 +632,11 @@ class FNOArch(Arch):
             for d in range(len(output_dxx)):  # Loop through dimensions
                 for k, v in zip(
                     self.output_keys_fno,
-                    torch.split(
-                        output_dxx[d], list(self.output_key_fno_dict.values()), dim=1
+                    paddle.split(
+                        output_dxx[d],
+                        num_or_sections=output_dxx[d].shape[1]
+                        // list(self.output_key_fno_dict.values()),
+                        axis=1,
                     ),
                 ):  # Loop through variables
                     if f"{k}__{dims[d]}__{dims[d]}" in self.output_key_dict.keys():

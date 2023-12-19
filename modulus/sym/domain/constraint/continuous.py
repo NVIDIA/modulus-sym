@@ -15,13 +15,11 @@
 """ Continuous type constraints
 """
 
-import torch
-from torch.nn.parallel import DistributedDataParallel
 import numpy as np
 from typing import Dict, List, Union, Tuple, Callable
 import sympy as sp
 import logging
-import torch
+import paddle
 
 from .constraint import Constraint
 from .utils import _compute_outvar, _compute_lambda_weighting
@@ -46,7 +44,7 @@ from modulus.sym.dataset import (
     DictVariationalDataset,
 )
 
-Tensor = torch.Tensor
+Tensor = paddle.Tensor
 logger = logging.getLogger(__name__)
 
 
@@ -56,11 +54,10 @@ class PointwiseConstraint(Constraint):
     """
 
     def save_batch(self, filename):
-        # sample batch
         invar, true_outvar, lambda_weighting = next(self.dataloader)
-        invar = Constraint._set_device(invar, device=self.device, requires_grad=True)
-        true_outvar = Constraint._set_device(true_outvar, device=self.device)
-        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.device)
+        invar = Constraint._set_device(invar, device=self.place, requires_grad=True)
+        true_outvar = Constraint._set_device(true_outvar, device=self.place)
+        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.place)
 
         # If using DDP, strip out collective stuff to prevent deadlocks
         # This only works either when one process alone calls in to save_batch
@@ -95,11 +92,11 @@ class PointwiseConstraint(Constraint):
         invar, true_outvar, lambda_weighting = next(self.dataloader)
 
         self._input_vars = Constraint._set_device(
-            invar, device=self.device, requires_grad=True
+            invar, device=self.place, requires_grad=True
         )
-        self._target_vars = Constraint._set_device(true_outvar, device=self.device)
+        self._target_vars = Constraint._set_device(true_outvar, device=self.place)
         self._lambda_weighting = Constraint._set_device(
-            lambda_weighting, device=self.device
+            lambda_weighting, device=self.place
         )
 
     def load_data_static(self):
@@ -111,29 +108,28 @@ class PointwiseConstraint(Constraint):
             invar, true_outvar, lambda_weighting = next(self.dataloader)
             # Set grads to false here for inputs, static var has allocation already
             input_vars = Constraint._set_device(
-                invar, device=self.device, requires_grad=False
+                invar, device=self.place, requires_grad=False
             )
-            target_vars = Constraint._set_device(true_outvar, device=self.device)
+            target_vars = Constraint._set_device(true_outvar, device=self.place)
             lambda_weighting = Constraint._set_device(
-                lambda_weighting, device=self.device
+                lambda_weighting, device=self.place
             )
 
             for key in input_vars.keys():
                 self._input_vars[key].data.copy_(input_vars[key])
             for key in target_vars.keys():
-                self._target_vars[key].copy_(target_vars[key])
+                paddle.assign(target_vars[key], output=self._target_vars[key])
             for key in lambda_weighting.keys():
-                self._lambda_weighting[key].copy_(lambda_weighting[key])
+                paddle.assign(lambda_weighting[key], output=self._lambda_weighting[key])
 
     def forward(self):
         # compute pred outvar
         self._output_vars = self.model(self._input_vars)
 
-    def loss(self, step: int) -> Dict[str, torch.Tensor]:
+    def loss(self, step: int) -> Dict[str, paddle.Tensor]:
         if self._output_vars is None:
             logger.warn("Calling loss without forward call")
             return {}
-
         losses = self._loss(
             self._input_vars,
             self._output_vars,
@@ -281,7 +277,7 @@ class PointwiseBoundaryConstraint(PointwiseConstraint):
 
         # assert that not using importance measure with continuous dataset
         assert not (
-            (not fixed_dataset) and (importance_measure is not None)
+            not fixed_dataset and importance_measure is not None
         ), "Using Importance measure with continuous dataset is not supported"
 
         # if fixed dataset then sample points and fix for all of training
@@ -524,7 +520,7 @@ class IntegralConstraint(Constraint):
         pass
         # sample batch
         invar, true_outvar, lambda_weighting = next(self.dataloader)
-        invar = Constraint._set_device(invar, device=self.device, requires_grad=True)
+        invar = Constraint._set_device(invar, device=self.place, requires_grad=True)
 
         # rename values and save batch to vtk file TODO clean this up after graph unroll stuff
         for i in range(self.batch_size):
@@ -538,11 +534,11 @@ class IntegralConstraint(Constraint):
         invar, true_outvar, lambda_weighting = next(self.dataloader)
 
         self._input_vars = Constraint._set_device(
-            invar, device=self.device, requires_grad=True
+            invar, device=self.place, requires_grad=True
         )
-        self._target_vars = Constraint._set_device(true_outvar, device=self.device)
+        self._target_vars = Constraint._set_device(true_outvar, device=self.place)
         self._lambda_weighting = Constraint._set_device(
-            lambda_weighting, device=self.device
+            lambda_weighting, device=self.place
         )
 
     def load_data_static(self):
@@ -554,19 +550,19 @@ class IntegralConstraint(Constraint):
             invar, true_outvar, lambda_weighting = next(self.dataloader)
             # Set grads to false here for inputs, static var has allocation already
             input_vars = Constraint._set_device(
-                invar, device=self.device, requires_grad=False
+                invar, device=self.place, requires_grad=False
             )
-            target_vars = Constraint._set_device(true_outvar, device=self.device)
+            target_vars = Constraint._set_device(true_outvar, device=self.place)
             lambda_weighting = Constraint._set_device(
-                lambda_weighting, device=self.device
+                lambda_weighting, device=self.place
             )
 
             for key in input_vars.keys():
                 self._input_vars[key].data.copy_(input_vars[key])
             for key in target_vars.keys():
-                self._target_vars[key].copy_(target_vars[key])
+                paddle.assign(target_vars[key], output=self._target_vars[key])
             for key in lambda_weighting.keys():
-                self._lambda_weighting[key].copy_(lambda_weighting[key])
+                paddle.assign(lambda_weighting[key], output=self._lambda_weighting[key])
 
     @property
     def output_vars(self) -> Dict[str, Tensor]:
@@ -582,7 +578,7 @@ class IntegralConstraint(Constraint):
         # compute pred outvar
         self._output_vars = self.model(self._input_vars)
 
-    def loss(self, step: int) -> Dict[str, torch.Tensor]:
+    def loss(self, step: int) -> Dict[str, paddle.Tensor]:
         if self._output_vars is None:
             logger.warn("Calling loss without forward call")
             return {}
@@ -810,7 +806,7 @@ class VariationalConstraint(Constraint):
 
         # Get DDP manager
         self.manager = DistributedManager()
-        self.device = self.manager.device
+        self.place = self.manager.place
         if not drop_last and self.manager.cuda_graphs:
             logger.info("drop_last must be true when using cuda graphs")
             drop_last = True
@@ -831,32 +827,23 @@ class VariationalConstraint(Constraint):
             )
             invar_keys = invar_keys + datasets[name].invar_keys
             outvar_keys = outvar_keys + datasets[name].outvar_keys
-
-        # construct model from nodes
         self.model = Graph(
             nodes,
             Key.convert_list(list(set(invar_keys))),
             Key.convert_list(list(set(outvar_keys))),
         )
         self.manager = DistributedManager()
-        self.device = self.manager.device
-        self.model.to(self.device)
+        self.place = self.manager.place
+        self.model.to(self.place)
         if self.manager.distributed:
-            # https://pytorch.org/docs/master/notes/cuda.html#id5
-            s = torch.cuda.Stream()
-            s.wait_stream(torch.cuda.current_stream())
-            with torch.cuda.stream(s):
-                self.model = DistributedDataParallel(
+            s = paddle.device.cuda.Stream()
+            s.wait_stream(paddle.device.cuda.current_stream())
+            with paddle.device.cuda.stream_guard(s):
+                self.model = paddle.DataParallel(
                     self.model,
-                    device_ids=[self.manager.local_rank],
-                    output_device=self.device,
-                    broadcast_buffers=self.manager.broadcast_buffers,
                     find_unused_parameters=self.manager.find_unused_parameters,
-                    process_group=self.manager.group(
-                        "data_parallel"
-                    ),  # None by default
                 )
-            torch.cuda.current_stream().wait_stream(s)
+            paddle.device.cuda.current_stream().wait_stream(s)
 
         self._input_names = Key.convert_list(list(set(invar_keys)))
         self._output_names = Key.convert_list(list(set(outvar_keys)))
@@ -866,13 +853,13 @@ class VariationalConstraint(Constraint):
         self._lambda_weighting = None
 
         # put loss on device
-        self._loss = loss.to(self.device)
+        self._loss = loss.to(self.place)
 
     def save_batch(self, filename):
         # sample batch
         for name, data_loader in self.data_loaders.items():
             invar = Constraint._set_device(
-                next(data_loader), device=self.device, requires_grad=True
+                next(data_loader), device=self.place, requires_grad=True
             )
 
             # If using DDP, strip out collective stuff to prevent deadlocks
@@ -904,7 +891,7 @@ class VariationalConstraint(Constraint):
             invar = next(data_loader)
 
             self._input_vars[name] = Constraint._set_device(
-                invar, device=self.device, requires_grad=True
+                invar, device=self.place, requires_grad=True
             )
 
     def load_data_static(self):
@@ -917,14 +904,14 @@ class VariationalConstraint(Constraint):
                 invar = next(data_loader)
                 # Set grads to false here for inputs, static var has allocation already
                 input_vars = Constraint._set_device(
-                    invar, device=self.device, requires_grad=False
+                    invar, device=self.place, requires_grad=False
                 )
 
                 for key in input_vars.keys():
                     self._input_vars[name][key].data.copy_(input_vars[key])
 
                 self._input_vars[name] = Constraint._set_device(
-                    invar, device=self.device, requires_grad=True
+                    invar, device=self.place, requires_grad=True
                 )
 
     def forward(self):
@@ -1019,9 +1006,9 @@ class DeepONetConstraint(PointwiseConstraint):
     def save_batch(self, filename):
         # sample batch
         invar, true_outvar, lambda_weighting = next(self.dataloader)
-        invar = Constraint._set_device(invar, device=self.device, requires_grad=True)
-        true_outvar = Constraint._set_device(true_outvar, device=self.device)
-        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.device)
+        invar = Constraint._set_device(invar, device=self.place, requires_grad=True)
+        true_outvar = Constraint._set_device(true_outvar, device=self.place)
+        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.place)
 
         # If using DDP, strip out collective stuff to prevent deadlocks
         # This only works either when one process alone calls in to save_batch

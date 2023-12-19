@@ -13,12 +13,12 @@
 # limitations under the License.
 
 __version__ = "1.4.0a0"
-
 from pint import UnitRegistry
 
 from .node import Node
 from .key import Key
 from .hydra.utils import main, compose
+from .utils_aux import paddle_aux
 
 # pint unit registry
 ureg = UnitRegistry()

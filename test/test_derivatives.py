@@ -12,61 +12,73 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+import paddle
 import time
-import torch
 from typing import List, Optional
 from modulus.sym.key import Key
 from modulus.sym.constants import diff
 from modulus.sym.eq.derivatives import Derivative
 
 
-class Model(torch.nn.Module):
+class Model(paddle.nn.Layer):
     def __init__(self):
         super().__init__()
 
     def forward(self, x, y, z):
         return (
-            1.5 * x * x + torch.sin(y) + torch.exp(z),
-            2 * x * x + torch.cos(y) + torch.exp(-z),
-            1.5 * x * x + torch.sin(y) + torch.exp(z),
-            2 * x * x + torch.cos(y) + torch.exp(-z),
+            1.5 * x * x + paddle.sin(x=y) + paddle.exp(x=z),
+            2 * x * x + paddle.cos(x=y) + paddle.exp(x=-z),
+            1.5 * x * x + paddle.sin(x=y) + paddle.exp(x=z),
+            2 * x * x + paddle.cos(x=y) + paddle.exp(x=-z),
         )
 
 
 def validate_gradients(
     x, y, z, dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz, dpdx, dpdy, dpdz
 ):
-    # Check against exact solution
-    assert torch.allclose(dudx, 3 * x), "x derivative of u failed"
-    assert torch.allclose(dudy, torch.cos(y)), "y derivative of u  failed"
-    assert torch.allclose(dudz, torch.exp(z)), "z derivative of u  failed"
-
-    assert torch.allclose(dvdx, 4 * x), "x derivative of v failed"
-    assert torch.allclose(dvdy, -torch.sin(y)), "y derivative of v failed"
-    assert torch.allclose(dvdz, -torch.exp(-z)), "z derivative of v failed"
-
-    assert torch.allclose(dwdx, 3 * x), "x derivative of w failed"
-    assert torch.allclose(dwdy, torch.cos(y)), "y derivative of w failed"
-    assert torch.allclose(dwdz, torch.exp(z)), "z derivative of w failed"
-
-    assert torch.allclose(dpdx, 4 * x), "x derivative of p failed"
-    assert torch.allclose(dpdy, -torch.sin(y)), "y derivative of p failed"
-    assert torch.allclose(dpdz, -torch.exp(-z)), "z derivative of p failed"
+    assert paddle.allclose(x=dudx, y=3 * x).item(), "x derivative of u failed"
+    assert paddle.allclose(
+        x=dudy, y=paddle.cos(x=y)
+    ).item(), "y derivative of u  failed"
+    assert paddle.allclose(
+        x=dudz, y=paddle.exp(x=z)
+    ).item(), "z derivative of u  failed"
+    assert paddle.allclose(x=dvdx, y=4 * x).item(), "x derivative of v failed"
+    assert paddle.allclose(
+        x=dvdy, y=-paddle.sin(x=y)
+    ).item(), "y derivative of v failed"
+    assert paddle.allclose(
+        x=dvdz, y=-paddle.exp(x=-z)
+    ).item(), "z derivative of v failed"
+    assert paddle.allclose(x=dwdx, y=3 * x).item(), "x derivative of w failed"
+    assert paddle.allclose(x=dwdy, y=paddle.cos(x=y)).item(), "y derivative of w failed"
+    assert paddle.allclose(x=dwdz, y=paddle.exp(x=z)).item(), "z derivative of w failed"
+    assert paddle.allclose(x=dpdx, y=4 * x).item(), "x derivative of p failed"
+    assert paddle.allclose(
+        x=dpdy, y=-paddle.sin(x=y)
+    ).item(), "y derivative of p failed"
+    assert paddle.allclose(
+        x=dpdz, y=-paddle.exp(x=-z)
+    ).item(), "z derivative of p failed"
 
 
 def test_derivative_node():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    # Set up input coordinates
+    device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
+        "cuda", "gpu"
+    )
     batch_size = 128
-    x = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    y = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-    z = torch.rand(batch_size, 1, dtype=torch.float32, requires_grad=True).to(device)
-
-    # Instantiate the model and compute outputs
-    model = torch.jit.script(Model()).to(device)
+    out_29 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_29.stop_gradient = not True
+    x = out_29.to(device)
+    out_30 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_30.stop_gradient = not True
+    y = out_30.to(device)
+    out_31 = paddle.rand(shape=[batch_size, 1], dtype="float32")
+    out_31.stop_gradient = not True
+    z = out_31.to(device)
+    model = Model()
     u, v, w, p = model(x, y, z)
-
     input_vars = [
         Key.from_str("x"),
         Key.from_str("y"),
@@ -91,7 +103,6 @@ def test_derivative_node():
         Key.from_str(diff("p", "z")),
     ]
     dnode = Derivative.make_node(input_vars, derivs, jit=False)
-
     input_dict = dict(zip((str(v) for v in input_vars), [x, y, z, u, v, w, p]))
     derivs_dict = dnode.evaluate(input_dict)
     validate_gradients(x, y, z, *(derivs_dict[str(d)] for d in derivs))

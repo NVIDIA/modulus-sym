@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.models.fused_mlp import (
     FusedMLPArch,
     FusedFourierNetArch,
     FusedGridEncodingNetArch,
 )
-import torch
 import numpy as np
 from modulus.sym.key import Key
-
 import pytest
 
 layer_size_params = [
@@ -45,14 +44,10 @@ def make_dict(nr_layers):
 @pytest.mark.parametrize("layer_size", layer_size_params)
 def test_fully_fused_mlp(layer_size):
     batch_size = 1024
-
     data_in = np.random.random((batch_size, 2))
-
     fully_fused = False
     if layer_size in set([16, 32, 64, 128]):
         fully_fused = True
-
-    # create graph
     arch = FusedMLPArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -60,31 +55,22 @@ def test_fully_fused_mlp(layer_size):
         nr_layers=6,
         fully_fused=fully_fused,
     )
-
     data_out2 = arch(
         {
-            "x": torch.from_numpy(data_in[:, 0:1]).cuda(),
-            "y": torch.from_numpy(data_in[:, 1:2]).cuda(),
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
         }
     )
     data_out2 = data_out2["u"].cpu().detach().numpy()
-
-    # TODO: Figure out arch.params slicing to initialize pytorch model
-    #       and compare TCNN output to that
-    # assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
 
 
 @pytest.mark.parametrize("layer_size", layer_size_params)
 def test_fused_fourier_net(layer_size):
     batch_size = 1024
-
     data_in = np.random.random((batch_size, 2))
-
     fully_fused = False
     if layer_size in set([16, 32, 64, 128]):
         fully_fused = True
-
-    # create graph
     arch = FusedFourierNetArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -93,31 +79,22 @@ def test_fused_fourier_net(layer_size):
         fully_fused=fully_fused,
         n_frequencies=12,
     )
-
     data_out2 = arch(
         {
-            "x": torch.from_numpy(data_in[:, 0:1]).cuda(),
-            "y": torch.from_numpy(data_in[:, 1:2]).cuda(),
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
         }
     )
     data_out2 = data_out2["u"].cpu().detach().numpy()
-
-    # TODO: Figure out arch.params slicing to initialize pytorch model
-    #       and compare TCNN output to that
-    # assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
 
 
 @pytest.mark.parametrize("layer_size", layer_size_params)
 def test_fused_grid_encoding_net(layer_size):
     batch_size = 1024
-
     data_in = np.random.random((batch_size, 2))
-
     fully_fused = False
     if layer_size in set([16, 32, 64, 128]):
         fully_fused = True
-
-    # create graph
     arch = FusedGridEncodingNetArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -132,29 +109,19 @@ def test_fused_grid_encoding_net(layer_size):
         per_level_scale=2.0,
         interpolation="Smoothstep",
     )
-
     data_out2 = arch(
         {
-            "x": torch.from_numpy(data_in[:, 0:1]).cuda(),
-            "y": torch.from_numpy(data_in[:, 1:2]).cuda(),
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
         }
     )
     data_out2 = data_out2["u"].cpu().detach().numpy()
 
-    # TODO: Figure out arch.params slicing to initialize pytorch model
-    #       and compare TCNN output to that
-    # assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
-
 
 if __name__ == "__main__":
-    # Fused MLP tests
-    test_fully_fused_mlp(128)  # Fully Fused MLP
-    test_fully_fused_mlp(256)  # Cutlass MLP
-
-    # Fused Fourier Net tests
-    test_fused_fourier_net(128)  # Fully Fused MLP
-    test_fused_fourier_net(256)  # Cutlass MLP
-
-    # Fused Grid encoding tests
-    test_fused_grid_encoding_net(128)  # Fully Fused MLP
-    test_fused_grid_encoding_net(256)  # Cutlass MLP
+    test_fully_fused_mlp(128)
+    test_fully_fused_mlp(256)
+    test_fused_fourier_net(128)
+    test_fused_fourier_net(256)
+    test_fused_grid_encoding_net(128)
+    test_fused_grid_encoding_net(256)

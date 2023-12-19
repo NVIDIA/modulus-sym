@@ -12,20 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 import types
-
-import torch
-import torch.distributed as dist
-from torch._utils import _flatten_dense_tensors, _unflatten_dense_tensors
-
 from modulus.sym.distributed.manager import DistributedManager
 from modulus.sym.distributed.helpers import split_tensor_along_dim
 from modulus.sym.distributed.helpers import _reduce
 from modulus.sym.distributed.helpers import _split
 from modulus.sym.distributed.helpers import _gather
 
-# matmul parallel
-class _CopyToMatmulParallelRegion(torch.autograd.Function):
+
+class _CopyToMatmulParallelRegion(paddle.autograd.PyLayer):
     """Pass the input to the matmul parallel region."""
 
     @staticmethod
@@ -41,7 +37,7 @@ class _CopyToMatmulParallelRegion(torch.autograd.Function):
         return _reduce(grad_output, group=DistributedManager().group("model_parallel"))
 
 
-class _ReduceFromMatmulParallelRegion(torch.autograd.Function):
+class _ReduceFromMatmulParallelRegion(paddle.autograd.PyLayer):
     """All-reduce the input from the matmul parallel region."""
 
     @staticmethod
@@ -57,7 +53,7 @@ class _ReduceFromMatmulParallelRegion(torch.autograd.Function):
         return grad_output
 
 
-class _ScatterToMatmulParallelRegion(torch.autograd.Function):
+class _ScatterToMatmulParallelRegion(paddle.autograd.PyLayer):
     """Split the input and keep only the corresponding chuck to the rank."""
 
     @staticmethod
@@ -79,7 +75,7 @@ class _ScatterToMatmulParallelRegion(torch.autograd.Function):
         )
 
 
-class _GatherFromMatmulParallelRegion(torch.autograd.Function):
+class _GatherFromMatmulParallelRegion(paddle.autograd.PyLayer):
     """Gather the input from matmul parallel region and concatinate."""
 
     @staticmethod
@@ -101,7 +97,7 @@ class _GatherFromMatmulParallelRegion(torch.autograd.Function):
         )
 
 
-class _GatherWithinMatmulParallelRegion(torch.autograd.Function):
+class _GatherWithinMatmulParallelRegion(paddle.autograd.PyLayer):
     """Gather the input from matmul parallel region and concatinate."""
 
     @staticmethod
@@ -122,10 +118,6 @@ class _GatherWithinMatmulParallelRegion(torch.autograd.Function):
         )
 
 
-# -----------------
-# Helper functions.
-# -----------------
-# matmul parallel
 def copy_to_matmul_parallel_region(input_):
     return _CopyToMatmulParallelRegion.apply(input_)
 

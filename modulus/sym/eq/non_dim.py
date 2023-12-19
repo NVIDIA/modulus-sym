@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 from typing import Dict
 
 from modulus.sym import quantity
@@ -169,7 +169,7 @@ class Scaler:
         ]
 
 
-class _Scale(torch.nn.Module):
+class _Scale(paddle.nn.Layer):
     """
     Scales back non-dimensionalized and normalized quantities
 
@@ -192,7 +192,7 @@ class _Scale(torch.nn.Module):
         self.outvar_unit = outvar_unit
         self.non_dimensionalizer = non_dimensionalizer
 
-    def forward(self, invar: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    def forward(self, invar: Dict[str, paddle.Tensor]) -> Dict[str, paddle.Tensor]:
         outvar = {}
         for i, key in enumerate(self.invar):
             outvar[self.outvar[i]] = self.non_dimensionalizer.dim(

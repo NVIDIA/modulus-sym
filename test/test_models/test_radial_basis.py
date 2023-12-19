@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.models.radial_basis import RadialBasisArch
-import torch
 import numpy as np
 from pathlib import Path
 from modulus.sym.key import Key
@@ -36,7 +36,6 @@ def test_radial_basis():
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]
     params = test_data["params"][()]
-    # create graph
     arch = RadialBasisArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -50,18 +49,18 @@ def test_radial_basis():
     )
     for _name, _tensor in arch.named_parameters():
         if _name == "centers":
-            _tensor.data = torch.from_numpy(center_data)
+            _tensor.data = paddle.to_tensor(data=center_data)
         else:
-            _tensor.data = torch.from_numpy(Wbs[name_dict[_name]].T)
-
+            _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]].T)
     data_out2 = arch(
-        {"x": torch.from_numpy(data_in[:, 0:1]), "y": torch.from_numpy(data_in[:, 1:2])}
+        {
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
+        }
     )
     data_out2 = data_out2["u"].detach().numpy()
-    # load outputs
     data_out1 = test_data["data_out"]
-    # verify
-    assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
+    assert np.allclose(data_out1, data_out2, rtol=0.001), "Test failed!"
     print("Success!")
 
 

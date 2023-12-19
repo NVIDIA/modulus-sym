@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import numpy as np
 from typing import List, Tuple, Dict
 
 
-class ADF(torch.nn.Module):
+class ADF(paddle.nn.Layer):
     """
     Used for hard imposition of boundary conditions.
     Currently supports 2d geometries and Dirichlet boundary conditions.
@@ -38,25 +38,25 @@ class ADF(torch.nn.Module):
         raise RuntimeError("No forward method was defined for ADF or its child class")
 
     @staticmethod
-    def r_equivalence(omegas: List[torch.Tensor], m: float = 2.0) -> torch.Tensor:
+    def r_equivalence(omegas: List[paddle.Tensor], m: float = 2.0) -> paddle.Tensor:
         """
         Computes the R-equivalence of a collection of approximate distance functions
 
         Parameters
         ----------
-        omegas : List[torch.Tensor]
+        omegas : List[paddle.Tensor]
           List of ADFs used to compute the R-equivalence.
         m: float
           Normalization order
 
         Returns
         -------
-        omega_E : torch.Tensor
+        omega_E : paddle.Tensor
           R-equivalence distance
 
         """
 
-        omega_E = torch.zeros_like(omegas[0])
+        omega_E = paddle.zeros_like(omegas[0])
         for omega in omegas:
             omega_E += 1.0 / omega**m
         omega_E = 1.0 / omega_E ** (1.0 / m)
@@ -64,14 +64,14 @@ class ADF(torch.nn.Module):
 
     @staticmethod
     def transfinite_interpolation(
-        bases: List[torch.Tensor], indx: int, eps: float = 1e-8
-    ) -> torch.Tensor:
+        bases: List[paddle.Tensor], indx: int, eps: float = 1e-08
+    ) -> paddle.Tensor:
         """
         Performs transfinite interpolation of the boundary conditions
 
         Parameters
         ----------
-        bases: List[torch.Tensor]
+        bases: List[paddle.Tensor]
           List of ADFs used for the transfinite interpolation.
         indx: int
           index of the interpolation basis
@@ -80,29 +80,29 @@ class ADF(torch.nn.Module):
 
         Returns
         -------
-        w : torch.Tensor
+        w : paddle.Tensor
           Interpolation basis corresponding to the input index
         """
 
         bases_reduced = [bases[i] for i in range(len(bases)) if i != indx]
-        numerator = torch.prod(torch.stack(bases_reduced), dim=0)
+        numerator = paddle.prod(paddle.stack(bases_reduced), axis=0)
         denominator = 0.0
         for j in range(len(bases)):
             denom_term = [bases[i] for i in range(len(bases)) if i != j]
-            denominator += torch.prod(torch.stack(denom_term), dim=0)
-        w = torch.div(numerator, denominator + eps)
+            denominator += paddle.prod(paddle.stack(denom_term), axis=0)
+        w = paddle.divide(numerator, paddle.to_tensor(denominator + eps))
         return w
 
     @staticmethod
     def infinite_line_adf(
-        points: Tuple[torch.Tensor], point_1: Tuple[float], point_2: Tuple[float]
-    ) -> torch.Tensor:
+        points: Tuple[paddle.Tensor], point_1: Tuple[float], point_2: Tuple[float]
+    ) -> paddle.Tensor:
         """
         Computes the pointwise approximate distance for an infinite line
 
         Parameters
         ----------
-        points: Tuple[torch.Tensor]
+        points: Tuple[paddle.Tensor]
           ADF will be computed on these points
         point_1: Tuple[float]
           One of the two points that form the infinite line
@@ -111,7 +111,7 @@ class ADF(torch.nn.Module):
 
         Returns
         -------
-        omega : torch.Tensor
+        omega : paddle.Tensor
           pointwise approximate distance
         """
 
@@ -124,14 +124,14 @@ class ADF(torch.nn.Module):
 
     @staticmethod
     def line_segment_adf(
-        points: Tuple[torch.Tensor], point_1: Tuple[float], point_2: Tuple[float]
-    ) -> torch.Tensor:
+        points: Tuple[paddle.Tensor], point_1: Tuple[float], point_2: Tuple[float]
+    ) -> paddle.Tensor:
         """
         Computes the pointwise approximate distance for a line segment
 
         Parameters
         ----------
-        points: Tuple[torch.Tensor]
+        points: Tuple[paddle.Tensor]
           ADF will be computed on these points
         point_1: Tuple[float]
           Point on one end of the line segment
@@ -140,7 +140,7 @@ class ADF(torch.nn.Module):
 
         Returns
         -------
-        omega : torch.Tensor
+        omega : paddle.Tensor
           pointwise approximate distance
         """
 
@@ -148,20 +148,20 @@ class ADF(torch.nn.Module):
         center = ADF._center(point_1, point_2)
         f = ADF.infinite_line_adf(points, point_1, point_2)
         t = ADF.circle_adf(points, L / 2, center)
-        phi = torch.sqrt(t**2 + f**4)
-        omega = torch.sqrt(f**2 + ((phi - t) / 2) ** 2)
+        phi = paddle.sqrt(t**2 + f**4)
+        omega = paddle.sqrt(f**2 + ((phi - t) / 2) ** 2)
         return omega
 
     @staticmethod
     def circle_adf(
-        points: Tuple[torch.Tensor], radius: float, center: Tuple[float]
-    ) -> torch.Tensor:
+        points: Tuple[paddle.Tensor], radius: float, center: Tuple[float]
+    ) -> paddle.Tensor:
         """
         Computes the pointwise approximate distance for a circle
 
         Parameters
         ----------
-        points: Tuple[torch.Tensor]
+        points: Tuple[paddle.Tensor]
           ADF will be computed on these points
         radius: float
           Radius of the circle
@@ -170,7 +170,7 @@ class ADF(torch.nn.Module):
 
         Returns
         -------
-        omega : torch.Tensor
+        omega : paddle.Tensor
           pointwise approximate distance
         """
 
@@ -181,19 +181,19 @@ class ADF(torch.nn.Module):
 
     @staticmethod
     def trimmed_circle_adf(
-        points: Tuple[torch.Tensor],
+        points: Tuple[paddle.Tensor],
         point_1: Tuple[float],
         point_2: Tuple[float],
         sign: int,
         radius: float,
         center: float,
-    ) -> torch.Tensor:
+    ) -> paddle.Tensor:
         """
         Computes the pointwise approximate distance of a trimmed circle
 
         Parameters
         ----------
-        points: Tuple[torch.Tensor]
+        points: Tuple[paddle.Tensor]
           ADF will be computed on these points
         point_1: Tuple[float]
           One of the two points that form the trimming infinite line
@@ -208,19 +208,19 @@ class ADF(torch.nn.Module):
 
         Returns
         -------
-        omega : torch.Tensor
+        omega : paddle.Tensor
           pointwise approximate distance
         """
 
         assert sign != 0, "sign should be non-negative"
         f = ADF.circle_adf(points, radius, center)
         t = np.sign(sign) * ADF.infinite_line_adf(points, point_1, point_2)
-        phi = torch.sqrt(t**2 + f**4)
-        omega = torch.sqrt(f**2 + ((phi - t) / 2) ** 2)
+        phi = paddle.sqrt(t**2 + f**4)
+        omega = paddle.sqrt(f**2 + ((phi - t) / 2) ** 2)
         return omega
 
     @staticmethod
-    def _distance(point_1: Tuple[float], point_2: Tuple[float]) -> torch.Tensor:
+    def _distance(point_1: Tuple[float], point_2: Tuple[float]) -> paddle.Tensor:
         """
         Computes the distance between two points
 
@@ -231,7 +231,7 @@ class ADF(torch.nn.Module):
 
         Returns
         -------
-        distance : torch.Tensor
+        distance : paddle.Tensor
             distance between the two points
         """
 
@@ -252,7 +252,7 @@ class ADF(torch.nn.Module):
 
         Returns
         -------
-        center : torch.Tensor
+        center : paddle.Tensor
             Center the two points
         """
 

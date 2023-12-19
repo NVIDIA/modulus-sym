@@ -4,7 +4,9 @@
   "exclude-dir": [
       "../../build/",
       "../../docs/",
-      "../../deps/"
+      "../../deps/",
+      "../../examples/",
+      "../../modulus/sym/utils_aux"
     ],
   "include-ext": [
       ".py",

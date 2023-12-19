@@ -13,10 +13,10 @@
 # limitations under the License.
 
 """
-Supported PyTorch scheduler configs
+Supported Paddle scheduler configs
 """
 
-import torch
+import paddle
 
 from dataclasses import dataclass
 from hydra.core.config_store import ConfigStore
@@ -30,7 +30,7 @@ class SchedulerConf:
 
 @dataclass
 class ExponentialLRConf(SchedulerConf):
-    _target_: str = "torch.optim.lr_scheduler.ExponentialLR"
+    _target_: str = "paddle.optimimizer.lr.ExponentialDecay"
     gamma: float = 0.99998718
 
 
@@ -38,13 +38,14 @@ class ExponentialLRConf(SchedulerConf):
 class TFExponentialLRConf(SchedulerConf):
     _target_: str = "custom"
     _name_: str = "tf.ExponentialLR"
+    learning_rate: float = 0.001
     decay_rate: float = 0.95
     decay_steps: int = 1000
 
 
 @dataclass
 class CosineAnnealingLRConf(SchedulerConf):
-    _target_: str = "torch.optim.lr_scheduler.CosineAnnealingLR"
+    _target_: str = "paddle.optimimizer.lr.CosineAnnealingDecay"
     T_max: int = 1000
     eta_min: float = 0
     last_epoch: int = -1
@@ -52,7 +53,7 @@ class CosineAnnealingLRConf(SchedulerConf):
 
 @dataclass
 class CosineAnnealingWarmRestartsConf(SchedulerConf):
-    _target_: str = "torch.optim.lr_scheduler.CosineAnnealingWarmRestarts"
+    _target_: str = "paddle.optimimizer.lr.CosineAnnealingWarmRestarts"
     T_0: int = 1000
     T_mult: int = 1
     eta_min: float = 0

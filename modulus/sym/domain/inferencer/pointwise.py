@@ -16,7 +16,7 @@ from typing import Dict, List, Union, Callable
 from pathlib import Path
 import inspect
 
-import torch
+import paddle
 import numpy as np
 
 from modulus.sym.domain.inferencer import Inferencer
@@ -85,11 +85,11 @@ class PointwiseInferencer(Inferencer):
         else:
             self.model = model
         self.manager = DistributedManager()
-        self.device = self.manager.device
-        self.model.to(self.device)
+        self.place = self.manager.place
+        self.model.to(self.place)
 
         # set foward method
-        self.requires_grad = requires_grad
+        self.stop_gradient = not requires_grad
         self.forward = self.forward_grad if requires_grad else self.forward_nograd
 
         # set plotter
@@ -102,13 +102,13 @@ class PointwiseInferencer(Inferencer):
         for i, (invar0,) in enumerate(self.dataloader):
             # Move data to device
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
             pred_outvar = self.forward(invar)
 
             invar_cpu = {key: value + [invar0[key]] for key, value in invar_cpu.items()}
             predvar_cpu = {
-                key: value + [pred_outvar[key].cpu().detach().numpy()]
+                key: value + [pred_outvar[key].detach().numpy()]
                 for key, value in predvar_cpu.items()
             }
 

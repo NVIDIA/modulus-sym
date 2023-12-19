@@ -15,11 +15,9 @@
 """ Continuous type constraints
 """
 
+import paddle
 import logging
 from typing import Dict, List, Union
-
-import torch
-from torch.nn.parallel import DistributedDataParallel
 import numpy as np
 
 from modulus.sym.domain.constraint import Constraint
@@ -84,9 +82,9 @@ class SupervisedGridConstraint(Constraint):
         # sample batch
         invar, true_outvar, lambda_weighting = next(self.dataloader)
         invar0 = {key: value for key, value in invar.items()}
-        invar = Constraint._set_device(invar, device=self.device, requires_grad=True)
-        true_outvar = Constraint._set_device(true_outvar, device=self.device)
-        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.device)
+        invar = Constraint._set_device(invar, device=self.place, requires_grad=True)
+        true_outvar = Constraint._set_device(true_outvar, device=self.place)
+        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.place)
 
         # If using DDP, strip out collective stuff to prevent deadlocks
         # This only works either when one process alone calls in to save_batch
@@ -123,11 +121,11 @@ class SupervisedGridConstraint(Constraint):
         invar, true_outvar, lambda_weighting = next(self.dataloader)
 
         self._input_vars = Constraint._set_device(
-            invar, device=self.device, requires_grad=True
+            invar, device=self.place, requires_grad=True
         )
-        self._target_vars = Constraint._set_device(true_outvar, device=self.device)
+        self._target_vars = Constraint._set_device(true_outvar, device=self.place)
         self._lambda_weighting = Constraint._set_device(
-            lambda_weighting, device=self.device
+            lambda_weighting, device=self.place
         )
 
     def load_data_static(self):
@@ -139,25 +137,25 @@ class SupervisedGridConstraint(Constraint):
             invar, true_outvar, lambda_weighting = next(self.dataloader)
             # Set grads to false here for inputs, static var has allocation already
             input_vars = Constraint._set_device(
-                invar, device=self.device, requires_grad=False
+                invar, device=self.place, requires_grad=False
             )
-            target_vars = Constraint._set_device(true_outvar, device=self.device)
+            target_vars = Constraint._set_device(true_outvar, device=self.place)
             lambda_weighting = Constraint._set_device(
-                lambda_weighting, device=self.device
+                lambda_weighting, device=self.place
             )
 
             for key in input_vars.keys():
                 self._input_vars[key].data.copy_(input_vars[key])
             for key in target_vars.keys():
-                self._target_vars[key].copy_(target_vars[key])
+                paddle.assign(target_vars[key], output=self._target_vars[key])
             for key in lambda_weighting.keys():
-                self._lambda_weighting[key].copy_(lambda_weighting[key])
+                paddle.assign(lambda_weighting[key], output=self._lambda_weighting[key])
 
     def forward(self):
         # compute pred outvar
         self._output_vars = self.model(self._input_vars)
 
-    def loss(self, step: int) -> Dict[str, torch.Tensor]:
+    def loss(self, step: int) -> Dict[str, paddle.Tensor]:
         if self._output_vars is None:
             logger.warn("Calling loss without forward call")
             return {}
@@ -196,7 +194,7 @@ class _DeepONetConstraint(Constraint):
         )
         # Get DDP manager
         self.manager = DistributedManager()
-        self.device = self.manager.device
+        self.place = self.manager.place
         if not drop_last and self.manager.cuda_graphs:
             logger.info("drop_last must be true when using cuda graphs")
             drop_last = True
@@ -218,24 +216,17 @@ class _DeepONetConstraint(Constraint):
             + Key.convert_list(invar_trunk.keys()),
             Key.convert_list(outvar.keys()),
         )
-        self.model.to(self.device)
+        self.model.to(self.place)
         if self.manager.distributed:
-            # https://pytorch.org/docs/master/notes/cuda.html#id5
-            s = torch.cuda.Stream()
-            s.wait_stream(torch.cuda.current_stream())
-            with torch.cuda.stream(s):
-                self.model = DistributedDataParallel(
+            s = paddle.device.cuda.Stream()
+            s.wait_stream(paddle.device.cuda.current_stream())
+            with paddle.device.cuda.stream_guard(s):
+                self.model = paddle.DataParallel(
                     self.model,
                     device_ids=[self.manager.local_rank],
-                    output_device=self.device,
-                    broadcast_buffers=self.manager.broadcast_buffers,
                     find_unused_parameters=self.manager.find_unused_parameters,
-                    process_group=self.manager.group(
-                        "data_parallel"
-                    ),  # None by default
                 )
-            torch.cuda.current_stream().wait_stream(s)
-
+            paddle.device.cuda.current_stream().wait_stream(s)
         self._input_names = Key.convert_list(self.dataset.invar_keys)
         self._output_names = Key.convert_list(self.dataset.outvar_keys)
 
@@ -244,16 +235,15 @@ class _DeepONetConstraint(Constraint):
         self._lambda_weighting = None
 
         # put loss on device
-        self._loss = loss.to(self.device)
+        self._loss = loss.to(self.place)
 
     def save_batch(self, filename):
         # sample batch
         invar, true_outvar, lambda_weighting = next(self.dataloader)
         invar0 = {key: value for key, value in invar.items()}
-        invar = Constraint._set_device(invar, device=self.device, requires_grad=True)
-        true_outvar = Constraint._set_device(true_outvar, device=self.device)
-        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.device)
-
+        invar = Constraint._set_device(invar, device=self.place, requires_grad=True)
+        true_outvar = Constraint._set_device(true_outvar, device=self.place)
+        lambda_weighting = Constraint._set_device(lambda_weighting, device=self.place)
         # If using DDP, strip out collective stuff to prevent deadlocks
         # This only works either when one process alone calls in to save_batch
         # or when multiple processes independently save data
@@ -291,11 +281,11 @@ class _DeepONetConstraint(Constraint):
         invar, true_outvar, lambda_weighting = next(self.dataloader)
 
         self._input_vars_branch = Constraint._set_device(
-            invar, device=self.device, requires_grad=True
+            invar, device=self.place, requires_grad=True
         )
-        self._target_vars = Constraint._set_device(true_outvar, device=self.device)
+        self._target_vars = Constraint._set_device(true_outvar, device=self.place)
         self._lambda_weighting = Constraint._set_device(
-            lambda_weighting, device=self.device
+            lambda_weighting, device=self.place
         )
 
     def load_data_static(self):
@@ -307,19 +297,19 @@ class _DeepONetConstraint(Constraint):
             invar, true_outvar, lambda_weighting = next(self.dataloader)
             # Set grads to false here for inputs, static var has allocation already
             input_vars = Constraint._set_device(
-                invar, device=self.device, requires_grad=False
+                invar, device=self.place, requires_grad=False
             )
-            target_vars = Constraint._set_device(true_outvar, device=self.device)
+            target_vars = Constraint._set_device(true_outvar, device=self.place)
             lambda_weighting = Constraint._set_device(
-                lambda_weighting, device=self.device
+                lambda_weighting, device=self.place
             )
 
             for key in input_vars.keys():
                 self._input_vars_branch[key].data.copy_(input_vars[key])
             for key in target_vars.keys():
-                self._target_vars[key].copy_(target_vars[key])
+                paddle.assign(target_vars[key], output=self._target_vars[key])
             for key in lambda_weighting.keys():
-                self._lambda_weighting[key].copy_(lambda_weighting[key])
+                paddle.assign(lambda_weighting[key], output=self._lambda_weighting[key])
 
     def forward(self):
         # compute pred outvar
@@ -357,7 +347,7 @@ class DeepONetConstraint_Data(_DeepONetConstraint):
         )
 
         self._input_vars_trunk = Constraint._set_device(
-            invar_trunk, device=self.device, requires_grad=True
+            invar_trunk, device=self.place, requires_grad=True
         )
 
     def loss(self, step: int):
@@ -407,16 +397,16 @@ class DeepONetConstraint_Physics(_DeepONetConstraint):
                 invar_trunk[k] = np.tile(v, (batch_size, 1))
 
         self._input_vars_trunk = Constraint._set_device(
-            invar_trunk, device=self.device, requires_grad=True
+            invar_trunk, device=self.place, requires_grad=True
         )
 
     def loss(self, step: int):
 
         target_vars = {
-            k: torch.reshape(v, (-1, 1)) for k, v in self._target_vars.items()
+            k: paddle.reshape(v, (-1, 1)) for k, v in self._target_vars.items()
         }
         lambda_weighting = {
-            k: torch.reshape(v, (-1, 1)) for k, v in self._lambda_weighting.items()
+            k: paddle.reshape(v, (-1, 1)) for k, v in self._lambda_weighting.items()
         }
 
         # compute loss

@@ -15,21 +15,21 @@
 from typing import Optional, Dict, Tuple, Union
 from modulus.sym.key import Key
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
 import logging
 
-from modulus.sym.models.activation import Activation
+import modulus.sym.models.layers as layers
 from modulus.sym.models.arch import Arch
 
 from typing import List
 
 logger = logging.getLogger(__name__)
 
-if torch.cuda.is_available():
-    major, minor = torch.cuda.get_device_capability()
+if paddle.device.cuda.device_count() >= 1:
+    major, minor = paddle.device.cuda.get_device_capability()
     compute_capability = major * 10 + minor
     if compute_capability < 80:
         logger.warning(
@@ -62,7 +62,7 @@ class TinyCudaNNArchCore(Arch):
         Layer size for every hidden layer of the model.
     nr_layers : int = 2
         Number of hidden layers of the model.
-    activation_fn : Activation = Activation.SIGMOID
+    activation_fn : layers.Activation = layers.Activation.SIGMOID
         Activation function used by network.
     fully_fused : bool = True
         Whether to use a fully fused MLP kernel implementation
@@ -82,7 +82,7 @@ class TinyCudaNNArchCore(Arch):
         detach_keys: List[Key] = [],
         layer_size: int = 64,
         nr_layers: int = 2,
-        activation_fn=Activation.SIGMOID,
+        activation_fn=layers.Activation.SIGMOID,
         fully_fused: bool = True,
         encoding_config: Optional[Dict] = None,
     ) -> None:
@@ -95,13 +95,13 @@ class TinyCudaNNArchCore(Arch):
 
         # supported activations
         supported_activations = {
-            Activation.RELU: "ReLU",
-            # Activation.EXP : "Exponential",
-            # Activation.SIN : "Sine",
-            Activation.SIGMOID: "Sigmoid",
-            Activation.SQUAREPLUS: "Squareplus",
-            Activation.SOFTPLUS: "Softplus",
-            Activation.IDENTITY: "None",
+            layers.Activation.RELU: "ReLU",
+            # layers.Activation.EXP : "Exponential",
+            # layers.Activation.SIN : "Sine",
+            layers.Activation.SIGMOID: "Sigmoid",
+            layers.Activation.SQUAREPLUS: "Squareplus",
+            layers.Activation.SOFTPLUS: "Softplus",
+            layers.Activation.IDENTITY: "None",
         }
 
         if activation_fn not in supported_activations.keys():
@@ -192,7 +192,7 @@ class FusedMLPArch(TinyCudaNNArchCore):
         Layer size for every hidden layer of the model.
     nr_layers : int = 2
         Number of hidden layers of the model.
-    activation_fn : Activation = Activation.SIGMOID
+    activation_fn : layers.Activation = layers.Activation.SIGMOID
         Activation function used by network.
     fully_fused : bool = True
         Whether to use a fully fused MLP kernel implementation
@@ -209,7 +209,7 @@ class FusedMLPArch(TinyCudaNNArchCore):
         detach_keys: List[Key] = [],
         layer_size: int = 64,
         nr_layers: int = 2,
-        activation_fn=Activation.SIGMOID,
+        activation_fn=layers.Activation.SIGMOID,
         fully_fused: bool = True,
     ) -> None:
         super().__init__(
@@ -247,7 +247,7 @@ class FusedFourierNetArch(TinyCudaNNArchCore):
         Layer size for every hidden layer of the model.
     nr_layers : int = 2
         Number of hidden layers of the model.
-    activation_fn : Activation = Activation.SIN
+    activation_fn : layers.Activation = layers.Activation.SIN
         Activation function used by network.
     fully_fused : bool = True
         Whether to use a fully fused MLP kernel implementation
@@ -266,7 +266,7 @@ class FusedFourierNetArch(TinyCudaNNArchCore):
         detach_keys: List[Key] = [],
         layer_size: int = 64,
         nr_layers: int = 2,
-        activation_fn=Activation.SIGMOID,
+        activation_fn=layers.Activation.SIGMOID,
         fully_fused: bool = True,
         n_frequencies: int = 12,
     ) -> None:
@@ -311,7 +311,7 @@ class FusedGridEncodingNetArch(TinyCudaNNArchCore):
         Layer size for every hidden layer of the model.
     nr_layers : int = 2
         Number of hidden layers of the model.
-    activation_fn : Activation = Activation.SIN
+    activation_fn : layers.Activation = layers.Activation.SIN
         Activation function used by network.
     fully_fused : bool = True
         Whether to use a fully fused MLP kernel implementation
@@ -346,7 +346,7 @@ class FusedGridEncodingNetArch(TinyCudaNNArchCore):
         detach_keys: List[Key] = [],
         layer_size: int = 64,
         nr_layers: int = 2,
-        activation_fn=Activation.SIGMOID,
+        activation_fn=layers.Activation.SIGMOID,
         fully_fused: bool = True,
         indexing: str = "Hash",
         n_levels: int = 16,

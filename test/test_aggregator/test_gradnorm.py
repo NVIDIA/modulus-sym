@@ -12,29 +12,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 import os
 import numpy as np
-import torch
-from torch import nn
 from modulus.sym.loss.aggregator import GradNorm
 
 
-class FitToPoly(nn.Module):
+class FitToPoly(paddle.nn.Layer):
     def __init__(self):
         super().__init__()
-        self.w = nn.Parameter(torch.ones((512, 512)))
-        self.b = nn.Parameter(torch.ones(512, 1))
+        out_20 = paddle.create_parameter(
+            shape=paddle.ones(shape=(512, 512)).shape,
+            dtype=paddle.ones(shape=(512, 512)).numpy().dtype,
+            default_initializer=paddle.nn.initializer.Assign(
+                paddle.ones(shape=(512, 512))
+            ),
+        )
+        out_20.stop_gradient = not True
+        self.w = out_20
+        out_21 = paddle.create_parameter(
+            shape=paddle.ones(shape=[512, 1]).shape,
+            dtype=paddle.ones(shape=[512, 1]).numpy().dtype,
+            default_initializer=paddle.nn.initializer.Assign(
+                paddle.ones(shape=[512, 1])
+            ),
+        )
+        out_21.stop_gradient = not True
+        self.b = out_21
 
     def forward(self, x):
         x1, x2, x3 = x[:, 0:1], x[:, 1:2], x[:, 2:3]
         losses = {
-            "loss_x": (torch.relu(torch.mm(self.w, x1) + self.b - x1**2))
+            "loss_x": paddle.nn.functional.relu(
+                x=paddle.mm(input=self.w, mat2=x1) + self.b - x1**2
+            )
             .abs()
             .mean(),
-            "loss_y": (torch.relu(torch.mm(self.w, x2) + self.b - x2**2.0))
+            "loss_y": paddle.nn.functional.relu(
+                x=paddle.mm(input=self.w, mat2=x2) + self.b - x2**2.0
+            )
             .abs()
             .mean(),
-            "loss_z": (torch.relu(torch.mm(self.w, x3) + self.b + x3**2.0))
+            "loss_z": paddle.nn.functional.relu(
+                x=paddle.mm(input=self.w, mat2=x3) + self.b + x3**2.0
+            )
             .abs()
             .mean(),
         }
@@ -42,15 +63,14 @@ class FitToPoly(nn.Module):
 
 
 def test_loss_aggregator():
-    # set device
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    # Load data
+    device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
+        "cuda", "gpu"
+    )
     filename = os.path.join(
         os.path.dirname(__file__), "test_aggregator_data/GradNorm_data.npz"
     )
     configs = np.load(filename, allow_pickle=True)
-    x_np = torch.tensor(configs["x_np"][()]).to(device)
+    x_np = paddle.to_tensor(data=configs["x_np"][()]).to(device)
     w_np, b_np, loss_np = (
         configs["w_np"][()],
         configs["b_np"][()],
@@ -60,29 +80,32 @@ def test_loss_aggregator():
         configs["total_steps"][()],
         configs["learning_rate"][()],
     )
-
-    # Instantiate the optimizer, scheduler, aggregator, and loss fucntion
-    loss_function = torch.jit.script(FitToPoly()).to(device)
+    loss_function = FitToPoly()
     aggregator = GradNorm(loss_function.parameters(), 3)
-    optimizer = torch.optim.SGD(loss_function.parameters(), lr=learning_rate)
-    scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer)
-
-    # Training loop
+    optimizer = paddle.optimizer.SGD(
+        parameters=loss_function.parameters(),
+        learning_rate=learning_rate,
+        weight_decay=0.0,
+    )
+    tmp_lr = paddle.optimizer.lr.PiecewiseDecay(
+        values=[0.3333333333333333 * optimizer.get_lr(), optimizer.get_lr()],
+        boundaries=[5],
+    )
+    optimizer.set_lr_scheduler(tmp_lr)
+    scheduler = tmp_lr
     for step in range(total_steps):
-        optimizer.zero_grad()
+        optimizer.clear_grad()
         train_losses = loss_function(x_np)
         train_loss = aggregator(train_losses, step)
         train_loss.backward()
         optimizer.step()
         scheduler.step()
-
-    # check outputs
     w_out = list(loss_function.parameters())[0].cpu().detach().numpy()
     b_out = list(loss_function.parameters())[1].cpu().detach().numpy()
     loss_out = train_loss.cpu().detach().numpy()
-    assert np.allclose(loss_np, loss_out, rtol=1e-4, atol=1e-4)
-    assert np.allclose(w_np, w_out, rtol=1e-4, atol=1e-4)
-    assert np.allclose(b_np, b_out, rtol=1e-4, atol=1e-4)
+    assert np.allclose(loss_np, loss_out, rtol=0.0001, atol=0.0001)
+    assert np.allclose(w_np, w_out, rtol=0.0001, atol=0.0001)
+    assert np.allclose(b_np, b_out, rtol=0.0001, atol=0.0001)
 
 
 if __name__ == "__main__":

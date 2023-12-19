@@ -14,7 +14,7 @@
 
 from typing import Dict, List
 
-import torch
+import paddle
 import numpy as np
 
 from modulus.sym.domain.validator import Validator
@@ -77,11 +77,11 @@ class GridValidator(Validator):
             Key.convert_list(self.dataset.outvar_keys),
         )
         self.manager = DistributedManager()
-        self.device = self.manager.device
-        self.model.to(self.device)
+        self.place = self.manager.place
+        self.model.to(self.place)
 
         # set foward method
-        self.requires_grad = requires_grad
+        self.stop_gradient = not requires_grad
         self.forward = self.forward_grad if requires_grad else self.forward_nograd
 
         # set plotter
@@ -96,34 +96,34 @@ class GridValidator(Validator):
         for i, (invar0, true_outvar0, lambda_weighting) in enumerate(self.dataloader):
             # Move data to device (may need gradients in future, if so requires_grad=True)
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
             true_outvar = Constraint._set_device(
-                true_outvar0, device=self.device, requires_grad=self.requires_grad
+                true_outvar0, device=self.place, requires_grad=not self.stop_gradient
             )
             pred_outvar = self.forward(invar)
 
             # Collect minibatch info into cpu dictionaries
             invar_cpu = {
-                key: value + [invar[key].cpu().detach()]
+                key: (value + [invar[key].cpu().detach()])
                 for key, value in invar_cpu.items()
             }
             true_outvar_cpu = {
-                key: value + [true_outvar[key].cpu().detach()]
+                key: (value + [true_outvar[key].cpu().detach()])
                 for key, value in true_outvar_cpu.items()
             }
             pred_outvar_cpu = {
-                key: value + [pred_outvar[key].cpu().detach()]
+                key: (value + [pred_outvar[key].cpu().detach()])
                 for key, value in pred_outvar_cpu.items()
             }
 
         # Concat mini-batch tensors
-        invar_cpu = {key: torch.cat(value) for key, value in invar_cpu.items()}
+        invar_cpu = {key: paddle.concat(x=value) for key, value in invar_cpu.items()}
         true_outvar_cpu = {
-            key: torch.cat(value) for key, value in true_outvar_cpu.items()
+            key: paddle.concat(x=value) for key, value in true_outvar_cpu.items()
         }
         pred_outvar_cpu = {
-            key: torch.cat(value) for key, value in pred_outvar_cpu.items()
+            key: paddle.concat(x=value) for key, value in pred_outvar_cpu.items()
         }
         # compute losses on cpu
         losses = GridValidator._l2_relative_error(true_outvar_cpu, pred_outvar_cpu)
@@ -164,11 +164,9 @@ class GridValidator(Validator):
         # add tensorboard scalars
         for k, loss in losses.items():
             if TF_SUMMARY:
-                writer.add_scalar("val/" + name + "/" + k, loss, step, new_style=True)
+                writer.add_scalar("val/" + name + "/" + k, float(loss), step)
             else:
-                writer.add_scalar(
-                    "Validators/" + name + "/" + k, loss, step, new_style=True
-                )
+                writer.add_scalar("Validators/" + name + "/" + k, float(loss), step)
         return losses
 
 
@@ -206,11 +204,11 @@ class _DeepONet_Validator(Validator):
             Key.convert_list(true_outvar.keys()),
         )
         self.manager = DistributedManager()
-        self.device = self.manager.device
-        self.model.to(self.device)
+        self.place = self.manager.place
+        self.model.to(self.place)
 
         # set foward method
-        self.requires_grad = requires_grad
+        self.stop_gradient = not requires_grad
         self.forward = self.forward_grad if requires_grad else self.forward_nograd
 
         # set plotter
@@ -254,7 +252,7 @@ class DeepONet_Physics_Validator(_DeepONet_Validator):
 
         invar_cpu = {key: [] for key in self.dataset.invar_keys}
         invar_trunk_gpu = Constraint._set_device(
-            self.invar_trunk, device=self.device, requires_grad=self.requires_grad
+            self.invar_trunk, device=self.place, requires_grad=not self.stop_gradient
         )
         true_outvar_cpu = {key: [] for key in self.dataset.outvar_keys}
         pred_outvar_cpu = {key: [] for key in self.dataset.outvar_keys}
@@ -262,10 +260,10 @@ class DeepONet_Physics_Validator(_DeepONet_Validator):
         for i, (invar0, true_outvar0, lambda_weighting) in enumerate(self.dataloader):
             # Move data to device (may need gradients in future, if so requires_grad=True)
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
             true_outvar = Constraint._set_device(
-                true_outvar0, device=self.device, requires_grad=self.requires_grad
+                true_outvar0, device=self.place, requires_grad=not self.stop_gradient
             )
             pred_outvar = self.forward({**invar, **invar_trunk_gpu})
 
@@ -284,12 +282,12 @@ class DeepONet_Physics_Validator(_DeepONet_Validator):
             }
 
         # Concat mini-batch tensors
-        invar_cpu = {key: torch.cat(value) for key, value in invar_cpu.items()}
+        invar_cpu = {key: paddle.concat(x=value) for key, value in invar_cpu.items()}
         true_outvar_cpu = {
-            key: torch.cat(value) for key, value in true_outvar_cpu.items()
+            key: paddle.concat(x=value) for key, value in true_outvar_cpu.items()
         }
         pred_outvar_cpu = {
-            key: torch.cat(value) for key, value in pred_outvar_cpu.items()
+            key: paddle.concat(x=value) for key, value in pred_outvar_cpu.items()
         }
         # compute losses on cpu
         losses = DeepONet_Physics_Validator._l2_relative_error(
@@ -340,22 +338,22 @@ class DeepONet_Physics_Validator(_DeepONet_Validator):
         # add tensorboard scalars
         for k, loss in losses.items():
             if TF_SUMMARY:
-                writer.add_scalar("val/" + name + "/" + k, loss, step, new_style=True)
+                writer.add_scalar("val/" + name + "/" + k, float(loss), step)
             else:
-                writer.add_scalar(
-                    "Validators/" + name + "/" + k, loss, step, new_style=True
-                )
+                writer.add_scalar("Validators/" + name + "/" + k, float(loss), step)
         return losses
 
     @staticmethod
     def _l2_relative_error(true_var, pred_var):  # TODO replace with metric classes
         new_var = {}
         for key in true_var.keys():
-            new_var["l2_relative_error_" + str(key)] = torch.sqrt(
-                torch.mean(
-                    torch.square(torch.reshape(true_var[key], (-1, 1)) - pred_var[key])
+            new_var["l2_relative_error_" + str(key)] = paddle.sqrt(
+                paddle.mean(
+                    paddle.square(
+                        paddle.reshape(true_var[key], (-1, 1)) - pred_var[key]
+                    )
                 )
-                / torch.var(true_var[key])
+                / paddle.var(true_var[key])
             )
         return new_var
 
@@ -398,7 +396,7 @@ class DeepONet_Data_Validator(_DeepONet_Validator):
 
         invar_cpu = {key: [] for key in self.dataset.invar_keys}
         invar_trunk_gpu = Constraint._set_device(
-            self.invar_trunk, device=self.device, requires_grad=self.requires_grad
+            self.invar_trunk, device=self.place, requires_grad=not self.stop_gradient
         )
         true_outvar_cpu = {key: [] for key in self.dataset.outvar_keys}
         pred_outvar_cpu = {key: [] for key in self.dataset.outvar_keys}
@@ -406,34 +404,34 @@ class DeepONet_Data_Validator(_DeepONet_Validator):
         for i, (invar0, true_outvar0, lambda_weighting) in enumerate(self.dataloader):
             # Move data to device (may need gradients in future, if so requires_grad=True)
             invar = Constraint._set_device(
-                invar0, device=self.device, requires_grad=self.requires_grad
+                invar0, device=self.place, requires_grad=not self.stop_gradient
             )
             true_outvar = Constraint._set_device(
-                true_outvar0, device=self.device, requires_grad=self.requires_grad
+                true_outvar0, device=self.place, requires_grad=not self.stop_gradient
             )
             pred_outvar = self.forward({**invar, **invar_trunk_gpu})
 
             # Collect minibatch info into cpu dictionaries
             invar_cpu = {
-                key: value + [invar[key].cpu().detach()]
+                key: (value + [invar[key].cpu().detach()])
                 for key, value in invar_cpu.items()
             }
             true_outvar_cpu = {
-                key: value + [true_outvar[key].cpu().detach()]
+                key: (value + [true_outvar[key].cpu().detach()])
                 for key, value in true_outvar_cpu.items()
             }
             pred_outvar_cpu = {
-                key: value + [pred_outvar[key].cpu().detach()]
+                key: (value + [pred_outvar[key].cpu().detach()])
                 for key, value in pred_outvar_cpu.items()
             }
 
         # Concat mini-batch tensors
-        invar_cpu = {key: torch.cat(value) for key, value in invar_cpu.items()}
+        invar_cpu = {key: paddle.concat(x=value) for key, value in invar_cpu.items()}
         true_outvar_cpu = {
-            key: torch.cat(value) for key, value in true_outvar_cpu.items()
+            key: paddle.concat(x=value) for key, value in true_outvar_cpu.items()
         }
         pred_outvar_cpu = {
-            key: torch.cat(value) for key, value in pred_outvar_cpu.items()
+            key: paddle.concat(x=value) for key, value in pred_outvar_cpu.items()
         }
         # compute losses on cpu
         losses = DeepONet_Data_Validator._l2_relative_error(
@@ -471,9 +469,7 @@ class DeepONet_Data_Validator(_DeepONet_Validator):
         # add tensorboard scalars
         for k, loss in losses.items():
             if TF_SUMMARY:
-                writer.add_scalar("val/" + name + "/" + k, loss, step, new_style=True)
+                writer.add_scalar("val/" + name + "/" + k, float(loss), step)
             else:
-                writer.add_scalar(
-                    "Validators/" + name + "/" + k, loss, step, new_style=True
-                )
+                writer.add_scalar("Validators/" + name + "/" + k, float(loss), step)
         return losses

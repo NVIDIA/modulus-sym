@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
+import paddle
 import pathlib
-from torch.autograd import Function
+from paddle.autograd import PyLayer
 from typing import Dict, List, Set, Optional, Union, Callable
 
-Tensor = torch.Tensor
+Tensor = paddle.Tensor
 
 # Finite difference coefficnets from:
 # https://en.wikipedia.org/wiki/Finite_difference_coefficient
 
 
-class FirstDerivO2_f(Function):
+class FirstDerivO2_f(PyLayer):
     # [0.5, -0.5]
     @staticmethod
     def forward(ctx, tensor0, tensor1, dx):
@@ -36,7 +36,7 @@ class FirstDerivO2_f(Function):
         return ctx.c0 * grad_output, ctx.c1 * grad_output, None
 
 
-class FirstDerivO4_f(Function):
+class FirstDerivO4_f(PyLayer):
     # [-1.0 / 12.0, 8.0 / 12.0, -8.0 / 12.0, 1.0 / 12.0]
     @staticmethod
     def forward(ctx, tensor0, tensor1, tensor2, tensor3, dx):
@@ -57,7 +57,7 @@ class FirstDerivO4_f(Function):
         )
 
 
-class SecondDerivO2_f(Function):
+class SecondDerivO2_f(PyLayer):
     # [1.0, -2.0, 1.0]
     @staticmethod
     def forward(ctx, tensor0, tensor1, tensor2, dx):
@@ -75,7 +75,7 @@ class SecondDerivO2_f(Function):
         )
 
 
-class SecondDerivO4_f(Function):
+class SecondDerivO4_f(PyLayer):
     # [-1/12, 4/3, -5/2, 4/3, -1/12]
     @staticmethod
     def forward(ctx, tensor0, tensor1, tensor2, tensor3, tensor4, dx):
@@ -102,7 +102,7 @@ class SecondDerivO4_f(Function):
         )
 
 
-class MixedSecondDerivO2_f(Function):
+class MixedSecondDerivO2_f(PyLayer):
     # Ref: https://onlinelibrary.wiley.com/doi/pdf/10.1002/9781119083405.app1
     @staticmethod
     def forward(ctx, tensor0, tensor1, tensor2, tensor3, dx):
@@ -121,7 +121,7 @@ class MixedSecondDerivO2_f(Function):
         )
 
 
-class ThirdDerivO2_f(Function):
+class ThirdDerivO2_f(PyLayer):
     # [1/2, -1.0, 1.0, -1/2]
     @staticmethod
     def forward(ctx, tensor0, tensor1, tensor2, tensor3, dx):
@@ -142,7 +142,7 @@ class ThirdDerivO2_f(Function):
         )
 
 
-class ForthDerivO2_f(Function):
+class ForthDerivO2_f(PyLayer):
     # [1.0, -4.0, 6.0, -4.0, 1.0]
     @staticmethod
     def forward(ctx, tensor0, tensor1, tensor2, tensor3, tensor4, dx):

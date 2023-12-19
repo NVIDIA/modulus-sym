@@ -14,8 +14,8 @@
 
 import time
 from typing import Any, Callable, Optional
-import torch
-from torch.profiler import record_function, ProfilerActivity
+import paddle
+from paddle.profiler import RecordEvent, Profiler, ProfilerTarget
 
 
 def timeit(
@@ -33,34 +33,37 @@ def timeit(
     Returns time/step in ms.
     If run_profile is True, then return (time/step in ms, a captured cuda events table)
     """
+    raise NotImplementedError("This function is not implemented yet.")
+
     if label is None:
         assert func.__name__, "please provide a label for this benchmark"
         label = func.__name__
 
     # warmup
-    torch.cuda.nvtx.range_push(f"{label}_warmup")
+    paddle.framework.core.nvprof_nvtx_push(f"{label}_warmup")
     for _ in range(warmup):
         func(*args)
-    torch.cuda.nvtx.range_pop()  # pop label_warmup
+    paddle.framework.core.nvprof_nvtx_pop()  # pop label_warmup
 
     # start timer
     if cpu_timing:
-        torch.cuda.synchronize()
+        paddle.device.cuda.synchronize()
         start = time.time()
     else:
-        start_event = torch.cuda.Event(enable_timing=True)
+        start_event = paddle.device.cuda.Event(enable_timing=True)
         start_event.record()
 
-    torch.cuda.nvtx.range_push(f"{label}")
+    paddle.framework.core.nvprof_nvtx_push(f"{label}")
     if run_profile:
         if verbose:
             print("\n" + "=" * 70 + " " + label + " " + "=" * 70)
-        with torch.profiler.profile(activities=[ProfilerActivity.CUDA]) as prof:
-            with record_function("run_total"):
+        with Profiler(activities=[ProfilerTarget.GPU]) as prof:
+            with RecordEvent("run_total"):
+                # Here might not be equaivalent to the original record_function
                 for i in range(steps):
-                    torch.cuda.nvtx.range_push(f"{i}th_iteration")
+                    paddle.framework.core.nvprof_nvtx_push(f"{i}th_iteration")
                     func(*args)
-                    torch.cuda.nvtx.range_pop()
+                    paddle.framework.core.nvprof_nvtx_pop()
         events = prof.key_averages()
         if verbose:
             print(
@@ -73,17 +76,17 @@ def timeit(
     else:
         events = None
         for i in range(steps):
-            torch.cuda.nvtx.range_push(f"{i}th_iteration")
+            paddle.framework.core.nvprof_nvtx_push(f"{i}th_iteration")
             func(*args)
-            torch.cuda.nvtx.range_pop()
-    torch.cuda.nvtx.range_pop()  # pop label
+            paddle.framework.core.nvprof_nvtx_pop()
+    paddle.framework.core.nvprof_nvtx_pop()
 
     # stop timer
     if cpu_timing:
-        torch.cuda.synchronize()
+        paddle.device.cuda.synchronize()
         time_ms = ((time.time() - start) / steps) * 1000
     else:
-        end_event = torch.cuda.Event(enable_timing=True)
+        end_event = paddle.device.cuda.Event(enable_timing=True)
         end_event.record()
         end_event.synchronize()
         time_ms = start_event.elapsed_time(end_event) / steps

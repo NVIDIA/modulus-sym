@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Union
 
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
-from modulus.models.layers import SirenLayer, SirenLayerType
+import modulus.sym.models.layers as layers
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 from modulus.sym.constants import NO_OP_NORM
@@ -61,7 +62,7 @@ class SirenArch(Arch):
     >>>    layer_size = 64,
     >>>    nr_layers = 2)
     >>> model = arch.make_node()
-    >>> input = {"x": torch.randn(64, 2)}
+    >>> input = {"x": paddle.randn([64, 2])}
     >>> output = model.evaluate(input)
 
     Note
@@ -92,21 +93,25 @@ class SirenArch(Arch):
         layers_list = []
 
         layers_list.append(
-            SirenLayer(
+            layers.SirenLayer(
                 in_features,
                 layer_size,
-                SirenLayerType.FIRST,
+                layers.SirenLayerType.FIRST,
                 first_omega,
             )
         )
 
         for _ in range(nr_layers - 1):
             layers_list.append(
-                SirenLayer(layer_size, layer_size, SirenLayerType.HIDDEN, omega)
+                layers.SirenLayer(
+                    layer_size, layer_size, layers.SirenLayerType.HIDDEN, omega
+                )
             )
 
         layers_list.append(
-            SirenLayer(layer_size, out_features, SirenLayerType.LAST, omega)
+            layers.SirenLayer(
+                layer_size, out_features, layers.SirenLayerType.LAST, omega
+            )
         )
 
         self.layers = nn.Sequential(*layers_list)
@@ -119,7 +124,7 @@ class SirenArch(Arch):
         self.register_buffer(
             "normalization_tensor",
             self._get_normalization_tensor(self.input_key_dict, self.normalization),
-            persistent=False,
+            persistable=False,
         )
 
     def _tensor_forward(self, x: Tensor) -> Tensor:

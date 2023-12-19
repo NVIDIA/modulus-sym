@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.models.multiplicative_filter_net import (
     MultiplicativeFilterNetArch,
     FilterType,
 )
-import torch
 import numpy as np
 from pathlib import Path
 from modulus.sym.key import Key
@@ -29,7 +29,7 @@ dir_path = Path(__file__).parent
 def make_dict(nr_layers):
     _dict = dict()
     names = [("weight", "weights"), ("bias", "biases"), ("weight_g", "alphas")]
-    tri_names = ("frequency", "phase")
+    tri_names = "frequency", "phase"
     for tri_name in tri_names:
         _dict["first_filter." + tri_name] = "fourier_filter_first_" + tri_name + ":0"
     for i in range(nr_layers):
@@ -52,7 +52,6 @@ def test_multiplicative_filter():
     data_in = test_data["data_in"]
     Wbs = test_data["Wbs"][()]
     params = test_data["params"][()]
-    # create graph
     arch = MultiplicativeFilterNetArch(
         input_keys=[Key("x"), Key("y")],
         output_keys=[Key("u")],
@@ -61,20 +60,20 @@ def test_multiplicative_filter():
     )
     name_dict = make_dict(params["nr_layers"])
     for _name, _tensor in arch.named_parameters():
-        if _tensor.requires_grad:
+        if not _tensor.stop_gradient:
             if "filter" in _name:
-                _tensor.data = torch.from_numpy(Wbs[name_dict[_name]])
+                _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]])
             else:
-                _tensor.data = torch.from_numpy(Wbs[name_dict[_name]].T)
-
+                _tensor.data = paddle.to_tensor(data=Wbs[name_dict[_name]].T)
     data_out2 = arch(
-        {"x": torch.from_numpy(data_in[:, 0:1]), "y": torch.from_numpy(data_in[:, 1:2])}
+        {
+            "x": paddle.to_tensor(data=data_in[:, 0:1]),
+            "y": paddle.to_tensor(data=data_in[:, 1:2]),
+        }
     )
     data_out2 = data_out2["u"].detach().numpy()
-    # load outputs
     data_out1 = test_data["data_out"]
-    # verify
-    assert np.allclose(data_out1, data_out2, atol=1e-4), "Test failed!"
+    assert np.allclose(data_out1, data_out2, atol=0.0001), "Test failed!"
     print("Success!")
 
 

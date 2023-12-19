@@ -16,7 +16,7 @@
 Supported Modulus callback configs
 """
 
-import torch
+import paddle
 import logging
 
 from dataclasses import dataclass

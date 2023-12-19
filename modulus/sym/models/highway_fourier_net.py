@@ -14,12 +14,11 @@
 
 from typing import Dict, List, Optional
 
-import torch
-import torch.nn as nn
-from torch import Tensor
+import paddle
+import paddle.nn as nn
+from paddle import Tensor
 
-from modulus.models.layers import FCLayer, FourierLayer
-from modulus.sym.models.activation import Activation, get_activation_fn
+import modulus.sym.models.layers as layers
 from modulus.sym.models.arch import Arch
 from modulus.sym.key import Key
 
@@ -57,7 +56,7 @@ class HighwayFourierNetArch(Arch):
     frequencies_params : Tuple[str, List[float]] = ("axis", [i for i in range(10)])
         Same as `frequencies` except these are used for encodings
         on any inputs not in the list `['x', 'y', 'z', 't']`.
-    activation_fn : Activation = Activation.SILU
+    activation_fn : layers.Activation = layers.Activation.SILU
         Activation function used by network.
     layer_size : int = 512
         Layer size for every hidden layer of the model.
@@ -83,7 +82,7 @@ class HighwayFourierNetArch(Arch):
         detach_keys: List[Key] = [],
         frequencies=("axis", [i for i in range(10)]),
         frequencies_params=("axis", [i for i in range(10)]),
-        activation_fn=Activation.SILU,
+        activation_fn=layers.Activation.SILU,
         layer_size: int = 512,
         nr_layers: int = 6,
         skip_connections: bool = False,
@@ -99,12 +98,11 @@ class HighwayFourierNetArch(Arch):
         self.transform_fourier_features = transform_fourier_features
         self.project_fourier_features = project_fourier_features
         self.skip_connections = skip_connections
-        activation_fn = get_activation_fn(activation_fn)
 
         self.xyzt_var = [x for x in self.input_key_dict if x in ["x", "y", "z", "t"]]
         # Prepare slice index
         xyzt_slice_index = self.prepare_slice_index(self.input_key_dict, self.xyzt_var)
-        self.register_buffer("xyzt_slice_index", xyzt_slice_index, persistent=False)
+        self.register_buffer("xyzt_slice_index", xyzt_slice_index, persistable=False)
 
         self.params_var = [
             x for x in self.input_key_dict if x not in ["x", "y", "z", "t"]
@@ -112,7 +110,9 @@ class HighwayFourierNetArch(Arch):
         params_slice_index = self.prepare_slice_index(
             self.input_key_dict, self.params_var
         )
-        self.register_buffer("params_slice_index", params_slice_index, persistent=False)
+        self.register_buffer(
+            "params_slice_index", params_slice_index, persistable=False
+        )
 
         in_features_xyzt = sum(
             (v for k, v in self.input_key_dict.items() if k in self.xyzt_var)
@@ -124,7 +124,10 @@ class HighwayFourierNetArch(Arch):
         out_features = sum(self.output_key_dict.values())
 
         if adaptive_activations:
-            activation_par = nn.Parameter(torch.ones(1))
+            activation_par = self.create_parameter(
+                [1],
+                default_initializer=nn.initializer.Constant(1),
+            )
         else:
             activation_par = None
 
@@ -132,7 +135,7 @@ class HighwayFourierNetArch(Arch):
         initial_in_features = in_features
 
         if in_features_xyzt > 0:
-            self.fourier_layer_xyzt = FourierLayer(
+            self.fourier_layer_xyzt = layers.FourierLayer(
                 in_features=in_features_xyzt, frequencies=frequencies
             )
             in_features += self.fourier_layer_xyzt.out_features()
@@ -140,7 +143,7 @@ class HighwayFourierNetArch(Arch):
             self.fourier_layer_xyzt = None
 
         if in_features_params > 0:
-            self.fourier_layer_params = FourierLayer(
+            self.fourier_layer_params = layers.FourierLayer(
                 in_features=in_features_params, frequencies=frequencies_params
             )
             in_features += self.fourier_layer_params.out_features()
@@ -157,27 +160,27 @@ class HighwayFourierNetArch(Arch):
         else:
             projector_in_features = initial_in_features
 
-        self.fc_t = FCLayer(
+        self.fc_t = layers.FCLayer(
             transformer_in_features,
             layer_size,
-            activation_fn=get_activation_fn(Activation.SIGMOID),
+            activation_fn=layers.Activation.SIGMOID,
             weight_norm=weight_norm,
             activation_par=activation_par,
         )
 
-        self.fc_v = FCLayer(
+        self.fc_v = layers.FCLayer(
             projector_in_features,
             layer_size,
-            activation_fn=get_activation_fn(Activation.IDENTITY),
+            activation_fn=layers.Activation.IDENTITY,
             weight_norm=weight_norm,
             activation_par=activation_par,
         )
 
-        self.fc_layers = nn.ModuleList()
+        self.fc_layers = nn.LayerList()
         layer_in_features = in_features
         for i in range(nr_layers):
             self.fc_layers.append(
-                FCLayer(
+                layers.FCLayer(
                     layer_in_features,
                     layer_size,
                     activation_fn=activation_fn,
@@ -187,10 +190,10 @@ class HighwayFourierNetArch(Arch):
             )
             layer_in_features = layer_size
 
-        self.final_layer = FCLayer(
+        self.final_layer = layers.FCLayer(
             layer_size,
             out_features,
-            activation_fn=None,
+            activation_fn=layers.Activation.IDENTITY,
             weight_norm=False,
             activation_par=None,
         )
@@ -204,11 +207,11 @@ class HighwayFourierNetArch(Arch):
         if self.fourier_layer_xyzt is not None:
             in_xyzt_var = self.slice_input(x, self.xyzt_slice_index, dim=-1)
             fourier_xyzt = self.fourier_layer_xyzt(in_xyzt_var)
-            x = torch.cat((x, fourier_xyzt), dim=-1)
+            x = paddle.concat((x, fourier_xyzt), axis=-1)
         if self.fourier_layer_params is not None:
             in_params_var = self.slice_input(x, self.params_slice_index, dim=-1)
             fourier_params = self.fourier_layer_params(in_params_var)
-            x = torch.cat((x, fourier_params), dim=-1)
+            x = paddle.concat((x, fourier_params), axis=-1)
 
         if self.transform_fourier_features:
             transformer_input = x
@@ -266,7 +269,7 @@ class HighwayFourierNetArch(Arch):
                 input_scales=self.input_scales,
             )
             fourier_xyzt = self.fourier_layer_xyzt(in_xyzt_var)
-            x = torch.cat((x, fourier_xyzt), dim=-1)
+            x = paddle.concat((x, fourier_xyzt), axis=-1)
         if self.fourier_layer_params is not None:
             in_params_var = self.prepare_input(
                 in_vars,
@@ -276,7 +279,7 @@ class HighwayFourierNetArch(Arch):
                 input_scales=self.input_scales,
             )
             fourier_params = self.fourier_layer_params(in_params_var)
-            x = torch.cat((x, fourier_params), dim=-1)
+            x = paddle.concat((x, fourier_params), axis=-1)
 
         if self.transform_fourier_features:
             transformer_input = x

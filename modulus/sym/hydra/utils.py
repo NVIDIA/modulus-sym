@@ -15,7 +15,7 @@
 import functools
 import hydra
 import os
-import torch
+import paddle
 import logging
 import copy
 import pprint
@@ -23,7 +23,7 @@ import pprint
 from termcolor import colored
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf, MISSING
-from typing import Optional, Any, Union, List
+from typing import Optional, Any, Union, List, Tuple
 from hydra._internal.utils import _run_hydra, get_args_parser
 from hydra.core.hydra_config import HydraConfig
 from hydra.utils import get_original_cwd
@@ -32,6 +32,7 @@ from modulus.sym.key import Key
 from modulus.sym.models.arch import Arch
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.models.utils import ModulusModels
+from modulus.sym.models.activation import Activation
 
 from .arch import ModelConf
 from .config import register_modulus_configs, ModulusConfig
@@ -73,9 +74,7 @@ def main(config_path: str, config_name: str = "config"):
             register_training_configs()
             register_modulus_configs()
             register_graph_configs()
-
-            # Set number of intraop torch CPU threads
-            torch.set_num_threads(1)  # TODO: define this as a hydra config somehow
+            # paddle.set_num_threads(1)
 
             # Setup distributed process config
             DistributedManager.initialize()
@@ -226,15 +225,20 @@ def instantiate_arch(
 
 
 def instantiate_optim(
-    cfg: DictConfig, model: torch.nn.Module, verbose: bool = False
-) -> torch.optim.Optimizer:
+    cfg: DictConfig, model: paddle.nn.Layer, verbose: bool = False
+) -> Tuple[paddle.optimizer.Optimizer, paddle.optimizer.lr.LRScheduler]:
     # Function for instantiating an optimizer with hydra
     # Remove custom parameters used internally in modulus
     optim_cfg = copy.deepcopy(cfg.optimizer)
     del optim_cfg._params_
 
     try:
-        optimizer = hydra.utils.instantiate(optim_cfg, params=model.parameters())
+        scheduler = instantiate_sched(cfg, None)
+        optimizer = hydra.utils.instantiate(
+            optim_cfg,
+            parameters=model.parameters(),
+            learning_rate=scheduler,
+        )
     except Exception as e:
         fail = colored("Failed to initialize optimizer: \n", "red")
         logger.error(fail + to_yaml(optim_cfg))
@@ -244,34 +248,36 @@ def instantiate_optim(
         pp = pprint.PrettyPrinter(indent=4)
         logger.info(f"Initialized optimizer: \n")
         pp.pprint(optimizer)
+        pp.pprint(scheduler)
 
-    return optimizer
+    return optimizer, scheduler
 
 
 def instantiate_sched(
-    cfg: DictConfig, optimizer: torch.optim
-) -> torch.optim.lr_scheduler:
+    cfg: DictConfig, optimizer: paddle.optimizer.Optimizer = None
+) -> paddle.optimizer.lr.LRScheduler:
     # Function for instantiating a scheduler with hydra
     sched_cfg = copy.deepcopy(cfg.scheduler)
-
+    optim_cfg = copy.deepcopy(cfg.optimizer)
     # Default is no scheduler, so just make fixed LR
     if sched_cfg is MISSING:
         sched_cfg = {
-            "_target_": "torch.optim.lr_scheduler.ConstantLR",
+            "_target_": "paddle.optimizer.lr.ConstantLR",
             "factor": 1.0,
         }
     # Handle custom cases
     if sched_cfg._target_ == "custom":
         if "tf.ExponentialLR" in sched_cfg._name_:
             sched_cfg = {
-                "_target_": "torch.optim.lr_scheduler.ExponentialLR",
+                "_target_": "paddle.optimizer.lr.ExponentialDecay",
+                "learning_rate": optim_cfg.learning_rate,
                 "gamma": sched_cfg.decay_rate ** (1.0 / sched_cfg.decay_steps),
             }
         else:
             logger.warn("Detected unsupported custom scheduler", sched_cfg)
 
     try:
-        scheduler = hydra.utils.instantiate(sched_cfg, optimizer=optimizer)
+        scheduler = hydra.utils.instantiate(sched_cfg)
     except Exception as e:
         fail = colored("Failed to initialize scheduler: \n", "red")
         logger.error(fail + to_yaml(sched_cfg))
@@ -280,7 +286,7 @@ def instantiate_sched(
     return scheduler
 
 
-def instantiate_agg(cfg: DictConfig, model: torch.nn.Module, num_losses: int = 1):
+def instantiate_agg(cfg: DictConfig, model: paddle.nn.Layer, num_losses: int = 1):
     # Function for instantiating a loss aggregator with hydra
     try:
         aggregator = hydra.utils.instantiate(

@@ -16,7 +16,7 @@ from typing import Dict, List, Union, Callable
 from pathlib import Path
 import inspect
 
-import torch
+import paddle
 import numpy as np
 
 from modulus.sym.domain.inferencer import PointVTKInferencer

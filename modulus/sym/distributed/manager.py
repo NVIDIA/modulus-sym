@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import torch.distributed as dist
+import paddle
+import paddle.distributed as dist
 
 import logging
 import os
@@ -21,6 +21,7 @@ import time
 import numpy as np
 
 logger = logging.getLogger("__name__")
+
 
 # Create singleton DistributedManager class
 class DistributedManager(object):
@@ -40,18 +41,18 @@ class DistributedManager(object):
         if not hasattr(obj, "_distributed"):
             obj._distributed = False
         if not hasattr(obj, "_device"):
-            obj._device = torch.device(
-                f"cuda:0" if torch.cuda.is_available() else "cpu"
+            obj._device: str = str(
+                f"gpu:0" if paddle.device.cuda.device_count() >= 1 else "cpu"
             )
         if not hasattr(obj, "_cuda"):
-            obj._cuda = torch.cuda.is_available()
+            obj._cuda = paddle.device.cuda.device_count() >= 1
         if not hasattr(obj, "_broadcast_buffers"):
             obj._broadcast_buffers = False
         if not hasattr(obj, "_find_unused_parameters"):
             obj._find_unused_parameters = False
         if not hasattr(obj, "_cuda_graphs"):
             obj._cuda_graphs = False
-
+        obj.place = paddle.device.set_device("gpu")
         return obj
 
     @property
@@ -163,7 +164,7 @@ class DistributedManager(object):
 
     @staticmethod
     def get_available_backend():
-        if torch.cuda.is_available() and torch.distributed.is_nccl_available():
+        if paddle.device.cuda.device_count() >= 1 and dist.get_backend() == "NCCL":
             return "nccl"
         else:
             return "gloo"
@@ -175,7 +176,7 @@ class DistributedManager(object):
         if "LOCAL_RANK" in os.environ:
             local_rank = int(os.environ.get("LOCAL_RANK"))
         else:
-            local_rank = rank % torch.cuda.device_count()
+            local_rank = rank % paddle.device.cuda.device_count()
         addr = os.environ.get("MASTER_ADDR")
         port = os.environ.get("MASTER_PORT")
 
@@ -225,7 +226,6 @@ class DistributedManager(object):
     def initialize():
         addr = os.getenv("MASTER_ADDR", "localhost")
         port = os.getenv("MASTER_PORT", "12355")
-        # https://pytorch.org/docs/master/notes/cuda.html#id5
         os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "0"
         try:
             DistributedManager.initialize_env()
@@ -241,7 +241,7 @@ class DistributedManager(object):
         manager = DistributedManager()
         if manager.distributed:
             print(
-                f'Initialized process {manager.rank} of {manager.world_size} using method "{manager._initialization_method}". Device set to {str(manager.device)}'
+                f'Initialized process {manager.rank} of {manager.world_size} using method "{manager._initialization_method}". Device set to {str(manager.place)}'
             )
 
     @staticmethod
@@ -259,38 +259,38 @@ class DistributedManager(object):
 
         manager = DistributedManager()
 
-        manager._distributed = (world_size > 1) and torch.distributed.is_available()
+        manager._distributed = (world_size > 1) and dist.is_available()
         if manager._distributed:
             # Update rank and world_size if using distributed
             manager._rank = rank
             manager._world_size = world_size
             if local_rank is None:
-                manager._local_rank = rank % torch.cuda.device_count()
+                manager._local_rank = rank % paddle.device.cuda.device_count()
             else:
                 manager._local_rank = local_rank
 
             # Setup distributed process group
             # time.sleep(1)
-            dist.init_process_group(
-                backend, rank=manager.rank, world_size=manager.world_size
-            )
+            dist.init_parallel_env()
 
         manager._groups = {}
         manager._group_ranks = {}
         manager._group_names = {}
 
-        manager._device = torch.device(
-            f"cuda:{manager.local_rank}" if torch.cuda.is_available() else "cpu"
+        manager._device = str(
+            f"gpu:{manager.local_rank}"
+            if paddle.device.cuda.device_count() >= 1
+            else "cpu"
         )
         # Needed for cuda graphs
-        if torch.cuda.is_available():
-            torch.cuda.set_device(manager.local_rank)
+        if paddle.device.cuda.device_count() >= 1:
+            paddle.device.set_device(device=f"gpu:{manager.local_rank}")
 
         manager._initialization_method = method
 
         # Set device for this process and empty cache to optimize memory usage
-        torch.cuda.device(manager.device)
-        torch.cuda.empty_cache()
+        paddle.device.set_device(manager.place)
+        paddle.device.cuda.empty_cache()
 
     @staticmethod
     def create_process_subgroup(name: str, size: int, group_name=None, verbose=False):

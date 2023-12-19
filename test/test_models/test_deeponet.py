@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import paddle
 from modulus.sym.models.deeponet import DeepONetArch
 from modulus.sym.models.fully_connected import FullyConnectedArch
 from modulus.sym.models.fourier_net import FourierNetArch
 from modulus.sym.models.pix2pix import Pix2PixArch
-import torch
 import numpy as np
 from modulus.sym.key import Key
 import pytest
@@ -24,11 +24,11 @@ from modulus.sym.graph import Graph
 from modulus.sym.models.arch import FuncArch
 from .model_test_utils import validate_func_arch_net
 
-# ensure torch.rand() is deterministic
-_ = torch.manual_seed(0)
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-# disable tf32 for accuracy
-torch.backends.cuda.matmul.allow_tf32 = False
+_ = paddle.seed(seed=0)
+device = str("cuda:0" if paddle.device.cuda.device_count() >= 1 else "cpu").replace(
+    "cuda", "gpu"
+)
+# >>>torch.backends.cuda.matmul.allow_tf32 = False
 
 
 @pytest.mark.parametrize(
@@ -52,9 +52,7 @@ def test_func_arch_deeponet(branch_input_keys, validate_with_dict_forward, dim):
         frequencies=("axis", [i for i in range(5)]),
     )
     ref_net = DeepONetArch(
-        branch_net=branch_net,
-        trunk_net=trunk_net,
-        output_keys=[Key("u")],
+        branch_net=branch_net, trunk_net=trunk_net, output_keys=[Key("u")]
     )
     validate_func_arch_net(ref_net, deriv_keys, validate_with_dict_forward)
 
@@ -67,16 +65,15 @@ def test_func_arch_deeponet_with_pix2pix(validate_with_dict_forward):
     deriv_keys = [Key.from_str("sol__x"), Key.from_str("sol__x__x")]
     branch_input_keys = [Key("coeff")]
     output_keys = [Key("sol")]
-
     branch_net = Pix2PixArch(
         input_keys=branch_input_keys,
-        output_keys=[Key("branch")],  # hard set in deeponet
+        output_keys=[Key("branch")],
         dimension=2,
         conv_layer_size=32,
     )
     trunk_net = FourierNetArch(
         input_keys=[Key("x"), Key("y")],
-        output_keys=[Key("trunk", 256)],  # hard set in deeponet
+        output_keys=[Key("trunk", 256)],
         nr_layers=5,
         layer_size=128,
         frequencies=("axis", [i for i in range(5)]),
@@ -87,44 +84,35 @@ def test_func_arch_deeponet_with_pix2pix(validate_with_dict_forward):
         output_keys=output_keys,
         branch_dim=1024,
     )
-
     if validate_with_dict_forward:
         ref_net.forward = ref_net._dict_forward
     ref_graph = Graph(
-        [
-            ref_net.make_node("ref_net", jit=False),
-        ],
+        [ref_net.make_node("ref_net", jit=False)],
         ref_net.input_keys,
         deriv_keys + [Key("sol")],
         func_arch=False,
     ).to(device)
-
-    # deeponet with pix2pix should not support func_arch
     assert not ref_net.supports_func_arch
-
-    # there is nothing happened even if we enable func_arch
     ft_graph = Graph(
-        [
-            ref_net.make_node("ref_net", jit=False),
-        ],
+        [ref_net.make_node("ref_net", jit=False)],
         ref_net.input_keys,
         deriv_keys + [Key("sol")],
         func_arch=True,
     ).to(device)
-
-    # there should be no FuncArch instance
     for node in ft_graph.node_evaluation_order:
         evaluate = node.evaluate
         assert not isinstance(evaluate, FuncArch)
-
-    # check result
-    x = torch.rand([100, 1], device=device).requires_grad_()
-    y = torch.rand([100, 1], device=device).requires_grad_()
-    coeff = torch.rand(
-        [100, branch_input_keys[0].size, 32, 32], device=device
-    ).requires_grad_()
+    out_32 = paddle.rand(shape=[100, 1])
+    out_32.stop_gradient = not True
+    x = out_32
+    out_33 = paddle.rand(shape=[100, 1])
+    out_33.stop_gradient = not True
+    y = out_33
+    out_34 = paddle.rand(shape=[100, branch_input_keys[0].size, 32, 32])
+    out_34.stop_gradient = not True
+    coeff = out_34
     in_vars = {"x": x, "y": y, "coeff": coeff}
     ft_out = ft_graph(in_vars)
     ref_out = ref_graph(in_vars)
     for k in ref_out.keys():
-        assert torch.allclose(ref_out[k], ft_out[k], atol=6e-5)
+        assert paddle.allclose(x=ref_out[k], y=ft_out[k], atol=6e-05).item()

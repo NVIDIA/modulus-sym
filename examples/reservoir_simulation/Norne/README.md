@@ -507,7 +507,8 @@ unzip modulus_reservoir_simulation_supplemental_material_latest.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
-python Execute_POC.py
+python Forward_problem_PINO.py
+python Learn_CCR.py
 cd ..
 conda deactivate
 ```
@@ -519,7 +520,8 @@ unzip modulus_reservoir_simulation_supplemental_material_latest.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
-python Execute_POC.py
+python Forward_problem_PINO.py
+python Learn_CCR.py
 cd ..
 ```
 

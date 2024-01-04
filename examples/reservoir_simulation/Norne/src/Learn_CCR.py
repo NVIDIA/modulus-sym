@@ -460,6 +460,25 @@ def PREDICTION_CCR__MACHINE(
 
 
 # ------------------Begin Code-------------------------------------------------------------------#
+texta ="""
+MMMMMMMM               MMMMMMMM               EEEEEEEEEEEEEEEEEEEEEE                         CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRRRRRRRRRRR   
+M:::::::M             M:::::::M               E::::::::::::::::::::E                      CCC::::::::::::C   CCC::::::::::::R::::::::::::::::R  
+M::::::::M           M::::::::M               E::::::::::::::::::::E                    CC:::::::::::::::C CC:::::::::::::::R::::::RRRRRR:::::R 
+M:::::::::M         M:::::::::M               EE::::::EEEEEEEEE::::E                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+M::::::::::M       M::::::::::M  ooooooooooo    E:::::E       EEEEEE                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+M:::::::::::M     M:::::::::::Moo:::::::::::oo  E:::::E                              C:::::C            C:::::C               R::::R     R:::::R
+M:::::::M::::M   M::::M:::::::o:::::::::::::::o E::::::EEEEEEEEEE                    C:::::C            C:::::C               R::::RRRRRR:::::R 
+M::::::M M::::M M::::M M::::::o:::::ooooo:::::o E:::::::::::::::E    --------------- C:::::C            C:::::C               R:::::::::::::RR  
+M::::::M  M::::M::::M  M::::::o::::o     o::::o E:::::::::::::::E    -:::::::::::::- C:::::C            C:::::C               R::::RRRRRR:::::R 
+M::::::M   M:::::::M   M::::::o::::o     o::::o E::::::EEEEEEEEEE    --------------- C:::::C            C:::::C               R::::R     R:::::R
+M::::::M    M:::::M    M::::::o::::o     o::::o E:::::E                              C:::::C            C:::::C               R::::R     R:::::R
+M::::::M     MMMMM     M::::::o::::o     o::::o E:::::E       EEEEEE                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+M::::::M               M::::::o:::::ooooo:::::EE::::::EEEEEEEE:::::E                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+M::::::M               M::::::o:::::::::::::::E::::::::::::::::::::E                    CC:::::::::::::::C CC:::::::::::::::R::::::R     R:::::R
+M::::::M               M::::::Moo:::::::::::ooE::::::::::::::::::::E                      CCC::::::::::::C   CCC::::::::::::R::::::R     R:::::R
+MMMMMMMM               MMMMMMMM  ooooooooooo  EEEEEEEEEEEEEEEEEEEEEE                         CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRR     RRRRRRR
+"""
+print(texta)
 print("")
 print("-------------------LOAD INPUT DATA-------------------------------------")
 mat = sio.loadmat(("../PACKETS/conversions.mat"))
@@ -571,15 +590,11 @@ print("--------------------- Learn the Forward model with CCR----------------")
 inputsz = range(Y.shape[1])
 num_cores = 12  # multiprocessing.cpu_count()
 
-from loky import get_reusable_executor
 
-executor_run = get_reusable_executor(max_workers=num_cores)
-with executor_run:
-    bigs = Parallel(n_jobs=num_cores, backend="multiprocessing", verbose=50)(
-        delayed(startit)(ib, outpuut2, inpuut2, trainingmaster, oldfolder, degg)
-        for ib in inputsz
-    )
-    executor_run.shutdown(wait=False)
+    
+bigs = Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(
+    startit)\
+    (ib,outpuut2,inpuut2,trainingmaster,oldfolder,degg)for ib in inputsz )
 
 big = np.vstack(bigs)
 
@@ -597,22 +612,10 @@ cluster_all = np.genfromtxt("clustersizescost.dat", dtype="float")
 cluster_all = np.reshape(cluster_all, (-1, 1), "F")
 os.chdir(oldfolder)
 
-executor_run1 = get_reusable_executor(max_workers=num_cores)
-with executor_run1:
-    clemes = Parallel(n_jobs=num_cores, backend="multiprocessing", verbose=50)(
-        delayed(PREDICTION_CCR__MACHINE)(
-            ib,
-            int(cluster_all[ib, :]),
-            X_test2,
-            X.shape[1],
-            trainingmaster,
-            oldfolder,
-            pred_type,
-            degg,
-        )
-        for ib in inputsz
-    )
-    executor_run1.shutdown(wait=False)
+clemes=Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(
+    PREDICTION_CCR__MACHINE)(ib,int(cluster_all[ib,:]),X_test2,X.shape[1],\
+                trainingmaster,oldfolder,pred_type,degg)\
+        for ib in inputsz)
 outputpredenergy = np.hstack(clemes)
 
 print(" ")

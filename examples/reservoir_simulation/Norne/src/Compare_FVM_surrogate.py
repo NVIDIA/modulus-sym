@@ -87,10 +87,17 @@ def process_chunk(chunk):
     return chunk_results
 
 
-def process_step(kk):
+def process_step(kk, steppi, dt, pressure, effectiveuse, 
+                 pressure_true, Swater, Swater_true, Soil, Soil_true, 
+                 Sgas, Sgas_true, nx, ny, nz, N_injw, N_pr, N_injg, 
+                 injectors, producers, gass):
+    progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
+    ShowBar(progressBar)
+    time.sleep(1)     
 
     current_time = dt[kk]
-
+    #Time_vector[kk] = current_time
+    
     f_3 = plt.figure(figsize=(20, 20), dpi = 200)
     
     look = ((pressure[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1] 
@@ -109,6 +116,8 @@ def process_step(kk):
     Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,
     N_pr,N_injg,'pressure diff',injectors,producers,gass)         
     R2p,L2p = compute_metrics(look.ravel(), lookf.ravel())
+    Accuracy_presure[kk,0] = R2p
+    Accuracy_presure[kk,1] = L2p
        
 
     look = ((Swater[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1] 
@@ -123,7 +132,9 @@ def process_step(kk):
     ax3 = f_3.add_subplot(4,3,6, projection='3d')
     Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,
     N_pr,N_injg,'water diff',injectors,producers,gass)         
-    R2w,L2w = compute_metrics(look.ravel(), lookf.ravel()) 
+    R2w,L2w = compute_metrics(look.ravel(), lookf.ravel())
+    Accuracy_water[kk,0] = R2w
+    Accuracy_water[kk,1] = L2w
 
         
 
@@ -142,6 +153,8 @@ def process_step(kk):
     Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,N_pr,N_injg,
     'oil diff',injectors,producers,gass)         
     R2o,L2o = compute_metrics(look.ravel(), lookf.ravel())
+    Accuracy_oil[kk,0] = R2o
+    Accuracy_oil[kk,1] = L2o
     
     
     look = (((Sgas[0,kk,:,:,:]) )* effectiveuse)[:, :, ::-1] 
@@ -157,17 +170,19 @@ def process_step(kk):
     Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,N_pr,N_injg,
     'gas diff',injectors,producers,gass)         
     R2g,L2g = compute_metrics(look.ravel(), lookf.ravel())
+    Accuracy_gas[kk,0] = R2g
+    Accuracy_gas[kk,1] = L2g
 
 
     plt.tight_layout(rect = [0,0,1,0.95])
 
     tita = 'Timestep --' + str(current_time) + ' days'
     plt.suptitle(tita, fontsize=16)
+    #plt.savefig('Dynamic' + str(int(kk)))
     plt.savefig('Dynamic' + str(int(kk)))
     plt.clf()
     plt.close()
-
-    return current_time, (R2p, L2p), (R2w, L2w), (R2o, L2o),(R2g, L2g)
+    return R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g
 
 
 oldfolder = os.getcwd()
@@ -435,6 +450,26 @@ fno_peacemann.eval()
 os.chdir(oldfolder)  
       
 print('********************Model Loaded*************************************')
+texta = """
+PPPPPPPPPPPPPPPPP  IIIIIIIIINNNNNNNN        NNNNNNNN    OOOOOOOOO                              CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRRRRRRRRRRR   
+P::::::::::::::::P I::::::::N:::::::N       N::::::N  OO:::::::::OO                         CCC::::::::::::C   CCC::::::::::::R::::::::::::::::R  
+P::::::PPPPPP:::::PI::::::::N::::::::N      N::::::NOO:::::::::::::OO                     CC:::::::::::::::C CC:::::::::::::::R::::::RRRRRR:::::R 
+PP:::::P     P:::::II::::::IN:::::::::N     N::::::O:::::::OOO:::::::O                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+  P::::P     P:::::P I::::I N::::::::::N    N::::::O::::::O   O::::::O                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+  P::::P     P:::::P I::::I N:::::::::::N   N::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::R     R:::::R
+  P::::PPPPPP:::::P  I::::I N:::::::N::::N  N::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::RRRRRR:::::R 
+  P:::::::::::::PP   I::::I N::::::N N::::N N::::::O:::::O     O:::::O --------------- C:::::C            C:::::C               R:::::::::::::RR  
+  P::::PPPPPPPPP     I::::I N::::::N  N::::N:::::::O:::::O     O:::::O -:::::::::::::- C:::::C            C:::::C               R::::RRRRRR:::::R 
+  P::::P             I::::I N::::::N   N:::::::::::O:::::O     O:::::O --------------- C:::::C            C:::::C               R::::R     R:::::R
+  P::::P             I::::I N::::::N    N::::::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::R     R:::::R
+  P::::P             I::::I N::::::N     N:::::::::O::::::O   O::::::O                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+PP::::::PP         II::::::IN::::::N      N::::::::O:::::::OOO:::::::O                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+P::::::::P         I::::::::N::::::N       N:::::::NOO:::::::::::::OO                     CC:::::::::::::::C CC:::::::::::::::R::::::R     R:::::R
+P::::::::P         I::::::::N::::::N        N::::::N  OO:::::::::OO                         CCC::::::::::::C   CCC::::::::::::R::::::R     R:::::R
+PPPPPPPPPP         IIIIIIIIINNNNNNNN         NNNNNNN    OOOOOOOOO                              CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRR     RRRRRRR
+                                                                                                                                                  
+"""
+print(texta)
 start_time_plots2 = time.time()
 _,ouut_peacemann,pressure,Swater,Sgas,Soil = Forward_model_ensemble(Ne,inn,steppi,min_inn_fcn,max_inn_fcn,
                  target_min,target_max,minK,maxK,minT,maxT,minP,maxP,fno_pressure
@@ -544,142 +579,33 @@ os.chdir(folderr)
 
 Runs = steppi
 ty = np.arange(1,Runs+1) 
-Time_vector = np.zeros((steppi)) 
+Time_vector = Time_unie
 Accuracy_presure = np.zeros((steppi,2))
 Accuracy_oil = np.zeros((steppi,2))
 Accuracy_water = np.zeros((steppi,2))
 Accuracy_gas = np.zeros((steppi,2))
 
 
-# lock = Lock()
-# processed_chunks = Value('i', 0)
-
-for kk in range(steppi):
-    progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
-    ShowBar(progressBar)
-    time.sleep(1)     
-
-    current_time = dt[kk]
-    Time_vector[kk] = current_time
-    
-    f_3 = plt.figure(figsize=(20, 20), dpi = 200)
-    
-    look = ((pressure[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1] 
-
-    lookf = ((pressure_true[0,kk,:,:,:])* effectiveuse)[:, :, ::-1]  
-    #lookf = lookf * pini_alt
-    diff1 = (abs(look - lookf)* effectiveuse)[:, :, ::-1]   
-
-    ax1 = f_3.add_subplot(4,3,1, projection='3d')
-    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'pressure Modulus',injectors,producers,gass)            
-    ax2 = f_3.add_subplot(4,3,2, projection='3d')
-    Plot_Modulus(ax2,nx,ny,nz,lookf,N_injw,N_pr,N_injg,
-    'pressure Numerical',injectors,producers,gass)                        
-    ax3 = f_3.add_subplot(4,3,3, projection='3d')
-    Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,
-    N_pr,N_injg,'pressure diff',injectors,producers,gass)         
-    R2p,L2p = compute_metrics(look.ravel(), lookf.ravel())
-    Accuracy_presure[kk,0] = R2p
-    Accuracy_presure[kk,1] = L2p
-       
-
-    look = ((Swater[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1] 
-    lookf = ((Swater_true[0,kk,:,:,:])* effectiveuse)[:, :, ::-1] 
-    diff1 = ((abs(look - lookf))* effectiveuse)[:, :, ::-1]      
-    ax1 = f_3.add_subplot(4,3,4, projection='3d')
-    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'water Modulus',injectors,producers,gass)            
-    ax2 = f_3.add_subplot(4,3,5, projection='3d')
-    Plot_Modulus(ax2,nx,ny,nz,lookf,N_injw,N_pr,N_injg,
-    'water Numerical',injectors,producers,gass)                        
-    ax3 = f_3.add_subplot(4,3,6, projection='3d')
-    Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,
-    N_pr,N_injg,'water diff',injectors,producers,gass)         
-    R2w,L2w = compute_metrics(look.ravel(), lookf.ravel())
-    Accuracy_water[kk,0] = R2w
-    Accuracy_water[kk,1] = L2w
-
-        
-
-    look = Soil[0,kk,:,:,:]  
-    look = (look * effectiveuse)[:, :, ::-1]
-    lookf = Soil_true[0,kk,:,:,:] 
-    lookf = (lookf * effectiveuse)[:, :, ::-1] 
-    diff1 = ((abs(look - lookf)) * effectiveuse)[:, :, ::-1]      
-    ax1 = f_3.add_subplot(4,3,7, projection='3d')
-    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'oil Modulus',injectors,producers,gass)            
-    ax2 = f_3.add_subplot(4,3,8, projection='3d')
-    Plot_Modulus(ax2,nx,ny,nz,lookf,N_injw,N_pr,N_injg,
-    'oil Numerical',injectors,producers,gass)                        
-    ax3 = f_3.add_subplot(4,3,9, projection='3d')
-    Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,N_pr,N_injg,
-    'oil diff',injectors,producers,gass)         
-    R2o,L2o = compute_metrics(look.ravel(), lookf.ravel())
-    Accuracy_oil[kk,0] = R2o
-    Accuracy_oil[kk,1] = L2o
-    
-    
-    look = (((Sgas[0,kk,:,:,:]) )* effectiveuse)[:, :, ::-1] 
-    lookf =(((Sgas_true[0,kk,:,:,:]) )* effectiveuse)[:, :, ::-1] 
-    diff1 = ((abs(look - lookf))* effectiveuse)[:, :, ::-1]      
-    ax1 = f_3.add_subplot(4,3,10, projection='3d')
-    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'gas Modulus',injectors,producers,gass)            
-    ax2 = f_3.add_subplot(4,3,11, projection='3d')
-    Plot_Modulus(ax2,nx,ny,nz,lookf,N_injw,N_pr,N_injg,
-    'gas Numerical',injectors,producers,gass)                        
-    ax3 = f_3.add_subplot(4,3,12, projection='3d')
-    Plot_Modulus(ax3,nx,ny,nz,diff1,N_injw,N_pr,N_injg,
-    'gas diff',injectors,producers,gass)         
-    R2g,L2g = compute_metrics(look.ravel(), lookf.ravel())
-    Accuracy_gas[kk,0] = R2g
-    Accuracy_gas[kk,1] = L2g
+results = Parallel(n_jobs=-1)(delayed(process_step)(kk, steppi, dt, pressure, 
+                    effectiveuse, pressure_true, Swater, Swater_true, Soil, 
+                    Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
+                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
 
 
-    plt.tight_layout(rect = [0,0,1,0.95])
-
-    tita = 'Timestep --' + str(current_time) + ' days'
-    plt.suptitle(tita, fontsize=16)
-    plt.savefig('Dynamic' + str(int(kk)))
-    plt.clf()
-    plt.close()
-
-progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk, steppi-1)
+progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
-time.sleep(1)  
+time.sleep(1) 
 
-
-
-# NUM_CORES = 6  # specify the number of cores you want to use
-
-# # Split the range of steps into chunks
-# if steppi < NUM_CORES:
-#     num_cores = steppi 
-# else:
-#     num_cores = NUM_CORES
-# chunks = [
-# list(range(i, min(i + steppi // num_cores, steppi)))
-# for i in range(0, steppi, steppi // num_cores)
-# ]
-
-
-
-# with concurrent.futures.ProcessPoolExecutor(max_workers=NUM_CORES) as executor:
-#     chunked_results = list(executor.map(process_chunk, chunks))
-
-
-# # Flatten the chunked results to get the ordered results
-# results = [result for sublist in chunked_results for result in sublist]
-
-
-# for kk, (current_time, acc_pressure, acc_oil, acc_water,acc_gas) in enumerate(results):
-#     Time_vector[kk] = current_time
-#     Accuracy_presure[kk] = acc_pressure
-#     Accuracy_oil[kk] = acc_oil
-#     Accuracy_water[kk] = acc_water
-#     Accuracy_water[kk] = acc_gas
+# Aggregating results
+for kk, (R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g) in enumerate(results):
+    Accuracy_presure[kk, 0] = R2p
+    Accuracy_presure[kk, 1] = L2p
+    Accuracy_water[kk, 0] = R2w
+    Accuracy_water[kk, 1] = L2w
+    Accuracy_oil[kk, 0] = R2o
+    Accuracy_oil[kk, 1] = L2o
+    Accuracy_gas[kk, 0] = R2g
+    Accuracy_gas[kk, 1] = L2g
 
 
 fig4 = plt.figure(figsize=(20, 20), dpi = 100)
@@ -825,6 +751,26 @@ destination_path = os.path.join(destination_directory, filename)
 # Perform the copy operation
 shutil.copy(source_path, destination_path)
 
+texta = """
+                                                                                                                                                      
+PPPPPPPPPPPPPPPPP  IIIIIIIIINNNNNNNN        NNNNNNNN    OOOOOOOOO                      FFFFFFFFFFFFFFFFFFFFFNNNNNNNN        NNNNNNNN    OOOOOOOOO     
+P::::::::::::::::P I::::::::N:::::::N       N::::::N  OO:::::::::OO                    F::::::::::::::::::::N:::::::N       N::::::N  OO:::::::::OO   
+P::::::PPPPPP:::::PI::::::::N::::::::N      N::::::NOO:::::::::::::OO                  F::::::::::::::::::::N::::::::N      N::::::NOO:::::::::::::OO 
+PP:::::P     P:::::II::::::IN:::::::::N     N::::::O:::::::OOO:::::::O                 FF::::::FFFFFFFFF::::N:::::::::N     N::::::O:::::::OOO:::::::O
+  P::::P     P:::::P I::::I N::::::::::N    N::::::O::::::O   O::::::O                   F:::::F       FFFFFN::::::::::N    N::::::O::::::O   O::::::O
+  P::::P     P:::::P I::::I N:::::::::::N   N::::::O:::::O     O:::::O                   F:::::F            N:::::::::::N   N::::::O:::::O     O:::::O
+  P::::PPPPPP:::::P  I::::I N:::::::N::::N  N::::::O:::::O     O:::::O                   F::::::FFFFFFFFFF  N:::::::N::::N  N::::::O:::::O     O:::::O
+  P:::::::::::::PP   I::::I N::::::N N::::N N::::::O:::::O     O:::::O ---------------   F:::::::::::::::F  N::::::N N::::N N::::::O:::::O     O:::::O
+  P::::PPPPPPPPP     I::::I N::::::N  N::::N:::::::O:::::O     O:::::O -:::::::::::::-   F:::::::::::::::F  N::::::N  N::::N:::::::O:::::O     O:::::O
+  P::::P             I::::I N::::::N   N:::::::::::O:::::O     O:::::O ---------------   F::::::FFFFFFFFFF  N::::::N   N:::::::::::O:::::O     O:::::O
+  P::::P             I::::I N::::::N    N::::::::::O:::::O     O:::::O                   F:::::F            N::::::N    N::::::::::O:::::O     O:::::O
+  P::::P             I::::I N::::::N     N:::::::::O::::::O   O::::::O                   F:::::F            N::::::N     N:::::::::O::::::O   O::::::O
+PP::::::PP         II::::::IN::::::N      N::::::::O:::::::OOO:::::::O                 FF:::::::FF          N::::::N      N::::::::O:::::::OOO:::::::O
+P::::::::P         I::::::::N::::::N       N:::::::NOO:::::::::::::OO                  F::::::::FF          N::::::N       N:::::::NOO:::::::::::::OO 
+P::::::::P         I::::::::N::::::N        N::::::N  OO:::::::::OO                    F::::::::FF          N::::::N        N::::::N  OO:::::::::OO   
+PPPPPPPPPP         IIIIIIIIINNNNNNNN         NNNNNNN    OOOOOOOOO                      FFFFFFFFFFF          NNNNNNNN         NNNNNNN    OOOOOOOOO   
+"""
+print(texta)
 
 
 start_time_plots2 = time.time()

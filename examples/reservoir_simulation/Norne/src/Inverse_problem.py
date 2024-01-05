@@ -224,7 +224,20 @@ def ProgressBar(Total, Progress, BarLength=20, ProgressIcon="#", BarIcon="-"):
         return Bar
     except:
         return "ERROR"
-
+def ProgressBar2(Total, Progress):
+    try:
+        # Calcuting progress between 0 and 1 for percentage.
+        Progress = float(Progress) / float(Total)
+        # Doing this conditions at final progressing.
+        if Progress >= 1.:
+            Progress = 1
+            # Show the completed status
+            return "100%"
+        # Show the percentage of completion
+        return "{:.0f}%".format(round(Progress * 100, 0))
+    except:
+        print('')  
+        return "ERROR"
 def ShowBar(Bar):
     sys.stdout.write(Bar)
     sys.stdout.flush()                 

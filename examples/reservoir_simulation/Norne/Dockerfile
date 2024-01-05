@@ -19,7 +19,7 @@ FROM nvcr.io/nvidia/modulus/modulus:23.09
 RUN cd /workspace && git clone https://github.com/ergosimulation/mpslib.git MPSlib && cd MPSlib && make -j 
 
 # Install Python packages
-RUN pip3 install tensorflow==2.9.1 scikit-mps kneed pyDOE FyeldGenerator py-cpuinfo gdown gstools scikit-image ema-pytorch accelerate loky xgboost scikit-learn pandas xlsxwriter openpyxl
+RUN pip3 install tensorflow==2.9.1 PyWavelets scikit-mps kneed pyDOE FyeldGenerator py-cpuinfo gdown gstools scikit-image ema-pytorch accelerate loky xgboost scikit-learn pandas xlsxwriter openpyxl
 
 # Set the working directory
 WORKDIR /workspace/project

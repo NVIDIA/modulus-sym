@@ -763,7 +763,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         # ShowBar(progressBar)
         # time.sleep(1) 
 
-        clemes = Parallel(n_jobs=8, backend='loky', verbose=10)(
+        clemes = Parallel(n_jobs=16, backend='loky', verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
                 "../ML_MACHINE", oldfolder, pred_type, 3
@@ -813,7 +813,11 @@ def KalmanGain(G, params, Gamma, N, alpha):
 
 def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
                             training_master,oldfolder,pred_type,deg):
-
+    #import numpy as np
+    # ii=0
+    # nclusters=2
+    #inputtest=X_test2
+    #print('Starting Prediction')
     filename1='Classifier_%d.bin'%ii
     filenamex='clfx_%d.asv'%ii
     filenamey='clfy_%d.asv'%ii      
@@ -838,17 +842,14 @@ def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
         labelDA=np.argmax(labelDA, axis=-1)
         labelDA=np.reshape(labelDA,(-1,1),'F')
         for i in range(nclusters):
-            #print('-- Predicting cluster: ' + str(i+1) + ' | ' + str(nclusters)) 
-            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".pkl"
-            filename2a="Regressor_Features_" + str(ii) + "_Cluster_" + str(i) +".pkl"
+            #print('-- Predicting cluster: ' + str(i) + ' | ' + str(nclusters)) 
+            loaded_modelr = xgb.Booster({'nthread': 4})  # init model
+            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
+             
+
             os.chdir(training_master)
-            # Load the model
-            with open(filename2, 'rb') as model_file:
-                model0 = pickle.load(model_file)
-            
-            # Load the transformer
-            with open(filename2a, 'rb') as transformer_file:
-                modell0 = pickle.load(transformer_file)
+            loaded_modelr.load_model(filename2)  # load data
+              
 
             os.chdir(oldfolder)
             labelDA0=(np.asarray(np.where(labelDA == i))).T
@@ -857,7 +858,7 @@ def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
             a00=np.reshape(a00,(-1,numcols),'F')
             if a00.shape[0]!=0:
                 clementanswer[labelDA0[:,0],:]=np.reshape\
-                    (predict_machine11(a00,deg,model0,modell0),(-1,1))
+                    (predict_machine11(a00,loaded_modelr),(-1,1))
             
         clementanswer=clfy.inverse_transform(clementanswer)
     else: #soft prediction
@@ -865,32 +866,23 @@ def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
         big_out=np.zeros((numrowstest,nclusters))
         for i in range(nclusters):
             #print('-- predicting cluster: ' + str(i+1) + ' | ' + str(nclusters)) 
-            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".pkl"
-            filename2a="Regressor_Features_" + str(ii) + "_Cluster_" + str(i) +".pkl"
+            loaded_modelr = xgb.Booster({'nthread': 4})  # init model
+            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
             os.chdir(training_master)
-            with open(filename2, 'rb') as model_file:
-                model0 = pickle.load(model_file)
-            
-            # Load the transformer
-            with open(filename2a, 'rb') as transformer_file:
-                modell0 = pickle.load(transformer_file)
+            loaded_modelr.load_model(filename2)  # load data                
             os.chdir(oldfolder)
             aa=np.reshape\
-                    (predict_machine11(inputtest,deg,model0,modell0),(-1,1))
+                    (predict_machine11(inputtest,loaded_modelr),(-1,1))
             aanew=np.multiply(aa,np.reshape(labelDA[:,i],(-1,1)))
-            #aanew[aanew<=0] = 0
             big_out[:,i]=np.ravel(aanew)
         clementanswer=np.reshape(np.sum(big_out,axis=1),(-1,1),'F')
-        clementanswer[clementanswer<=0] = 0
         #clementanswer=clfy.inverse_transform(clementanswer)
-    del model0,modell0
     return clementanswer
     #print('Finished prediction')
     
-def predict_machine11(a0,deg,model,model2):
-    x_new_poly = model2.transform(a0)
-    y_new = model.predict(x_new_poly)
-    return y_new
+def predict_machine11(a0,model):
+    ynew = model.predict(xgb.DMatrix(a0))
+    return ynew  
 
 def Get_data_FFNN(oldfolder,N,pressure,Sgas,Swater,perm,Time,steppi,steppi_indices): 
     """

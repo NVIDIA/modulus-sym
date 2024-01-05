@@ -550,6 +550,15 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
     Afterward, a new set of inputs for a secondary model (modelP2) is prepared 
     using the processed data. Finally, the function predicts outputs using the
     modelP2 and returns the predicted values.
+    texta1 = """
+     _   _       _     _ _             ___  ___          _       _           
+    | \ | |     (_)   | (_)            |  \/  |         | |     | |          
+    |  \| __   ___  __| |_  __ _ ______| .  . | ___   __| |_   _| |_   _ ___ 
+    | . ` \ \ / | |/ _` | |/ _` |______| |\/| |/ _ \ / _` | | | | | | | / __|
+    | |\  |\ V /| | (_| | | (_| |      | |  | | (_) | (_| | |_| | | |_| \__ \
+    \_| \_/ \_/ |_|\__,_|_|\__,_|      \_|  |_/\___/ \__,_|\__,_|_|\__,_|___/
+    """
+    #print(texta1)    
     """  
     
     pressure = []
@@ -597,7 +606,9 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         innn = np.zeros((N,steppi,90))
     
     for i in range(N):  
-        
+        progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i-1)
+        ShowBar(progressBar)
+        time.sleep(1)          
         ##INPUTS        
         permuse = perm[i,0,:,:,:]
         #Permeability    
@@ -745,7 +756,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         # ShowBar(progressBar)
         # time.sleep(1) 
 
-        clemes = Parallel(n_jobs=8, backend='loky', verbose=10)(
+        clemes = Parallel(n_jobs=8, backend='loky', verbose=0)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
                 "../ML_MACHINE", oldfolder, pred_type, 3
@@ -766,7 +777,10 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         use = np.reshape(spit,(-1,1),'F')
         
         sim.append(use)
-    sim = np.hstack(sim)    
+    sim = np.hstack(sim)  
+    progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i)
+    ShowBar(progressBar)
+    time.sleep(1)    
     return sim,ouut_p,pressure,Swater,Sgas,Soil
 
 
@@ -6990,15 +7004,58 @@ def Localisation(c,nx,ny,nz,N):
     
     return yoboschur
 
-# Create a 20x1 numpy array
-matrix = np.array([[1], [2], [3], [4], [5], [6], [7], [8], [9], [10],
-          [11], [12], [13], [14], [15], [16], [17], [18], [19], [20]])
+def process_step(kk, steppi, dt,pressure, effectiveuse, 
+                 Swater,Soil, 
+                 Sgas, nx, ny, nz, N_injw, N_pr, N_injg, 
+                 injectors, producers, gass):
+    progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
+    ShowBar(progressBar)
+    time.sleep(1)     
 
-# Specify the rows to remove (rows 2 to 5 and 7 to 10)
-rows_to_remove = list(range(2, 6)) + list(range(7, 11))
+    current_time = dt[kk]
+    Time_vector[kk] = current_time
+    
+    f_3 = plt.figure(figsize=(20, 20), dpi = 200)
+    
 
-# Use the remove_rows function to remove the specified rows
-modified_matrix = remove_rows(matrix, rows_to_remove)
+    look = ((pressure[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1]
+    ax1 = f_3.add_subplot(2,2,1, projection='3d')
+    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
+    'pressure Modulus',injectors,producers,gass)            
+
+       
+
+    look = ((Swater[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1]    
+    ax2 = f_3.add_subplot(2,2,2, projection='3d')
+    Plot_Modulus(ax2,nx,ny,nz,look,N_injw,N_pr,N_injg,
+    'water Modulus',injectors,producers,gass)            
+
+
+        
+
+    look = Soil[0,kk,:,:,:]  
+    look = (look * effectiveuse)[:, :, ::-1] 
+ 
+    ax3 = f_3.add_subplot(2,2,3, projection='3d')
+    Plot_Modulus(ax3,nx,ny,nz,look,N_injw,N_pr,N_injg,
+    'oil Modulus',injectors,producers,gass)            
+
+    
+    
+    look = (((Sgas[0,kk,:,:,:]) )* effectiveuse)[:, :, ::-1]      
+    ax4 = f_3.add_subplot(2,2,4, projection='3d')
+    Plot_Modulus(ax4,nx,ny,nz,look,N_injw,N_pr,N_injg,
+    'gas Modulus',injectors,producers,gass)  
+
+
+    plt.tight_layout(rect = [0,0,1,0.95])
+
+    tita = 'Timestep --' + str(current_time) + ' days'
+    plt.suptitle(tita, fontsize=16)
+    #plt.savefig('Dynamic' + str(int(kk)))
+    plt.savefig('Dynamic' + str(int(kk)))
+    plt.clf()
+    plt.close()
 
 
 ##############################################################################
@@ -7844,7 +7901,7 @@ else:
     P::::::::P         I::::::::N::::::N        N::::::N  OO:::::::::OO                    F::::::::FF          N::::::N        N::::::N  OO:::::::::OO   
     PPPPPPPPPP         IIIIIIIIINNNNNNNN         NNNNNNN    OOOOOOOOO                      FFFFFFFFFFF          NNNNNNNN         NNNNNNN    OOOOOOOOO   
     """
-print(texta)
+print(texta)   
 
 while (snn<1):        
     print( 'Iteration --' + str(ii+1) +' | ' + str(Termm))
@@ -7996,7 +8053,8 @@ while (snn<1):
     gc.collect()
     update_term @=factor_sum
     del factor_sum
-    gc.collect()                                                
+    gc.collect()
+    
     if do_localisation == 1:
         
         if ii == 0:
@@ -8347,64 +8405,20 @@ with gzip.open('RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
 
 Time_vector = np.zeros((steppi)) 
-for kk in range(steppi):  
-    
-    
-    progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
-    ShowBar(progressBar)
-    time.sleep(1)       
 
+for kk in range(steppi):
     current_time = dt[kk]
     Time_vector[kk] = current_time
-
-    f_3 = plt.figure(figsize=(20, 20), dpi = 200)
     
-    look = ((pree[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1]
 
-
-    ax1 = f_3.add_subplot(2,2,1, projection='3d')
-    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'pressure Modulus',injectors,producers,gass)            
-
-       
-
-    look = ((wats[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1]    
-    ax2 = f_3.add_subplot(2,2,2, projection='3d')
-    Plot_Modulus(ax2,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'water Modulus',injectors,producers,gass)            
-
-
-        
-
-    look = oilss[0,kk,:,:,:]  
-    look = (look * effectiveuse)[:, :, ::-1] 
- 
-    ax3 = f_3.add_subplot(2,2,3, projection='3d')
-    Plot_Modulus(ax3,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'oil Modulus',injectors,producers,gass)            
-
-    
-    
-    look = (((gasss[0,kk,:,:,:]) )* effectiveuse)[:, :, ::-1]      
-    ax4 = f_3.add_subplot(2,2,4, projection='3d')
-    Plot_Modulus(ax4,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'gas Modulus',injectors,producers,gass)            
-
-
-
-
-    plt.tight_layout(rect = [0,0,1,0.95])
-
-    tita = 'Timestep --' + str(current_time) + ' days'
-    plt.suptitle(tita, fontsize=16)
-    plt.savefig('Dynamic' + str(int(kk)))
-    plt.clf()
-    plt.close()        
-    
-    
-progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk, steppi-1)
+Parallel(n_jobs=-1)(delayed(process_step)(kk, steppi, dt,pree, 
+                    effectiveuse,wats,oilss, 
+                    gasss,nx, ny, nz, N_injw, 
+                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
+                        
+progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
-time.sleep(1)      
+time.sleep(1) 
 
 
 print('-------------------------Creating GIF---------------------------------')
@@ -8492,63 +8506,15 @@ X_data1 = {'permeability':yes_best_k,\
 with gzip.open('BEST_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
 
-Time_vector = np.zeros((steppi)) 
-for kk in range(steppi):  
-    
-    
-    progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
-    ShowBar(progressBar)
-    time.sleep(1)       
-
-    current_time = dt[kk]
-    Time_vector[kk] = current_time
-
-    f_3 = plt.figure(figsize=(20, 20), dpi = 200)
-    
-    look = ((preebest[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1] 
-
-
-    ax1 = f_3.add_subplot(2,2,1, projection='3d')
-    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'pressure Modulus',injectors,producers,gass)            
-
-       
-
-    look = ((watsbest[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1]    
-    ax2 = f_3.add_subplot(2,2,2, projection='3d')
-    Plot_Modulus(ax2,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'water Modulus',injectors,producers,gass)            
-
-
-        
-
-    look = oilssbest[0,kk,:,:,:]  
-    look = (look * effectiveuse)[:, :, ::-1] 
- 
-    ax3 = f_3.add_subplot(2,2,3, projection='3d')
-    Plot_Modulus(ax3,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'oil Modulus',injectors,producers,gass)            
-
-    
-    
-    look = (((gasbest[0,kk,:,:,:]) )* effectiveuse)[:, :, ::-1]      
-    ax4 = f_3.add_subplot(2,2,4, projection='3d')
-    Plot_Modulus(ax4,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'gas Modulus',injectors,producers,gass)            
-
-
-    plt.tight_layout(rect = [0,0,1,0.95])
-
-    tita = 'Timestep --' + str(current_time) + ' days'
-    plt.suptitle(tita, fontsize=16)
-    plt.savefig('Dynamic' + str(int(kk)))
-    plt.clf()
-    plt.close()        
-    
-    
-progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk, steppi-1)
+Parallel(n_jobs=-1)(delayed(process_step)(kk, steppi, dt,preebest, 
+                    effectiveuse,watsbest,oilssbest, 
+                    gasbest,nx, ny, nz, N_injw, 
+                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
+                        
+progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
-time.sleep(1)          
+time.sleep(1)
+          
 
 print('Creating GIF')
 import glob
@@ -8630,62 +8596,14 @@ X_data1 = {'permeability':yes_mean_k,\
 with gzip.open('MEAN_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
     
-Time_vector = np.zeros((steppi)) 
-for kk in range(steppi):  
-    
-    
-    progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
-    ShowBar(progressBar)
-    time.sleep(1)       
-
-    current_time = dt[kk]
-    Time_vector[kk] = current_time
-
-    f_3 = plt.figure(figsize=(20, 20), dpi = 200)
-    
-    look = ((preebest[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1] 
-
-
-    ax1 = f_3.add_subplot(2,2,1, projection='3d')
-    Plot_Modulus(ax1,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'pressure Modulus',injectors,producers,gass)            
-
-       
-
-    look = ((watsbest[0,kk,:,:,:]) * effectiveuse)[:, :, ::-1]    
-    ax2 = f_3.add_subplot(2,2,2, projection='3d')
-    Plot_Modulus(ax2,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'water Modulus',injectors,producers,gass)            
-
-
-        
-
-    look = oilssbest[0,kk,:,:,:]  
-    look = (look * effectiveuse)[:, :, ::-1] 
- 
-    ax3 = f_3.add_subplot(2,2,3, projection='3d')
-    Plot_Modulus(ax3,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'oil Modulus',injectors,producers,gass)            
-
-    
-    
-    look = (((gasbest[0,kk,:,:,:]) )* effectiveuse)[:, :, ::-1]      
-    ax4 = f_3.add_subplot(2,2,4, projection='3d')
-    Plot_Modulus(ax4,nx,ny,nz,look,N_injw,N_pr,N_injg,
-    'gas Modulus',injectors,producers,gass)            
-
-
-    plt.tight_layout(rect = [0,0,1,0.95])
-
-    tita = 'Timestep --' + str(current_time) + ' days'
-    plt.suptitle(tita, fontsize=16)
-    plt.savefig('Dynamic' + str(int(kk)))
-    plt.clf()
-    plt.close()      
-    
-progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk, steppi-1)
+Parallel(n_jobs=-1)(delayed(process_step)(kk, steppi, dt,preebest, 
+                    effectiveuse,watsbest,oilssbest, 
+                    gasbest,nx, ny, nz, N_injw, 
+                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
+                        
+progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
-time.sleep(1)  
+time.sleep(1)
     
 print('Creating GIF')
 import glob
@@ -8854,4 +8772,15 @@ print('Inverse problem solution used =: ' + comment)
 print('Ensemble size = ', str(Ne))
 msg = "Execution took: %s secs (Wall clock time)" % timedelta(seconds=round(elapsed_time_secs))
 print(msg)
+textaa="""
+______                                                      _____                    _           _   _ _ 
+| ___ \                                                    |  ___|                  | |         | | | | |
+| |_/ _ __ ___   __ _ _ __ __ _ _ __ ___  _ __ ___   ___   | |____  _____  ___ _   _| |_ ___  __| | | | |
+|  __| '__/ _ \ / _` | '__/ _` | '_ ` _ \| '_ ` _ \ / _ \  |  __\ \/ / _ \/ __| | | | __/ _ \/ _` | | | |
+| |  | | | (_) | (_| | | | (_| | | | | | | | | | | |  __/  | |___>  |  __| (__| |_| | ||  __| (_| | |_|_|
+\_|  |_|  \___/ \__, |_|  \__,_|_| |_| |_|_| |_| |_|\___|  \____/_/\_\___|\___|\__,_|\__\___|\__,_| (_(_)
+                 __/ |                                                                                   
+                |___/                                                                                                                                                               
+"""
+print(textaa)  
 print('-------------------PROGRAM EXECUTED-----------------------------------')  

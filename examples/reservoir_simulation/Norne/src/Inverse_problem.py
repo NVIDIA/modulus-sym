@@ -7915,10 +7915,25 @@ while (snn<1):
 
     (V,X,U) = pinvmatt((Cdd + (cp.asarray(alpha)*cp.eye(CDd.shape[1]))),tol)
     
-    update_term=((Cyd@(X))@(inv_CDd)@((cp.tile(cp.asarray(True_dataa), Ne)\
-                                + (cp.sqrt(cp.asarray(alpha))*\
-                                cp.asarray(pertubations)))\
-                                  -Sim1 ))                                                  
+    pertubations_cu = cp.asarray(pertubations)
+    true_data_cu = cp.asarray(True_data)
+    alpha_cu = cp.asarray(alpha)
+    tile_true_ne = cp.tile(true_data_cu, Ne)
+    pertu_alpha = cp.sqrt(alpha_cu)*pertubations_cu
+    factor_sum = (tile_true_ne + pertu_alpha) - Sim1 
+    del pertubations_cu, true_data_cu, alpha_cu,Usig,Vsig
+    gc.collect()
+
+    #print(f"Cyd {Cyd.shape}, X {X.shape}, inv_CDd {inv_CDd.shape}")
+    update_term = Cyd@X
+    del Cyd, X
+    gc.collect()
+    update_term @=inv_CDd
+    del inv_CDd
+    gc.collect()
+    update_term @=factor_sum
+    del factor_sum
+    gc.collect()                                                
     if do_localisation == 1:
         
         if ii == 0:

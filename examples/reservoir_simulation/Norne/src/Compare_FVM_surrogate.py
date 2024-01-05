@@ -586,7 +586,7 @@ Accuracy_water = np.zeros((steppi,2))
 Accuracy_gas = np.zeros((steppi,2))
 
 
-results = Parallel(n_jobs=-1)(delayed(process_step)(kk, steppi, dt, pressure, 
+results = Parallel(n_jobs=6)(delayed(process_step)(kk, steppi, dt, pressure, 
                     effectiveuse, pressure_true, Swater, Swater_true, Soil, 
                     Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))

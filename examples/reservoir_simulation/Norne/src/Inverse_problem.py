@@ -135,6 +135,7 @@ from imresize import *
 import matplotlib.colors
 from matplotlib import cm
 import yaml
+import gc
 
 
 colors = [(0, 0, 0),(.3, .15, .75),(.6, .2, .50),(1, .25, .15),(.9, .5, 0),\
@@ -224,6 +225,7 @@ def ProgressBar(Total, Progress, BarLength=20, ProgressIcon="#", BarIcon="-"):
         return Bar
     except:
         return "ERROR"
+        
 def ProgressBar2(Total, Progress):
     try:
         # Calcuting progress between 0 and 1 for percentage.
@@ -238,6 +240,7 @@ def ProgressBar2(Total, Progress):
     except:
         print('')  
         return "ERROR"
+
 def ShowBar(Bar):
     sys.stdout.write(Bar)
     sys.stdout.flush()                 
@@ -562,7 +565,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
     and scales and converts them back to their original values. 
     Afterward, a new set of inputs for a secondary model (modelP2) is prepared 
     using the processed data. Finally, the function predicts outputs using the
-    modelP2 and returns the predicted values.  
+    modelP2 and returns the predicted values.    
     """  
     
     pressure = []
@@ -610,9 +613,9 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         innn = np.zeros((N,steppi,90))
     
     for i in range(N):  
-        progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i-1)
-        ShowBar(progressBar)
-        time.sleep(1)          
+        # progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i-1)
+        # ShowBar(progressBar)
+        # time.sleep(1)          
         ##INPUTS        
         permuse = perm[i,0,:,:,:]
         #Permeability    
@@ -760,7 +763,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         # ShowBar(progressBar)
         # time.sleep(1) 
 
-        clemes = Parallel(n_jobs=8, backend='loky', verbose=0)(
+        clemes = Parallel(n_jobs=8, backend='loky', verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
                 "../ML_MACHINE", oldfolder, pred_type, 3
@@ -782,9 +785,9 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         
         sim.append(use)
     sim = np.hstack(sim)  
-    progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i)
-    ShowBar(progressBar)
-    time.sleep(1)    
+    # progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i)
+    # ShowBar(progressBar)
+    # time.sleep(1)    
     return sim,ouut_p,pressure,Swater,Sgas,Soil
 
 

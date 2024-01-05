@@ -7781,7 +7781,70 @@ updated_ensemblep = ensemblep
 base_k = np.mean(ensemble,axis=1).reshape(-1,1)
 base_p = np.mean(ensemblep,axis=1).reshape(-1,1)
 base_f = np.mean(ensemblef,axis=1).reshape(-1,1)
-   
+
+text ="""
+                                                                                                                                                                                   
+                  RRRRRRRRRRRRRRRRR   EEEEEEEEEEEEEEEEEEEEEEKKKKKKKKK    KKKKKKKIIIIIIIIII
+                  R::::::::::::::::R  E::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+                  R::::::RRRRRR:::::R E::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+                  RR:::::R     R:::::REE::::::EEEEEEEEE::::EK:::::::K   K::::::KII::::::II
+  aaaaaaaaaaaaa     R::::R     R:::::R  E:::::E       EEEEEEKK::::::K  K:::::KKK  I::::I  
+  a::::::::::::a    R::::R     R:::::R  E:::::E               K:::::K K:::::K     I::::I  
+  aaaaaaaaa:::::a   R::::RRRRRR:::::R   E::::::EEEEEEEEEE     K::::::K:::::K      I::::I  
+           a::::a   R:::::::::::::RR    E:::::::::::::::E     K:::::::::::K       I::::I  
+    aaaaaaa:::::a   R::::RRRRRR:::::R   E:::::::::::::::E     K:::::::::::K       I::::I  
+  aa::::::::::::a   R::::R     R:::::R  E::::::EEEEEEEEEE     K::::::K:::::K      I::::I  
+ a::::aaaa::::::a   R::::R     R:::::R  E:::::E               K:::::K K:::::K     I::::I  
+a::::a    a:::::a   R::::R     R:::::R  E:::::E       EEEEEEKK::::::K  K:::::KKK  I::::I  
+a::::a    a:::::a RR:::::R     R:::::REE::::::EEEEEEEE:::::EK:::::::K   K::::::KII::::::II
+a:::::aaaa::::::a R::::::R     R:::::RE::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+ a::::::::::aa:::aR::::::R     R:::::RE::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+  aaaaaaaaaa  aaaaRRRRRRRR     RRRRRRREEEEEEEEEEEEEEEEEEEEEEKKKKKKKKK    KKKKKKKIIIIIIIIII
+"""
+print(text)
+
+if Trainmoe ==2:
+    texta ="""
+    PPPPPPPPPPPPPPPPP  IIIIIIIIINNNNNNNN        NNNNNNNN    OOOOOOOOO                              CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRRRRRRRRRRR   
+    P::::::::::::::::P I::::::::N:::::::N       N::::::N  OO:::::::::OO                         CCC::::::::::::C   CCC::::::::::::R::::::::::::::::R  
+    P::::::PPPPPP:::::PI::::::::N::::::::N      N::::::NOO:::::::::::::OO                     CC:::::::::::::::C CC:::::::::::::::R::::::RRRRRR:::::R 
+    PP:::::P     P:::::II::::::IN:::::::::N     N::::::O:::::::OOO:::::::O                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+      P::::P     P:::::P I::::I N::::::::::N    N::::::O::::::O   O::::::O                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+      P::::P     P:::::P I::::I N:::::::::::N   N::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::R     R:::::R
+      P::::PPPPPP:::::P  I::::I N:::::::N::::N  N::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::RRRRRR:::::R 
+      P:::::::::::::PP   I::::I N::::::N N::::N N::::::O:::::O     O:::::O --------------- C:::::C            C:::::C               R:::::::::::::RR  
+      P::::PPPPPPPPP     I::::I N::::::N  N::::N:::::::O:::::O     O:::::O -:::::::::::::- C:::::C            C:::::C               R::::RRRRRR:::::R 
+      P::::P             I::::I N::::::N   N:::::::::::O:::::O     O:::::O --------------- C:::::C            C:::::C               R::::R     R:::::R
+      P::::P             I::::I N::::::N    N::::::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::R     R:::::R
+      P::::P             I::::I N::::::N     N:::::::::O::::::O   O::::::O                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+    PP::::::PP         II::::::IN::::::N      N::::::::O:::::::OOO:::::::O                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+    P::::::::P         I::::::::N::::::N       N:::::::NOO:::::::::::::OO                     CC:::::::::::::::C CC:::::::::::::::R::::::R     R:::::R
+    P::::::::P         I::::::::N::::::N        N::::::N  OO:::::::::OO                         CCC::::::::::::C   CCC::::::::::::R::::::R     R:::::R
+    PPPPPPPPPP         IIIIIIIIINNNNNNNN         NNNNNNN    OOOOOOOOO                              CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRR     RRRRRRR
+                                                                                                                                                      
+    """
+    #print(texta)
+else:
+    texta ="""
+                                                                                                                                                          
+    PPPPPPPPPPPPPPPPP  IIIIIIIIINNNNNNNN        NNNNNNNN    OOOOOOOOO                      FFFFFFFFFFFFFFFFFFFFFNNNNNNNN        NNNNNNNN    OOOOOOOOO     
+    P::::::::::::::::P I::::::::N:::::::N       N::::::N  OO:::::::::OO                    F::::::::::::::::::::N:::::::N       N::::::N  OO:::::::::OO   
+    P::::::PPPPPP:::::PI::::::::N::::::::N      N::::::NOO:::::::::::::OO                  F::::::::::::::::::::N::::::::N      N::::::NOO:::::::::::::OO 
+    PP:::::P     P:::::II::::::IN:::::::::N     N::::::O:::::::OOO:::::::O                 FF::::::FFFFFFFFF::::N:::::::::N     N::::::O:::::::OOO:::::::O
+      P::::P     P:::::P I::::I N::::::::::N    N::::::O::::::O   O::::::O                   F:::::F       FFFFFN::::::::::N    N::::::O::::::O   O::::::O
+      P::::P     P:::::P I::::I N:::::::::::N   N::::::O:::::O     O:::::O                   F:::::F            N:::::::::::N   N::::::O:::::O     O:::::O
+      P::::PPPPPP:::::P  I::::I N:::::::N::::N  N::::::O:::::O     O:::::O                   F::::::FFFFFFFFFF  N:::::::N::::N  N::::::O:::::O     O:::::O
+      P:::::::::::::PP   I::::I N::::::N N::::N N::::::O:::::O     O:::::O ---------------   F:::::::::::::::F  N::::::N N::::N N::::::O:::::O     O:::::O
+      P::::PPPPPPPPP     I::::I N::::::N  N::::N:::::::O:::::O     O:::::O -:::::::::::::-   F:::::::::::::::F  N::::::N  N::::N:::::::O:::::O     O:::::O
+      P::::P             I::::I N::::::N   N:::::::::::O:::::O     O:::::O ---------------   F::::::FFFFFFFFFF  N::::::N   N:::::::::::O:::::O     O:::::O
+      P::::P             I::::I N::::::N    N::::::::::O:::::O     O:::::O                   F:::::F            N::::::N    N::::::::::O:::::O     O:::::O
+      P::::P             I::::I N::::::N     N:::::::::O::::::O   O::::::O                   F:::::F            N::::::N     N:::::::::O::::::O   O::::::O
+    PP::::::PP         II::::::IN::::::N      N::::::::O:::::::OOO:::::::O                 FF:::::::FF          N::::::N      N::::::::O:::::::OOO:::::::O
+    P::::::::P         I::::::::N::::::N       N:::::::NOO:::::::::::::OO                  F::::::::FF          N::::::N       N:::::::NOO:::::::::::::OO 
+    P::::::::P         I::::::::N::::::N        N::::::N  OO:::::::::OO                    F::::::::FF          N::::::N        N::::::N  OO:::::::::OO   
+    PPPPPPPPPP         IIIIIIIIINNNNNNNN         NNNNNNN    OOOOOOOOO                      FFFFFFFFFFF          NNNNNNNN         NNNNNNN    OOOOOOOOO   
+    """
+print(texta)
 
 while (snn<1):        
     print( 'Iteration --' + str(ii+1) +' | ' + str(Termm))

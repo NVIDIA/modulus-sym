@@ -549,16 +549,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
     and scales and converts them back to their original values. 
     Afterward, a new set of inputs for a secondary model (modelP2) is prepared 
     using the processed data. Finally, the function predicts outputs using the
-    modelP2 and returns the predicted values.
-    texta1 = """
-     _   _       _     _ _             ___  ___          _       _           
-    | \ | |     (_)   | (_)            |  \/  |         | |     | |          
-    |  \| __   ___  __| |_  __ _ ______| .  . | ___   __| |_   _| |_   _ ___ 
-    | . ` \ \ / | |/ _` | |/ _` |______| |\/| |/ _ \ / _` | | | | | | | / __|
-    | |\  |\ V /| | (_| | | (_| |      | |  | | (_) | (_| | |_| | | |_| \__ \
-    \_| \_/ \_/ |_|\__,_|_|\__,_|      \_|  |_/\___/ \__,_|\__,_|_|\__,_|___/
-    """
-    #print(texta1)    
+    modelP2 and returns the predicted values.  
     """  
     
     pressure = []
@@ -8765,10 +8756,15 @@ print('--------------------SECTION ADAPTIVE REKI ENDED--------------------------
 elapsed_time_secs = time.time() - start_time
 
 
-comment = 'ADAPT_REKI (Vanilla Adaptive Ensemble Kalman Inversion)'
+comment = 'Adaptive Regularised Ensemble Kalman Inversion'
 
+if Trainmoe ==2:
+    comment2 = 'PINO-CCR'
+else:
+    comment2 = 'PINO-FNO'
 
 print('Inverse problem solution used =: ' + comment)
+print('Forward model surrogate =: ' + comment2)
 print('Ensemble size = ', str(Ne))
 msg = "Execution took: %s secs (Wall clock time)" % timedelta(seconds=round(elapsed_time_secs))
 print(msg)

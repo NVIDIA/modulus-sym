@@ -5822,7 +5822,8 @@ Time = np.stack(Time, axis=0)
 # os.chdir(oldfolder)
 
 
-_,out_fcn_true = Get_data_FFNN1(folder,oldfolder2,N,pressure_true,Sgas_true,Swater_true,permeability,Time,steppi,steppi_indices)
+_,out_fcn_true = Get_data_FFNN1(folder,oldfolder2,N,pressure_true,Sgas_true,
+                                Swater_true,permeability,Time,steppi,steppi_indices)
 
 folderrr = ('../True_Flow')
 rmtree(folderrr)
@@ -6064,37 +6065,25 @@ Accuracy_water = np.zeros((steppi,2))
 Accuracy_gas = np.zeros((steppi,2))
 
 
-results = Parallel(n_jobs=njobs, backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt, pressure, 
+results = Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt, pressure, 
                     effectiveuse, pressure_true, Swater, Swater_true, Soil, 
                     Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
-
-# for kk in range(steppi):
-#     Accuracy_presure[kk, 0],
-#     Accuracy_presure[kk, 1],
-#     Accuracy_water[kk, 0],
-#     Accuracy_water[kk, 1],
-#     Accuracy_oil[kk, 0],
-#     Accuracy_oil[kk, 1],
-#     Accuracy_gas[kk, 0],
-#     Accuracy_gas[kk, 1] = process_step(kk, steppi, dt, pressure, 
-#                         effectiveuse, pressure_true, Swater, Swater_true, Soil, 
-#                         Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
-#                         N_pr, N_injg, injectors, producers, gass)    
+   
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
 time.sleep(1) 
 
-# # Aggregating results
-# for kk, (R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g) in enumerate(results):
-#     Accuracy_presure[kk, 0] = R2p
-#     Accuracy_presure[kk, 1] = L2p
-#     Accuracy_water[kk, 0] = R2w
-#     Accuracy_water[kk, 1] = L2w
-#     Accuracy_oil[kk, 0] = R2o
-#     Accuracy_oil[kk, 1] = L2o
-#     Accuracy_gas[kk, 0] = R2g
-#     Accuracy_gas[kk, 1] = L2g
+# Aggregating results
+for kk, (R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g) in enumerate(results):
+    Accuracy_presure[kk, 0] = R2p
+    Accuracy_presure[kk, 1] = L2p
+    Accuracy_water[kk, 0] = R2w
+    Accuracy_water[kk, 1] = L2w
+    Accuracy_oil[kk, 0] = R2o
+    Accuracy_oil[kk, 1] = L2o
+    Accuracy_gas[kk, 0] = R2g
+    Accuracy_gas[kk, 1] = L2g
 
 
 fig4 = plt.figure(figsize=(20, 20), dpi = 100)

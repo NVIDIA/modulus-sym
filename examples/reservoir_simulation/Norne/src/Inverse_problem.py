@@ -763,7 +763,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         # ShowBar(progressBar)
         # time.sleep(1) 
 
-        clemes = Parallel(n_jobs=16, backend='loky', verbose=10)(
+        clemes = Parallel(n_jobs=num_cores, backend='loky', verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
                 "../ML_MACHINE", oldfolder, pred_type, 3
@@ -7073,6 +7073,10 @@ oldfolder = os.getcwd()
 os.chdir(oldfolder)
 cur_dir = oldfolder
 
+num_cores = multiprocessing.cpu_count()
+njobs = num_cores // 2
+num_cores = njobs
+
 print('------------------Download pre-trained models------------------------')
 if not os.path.exists('../PACKETS'):
     os.makedirs('../PACKETS')
@@ -7373,8 +7377,7 @@ if Trainmoe ==2:
 else:
     pred_type = 1    
 degg=3
-njobs = 12
-num_cores = njobs# multiprocessing.cpu_count()
+
 
 rho = 1.05
 

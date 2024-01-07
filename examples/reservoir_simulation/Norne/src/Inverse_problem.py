@@ -8413,7 +8413,7 @@ for kk in range(steppi):
     Time_vector[kk] = current_time
     
 
-Parallel(n_jobs=6)(delayed(process_step)(kk, steppi, dt,pree, 
+Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt,pree, 
                     effectiveuse,wats,oilss, 
                     gasss,nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
@@ -8508,7 +8508,7 @@ X_data1 = {'permeability':yes_best_k,\
 with gzip.open('BEST_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
 
-Parallel(n_jobs=6)(delayed(process_step)(kk, steppi, dt,preebest, 
+Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
@@ -8598,7 +8598,7 @@ X_data1 = {'permeability':yes_mean_k,\
 with gzip.open('MEAN_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
     
-Parallel(n_jobs=6)(delayed(process_step)(kk, steppi, dt,preebest, 
+Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))

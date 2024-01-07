@@ -3414,7 +3414,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         # time.sleep(1) 
 
         
-        clemes = Parallel(n_jobs=6, backend='loky', verbose=10)(
+        clemes = Parallel(n_jobs=num_cores, backend='loky', verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
                 "../ML_MACHINE", oldfolder, pred_type, 3

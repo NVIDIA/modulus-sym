@@ -221,7 +221,10 @@ else:
     os.makedirs('../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION')
   
 degg=3
-num_cores = 6
+#num_cores = 6
+num_cores = multiprocessing.cpu_count()
+njobs = num_cores // 2
+num_cores = njobs
 print('')
 
 
@@ -586,7 +589,7 @@ Accuracy_water = np.zeros((steppi,2))
 Accuracy_gas = np.zeros((steppi,2))
 
 
-results = Parallel(n_jobs=6)(delayed(process_step)(kk, steppi, dt, pressure, 
+results = Parallel(n_jobs=njobs, backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt, pressure, 
                     effectiveuse, pressure_true, Swater, Swater_true, Soil, 
                     Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
@@ -697,8 +700,6 @@ for f3 in glob("*Dynamic*"):
     os.remove(f3)
          
 #os.chdir(oldfolder)
-
-
 
 print('')
 print('Saving prediction in CSV file')

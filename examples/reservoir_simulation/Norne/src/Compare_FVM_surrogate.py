@@ -5565,7 +5565,8 @@ def save_response_content(response, destination):
 def process_step(kk, steppi, dt, pressure, effectiveuse, 
                  pressure_true, Swater, Swater_true, Soil, Soil_true, 
                  Sgas, Sgas_true, nx, ny, nz, N_injw, N_pr, N_injg, 
-                 injectors, producers, gass):
+                 injectors, producers, gass,fol,fol1):
+    os.chdir(fol)
     progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
     ShowBar(progressBar)
     time.sleep(1)     
@@ -5658,6 +5659,7 @@ def process_step(kk, steppi, dt, pressure, effectiveuse,
     plt.clf()
     plt.close()
     return R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g
+    os.chdir(fol1)
 
 
 oldfolder = os.getcwd()
@@ -5698,7 +5700,7 @@ else:
 degg=3
 #num_cores = 6
 num_cores = multiprocessing.cpu_count()
-njobs = num_cores // 2
+njobs = (num_cores // 4) -1
 num_cores = njobs
 print('')
 
@@ -6054,7 +6056,7 @@ os.chdir(oldfolder)
 dt = Time_unie
 print('') 
 print('Plotting outputs')
-os.chdir(folderr) 
+
 
 Runs = steppi
 ty = np.arange(1,Runs+1) 
@@ -6065,10 +6067,12 @@ Accuracy_water = np.zeros((steppi,2))
 Accuracy_gas = np.zeros((steppi,2))
 
 
-results = Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt, pressure, 
+results = Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt, pressure, 
                     effectiveuse, pressure_true, Swater, Swater_true, Soil, 
                     Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
-                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
+                    N_pr, N_injg, 
+                    injectors, producers, 
+                    gass,folderr,oldfolder) for kk in range(steppi))
    
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
@@ -6085,7 +6089,7 @@ for kk, (R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g) in enumerate(results):
     Accuracy_gas[kk, 0] = R2g
     Accuracy_gas[kk, 1] = L2g
 
-
+os.chdir(folderr) 
 fig4 = plt.figure(figsize=(20, 20), dpi = 100)
 font = FontProperties()
 font.set_family('Helvetica')

@@ -7006,7 +7006,8 @@ def Localisation(c,nx,ny,nz,N):
 def process_step(kk, steppi, dt,pressure, effectiveuse, 
                  Swater,Soil, 
                  Sgas, nx, ny, nz, N_injw, N_pr, N_injg, 
-                 injectors, producers, gass):
+                 injectors, producers, gass,fol,fol1):
+    os.chdir(fol)
     progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
     ShowBar(progressBar)
     time.sleep(1)     
@@ -7055,6 +7056,7 @@ def process_step(kk, steppi, dt,pressure, effectiveuse,
     plt.savefig('Dynamic' + str(int(kk)))
     plt.clf()
     plt.close()
+    os.chdir(fol1)
 
 
 ##############################################################################
@@ -7073,8 +7075,8 @@ oldfolder = os.getcwd()
 os.chdir(oldfolder)
 cur_dir = oldfolder
 
-num_cores = multiprocessing.cpu_count()
-njobs = num_cores // 2
+
+njobs = int((multiprocessing.cpu_count() // 4) - 1)
 num_cores = njobs
 
 print('------------------Download pre-trained models------------------------')
@@ -7206,7 +7208,7 @@ else:     # If CUDA is not available, use the CPU
 torch.cuda.set_device(device) 
 
 
-input_channel = 5#[K,F,Fw,phi,dt,Pini,Sini] 
+input_channel = 5#[K,phi,FTM,Pini,Sini] 
 output_channel = 1 * steppi 
 
 
@@ -8396,7 +8398,7 @@ _,yycheck,pree,wats,oilss,gasss = \
 os.chdir('../HM_RESULTS/ADAPT_REKI') 
 Plot_RSM_single(yycheck,Time_unie1)
 Plot_petrophysical(controlbest,controlbestp,nx,ny,nz,Low_K1,High_K1)
-#os.chdir(oldfolder)
+
 
 X_data1 = {'permeability':controlbest,\
 'porosity':controlbestp,\
@@ -8405,6 +8407,7 @@ X_data1 = {'permeability':controlbest,\
     
 with gzip.open('RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
+os.chdir(oldfolder)
 
 Time_vector = np.zeros((steppi)) 
 
@@ -8413,16 +8416,19 @@ for kk in range(steppi):
     Time_vector[kk] = current_time
     
 
-Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt,pree, 
+Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt,pree, 
                     effectiveuse,wats,oilss, 
                     gasss,nx, ny, nz, N_injw, 
-                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
+                    N_pr, N_injg, 
+                    injectors, producers, 
+                    gass,'../HM_RESULTS/ADAPT_REKI',oldfolder) for kk in range(steppi))
                         
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
 time.sleep(1) 
 
 
+os.chdir('../HM_RESULTS/ADAPT_REKI')
 print('-------------------------Creating GIF---------------------------------')
 import glob
 frames = []
@@ -8487,6 +8493,7 @@ ensemblepy = ensemble_pytorch(yes_best_k,yes_best_p,yes_best_f,\
                      minT,maxT,minP,maxP,minQ,maxQ,minQw,maxQw,minQg,\
                     maxQg,steppi,device,steppi_indices)        
 
+os.chdir(oldfolder)
 mazw = 0 # Dont smooth the presure field
 _,yycheck,preebest,watsbest,oilssbest,gasbest = \
     Forward_model_ensemble(controlbest2.shape[1],\
@@ -8508,16 +8515,21 @@ X_data1 = {'permeability':yes_best_k,\
 with gzip.open('BEST_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
 
-Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt,preebest, 
+os.chdir(oldfolder)
+
+Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
-                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
+                    N_pr, N_injg, injectors, 
+                    producers, 
+                    gass,'../HM_RESULTS/BEST_RESERVOIR_MODEL',oldfolder ) for kk in range(steppi))
                         
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
 time.sleep(1)
           
 
+os.chdir('../HM_RESULTS/BEST_RESERVOIR_MODEL' )
 print('Creating GIF')
 import glob
 frames = []
@@ -8543,6 +8555,8 @@ write_RSM(yycheck[0,:,:66],Time_vector,'Modulus')
 Plot_RSM_percentile_model(yycheck[0,:,:66],True_mat,Time_unie1)  
 
 os.chdir(oldfolder) 
+
+
 yycheck = yycheck[0,:,:66]
 #usesim=yycheck[:,1:]
 Oilz = yycheck[:,:22]/scalei
@@ -8577,6 +8591,7 @@ ensemblepy = ensemble_pytorch(yes_mean_k,yes_mean_p,yes_mean_f,\
     
     
 
+os.chdir(oldfolder)
 mazw = 0 # Dont smooth the presure field
 _,yycheck,preebest,watsbest,oilssbest,gasbest = \
     Forward_model_ensemble(controlbest2.shape[1],\
@@ -8597,16 +8612,21 @@ X_data1 = {'permeability':yes_mean_k,\
     
 with gzip.open('MEAN_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
+
+os.chdir(oldfolder )
     
-Parallel(n_jobs=4)(delayed(process_step)(kk, steppi, dt,preebest, 
+Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
-                    N_pr, N_injg, injectors, producers, gass) for kk in range(steppi))
+                    N_pr, N_injg, injectors, 
+                    producers, 
+                    gass,'../HM_RESULTS/MEAN_RESERVOIR_MODEL',oldfolder) for kk in range(steppi))
                         
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
 time.sleep(1)
-    
+
+os.chdir('../HM_RESULTS/MEAN_RESERVOIR_MODEL')   
 print('Creating GIF')
 import glob
 frames = []
@@ -8632,7 +8652,8 @@ write_RSM(yycheck[0,:,:66],Time_vector,'Modulus')
 Plot_RSM_percentile_model(yycheck[0,:,:66],True_mat,Time_unie1)       
     
 
-os.chdir(oldfolder) 
+os.chdir(oldfolder)
+ 
 yycheck = yycheck[0,:,:66]
 #usesim=yycheck[:,1:]
 Oilz = yycheck[:,:22]/scalei
@@ -8688,6 +8709,7 @@ ensemblepy = ensemble_pytorch(ensembleout1,ensembleoutp1,ensembleoutf1,\
                              minT,maxT,minP,maxP,minQ,maxQ,minQw,maxQw,minQg,\
                             maxQg,steppi,device,steppi_indices) 
 
+os.chdir(oldfolder)
 mazw = 0 # Dont smooth the presure field
 _,yzout,pressure_percentile,water_percentile,oil_percentile,gas_percentile = \
     Forward_model_ensemble(ensembleoutf1.shape[1],\

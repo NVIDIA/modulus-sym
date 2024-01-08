@@ -284,159 +284,159 @@ def endit(i, testt, training_master, oldfolder, pred_type, degg):
     return clemzz
 
 
-def fit_machine (a0, b0):
-    model =xgb.XGBRegressor(n_estimators=4000)
-    model.fit(a0,b0)
+def fit_machine(a0, b0):
+    model = xgb.XGBRegressor(n_estimators=4000)
+    model.fit(a0, b0)
     return model
-        
-def predict_machine(a0,model):
+
+
+def predict_machine(a0, model):
     ynew = model.predict(xgb.DMatrix(a0))
 
-    return ynew     
+    return ynew
 
-def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg):
-    #print('Starting CCR')
-    model=xgb.XGBClassifier(n_estimators=4000)
-    #import numpy as np
-    #import pickle
-    X=inpuutj
-    y=outputtj
-    numruth = len(X[0])    
-    
-    y_traind=y
+
+def CCR_Machine(inpuutj, outputtj, ii, training_master, oldfolder, degg):
+    # print('Starting CCR')
+    model = xgb.XGBClassifier(n_estimators=4000)
+    # import numpy as np
+    # import pickle
+    X = inpuutj
+    y = outputtj
+    numruth = len(X[0])
+
+    y_traind = y
     scaler1a = MinMaxScaler(feature_range=(0, 1))
     (scaler1a.fit(X))
-    X=(scaler1a.transform(X))
+    X = scaler1a.transform(X)
     scaler2a = MinMaxScaler(feature_range=(0, 1))
-    (scaler2a.fit(y))    
-    y=(scaler2a.transform(y))
-    yruth=y
+    (scaler2a.fit(y))
+    y = scaler2a.transform(y)
+    yruth = y
     os.chdir(training_master)
-    filenamex='clfx_%d.asv'%ii
-    filenamey='clfy_%d.asv'%ii    
-    pickle.dump(scaler1a, open(filenamex, 'wb'))
-    pickle.dump(scaler2a, open(filenamey, 'wb'))
-    os.chdir(oldfolder)    
-    y_traind=numruth*10*y
-    matrix=np.concatenate((X,y_traind), axis=1)
-    k=getoptimumk(matrix,ii,training_master,oldfolder)
-    nclusters=k
-    #nclusters=3
-    print ('Optimal k is: ', nclusters)
-    kmeans =MiniBatchKMeans(n_clusters=nclusters,max_iter=2000).fit(matrix)
-    filename='Clustering_%d.asv'%ii
-    os.chdir(training_master)
-    pickle.dump(kmeans, open(filename, 'wb'))
+    filenamex = "clfx_%d.asv" % ii
+    filenamey = "clfy_%d.asv" % ii
+    pickle.dump(scaler1a, open(filenamex, "wb"))
+    pickle.dump(scaler2a, open(filenamey, "wb"))
     os.chdir(oldfolder)
-    dd=kmeans.labels_
-    dd=dd.T
-    dd=np.reshape(dd,(-1,1))
-    #-------------------#---------------------------------#
-    inputtrainclass=X
-    outputtrainclass=np.reshape(dd,(-1,1))
-    run_model(model,inputtrainclass,outputtrainclass,ii,\
-                     training_master,oldfolder)        
-    #print('Split for classifier problem')
-    X_train=X
-    y_train=dd
-    #-------------------Regression----------------#
-    #print('Learn regression of the clusters with different labels from k-means ' )
-    
-    for i in range(nclusters):
-        print('-- Learning cluster: ' + str(i+1) + ' | ' + str(nclusters)) 
-        label0=(np.asarray(np.where(y_train == i))).T
-        #model0=xgb.XGBRegressor(n_estimators=2000)
-        #model0=np.empty([1,2],dtype=object)
-		
-        a0=X_train[label0[:,0],:]
-        a0=np.reshape(a0,(-1,numruth),'F')
-        b0=yruth[label0[:,0],:]
-        b0=np.reshape(b0,(-1,1),'F')
-        if a0.shape[0]!=0 and b0.shape[0]!=0:
-            #model0.fit(a0, b0,verbose=False)
-            theta =fit_machine (a0, b0)
+    y_traind = numruth * 10 * y
+    matrix = np.concatenate((X, y_traind), axis=1)
+    k = getoptimumk(matrix, ii, training_master, oldfolder)
+    nclusters = k
+    # nclusters=3
+    print("Optimal k is: ", nclusters)
+    kmeans = MiniBatchKMeans(n_clusters=nclusters, max_iter=2000).fit(matrix)
+    filename = "Clustering_%d.asv" % ii
+    os.chdir(training_master)
+    pickle.dump(kmeans, open(filename, "wb"))
+    os.chdir(oldfolder)
+    dd = kmeans.labels_
+    dd = dd.T
+    dd = np.reshape(dd, (-1, 1))
+    # -------------------#---------------------------------#
+    inputtrainclass = X
+    outputtrainclass = np.reshape(dd, (-1, 1))
+    run_model(model, inputtrainclass, outputtrainclass, ii, training_master, oldfolder)
+    # print('Split for classifier problem')
+    X_train = X
+    y_train = dd
+    # -------------------Regression----------------#
+    # print('Learn regression of the clusters with different labels from k-means ' )
 
-        filename="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
+    for i in range(nclusters):
+        print("-- Learning cluster: " + str(i + 1) + " | " + str(nclusters))
+        label0 = (np.asarray(np.where(y_train == i))).T
+        # model0=xgb.XGBRegressor(n_estimators=2000)
+        # model0=np.empty([1,2],dtype=object)
+
+        a0 = X_train[label0[:, 0], :]
+        a0 = np.reshape(a0, (-1, numruth), "F")
+        b0 = yruth[label0[:, 0], :]
+        b0 = np.reshape(b0, (-1, 1), "F")
+        if a0.shape[0] != 0 and b0.shape[0] != 0:
+            # model0.fit(a0, b0,verbose=False)
+            theta = fit_machine(a0, b0)
+
+        filename = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
         os.chdir(training_master)
-        #sio.savemat(filename, {'model0':model0})
-        theta.save_model(filename) 
+        # sio.savemat(filename, {'model0':model0})
+        theta.save_model(filename)
         os.chdir(oldfolder)
     return nclusters
-    #print('Finished CCR')
-    
-def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
-                            training_master,oldfolder,pred_type,deg):
-    #import numpy as np
+    # print('Finished CCR')
+
+
+def PREDICTION_CCR__MACHINE(
+    ii, nclusters, inputtest, numcols, training_master, oldfolder, pred_type, deg
+):
+    # import numpy as np
     # ii=0
     # nclusters=2
-    #inputtest=X_test2
-    print('Starting Prediction')
-    filename1='Classifier_%d.bin'%ii
-    filenamex='clfx_%d.asv'%ii
-    filenamey='clfy_%d.asv'%ii      
+    # inputtest=X_test2
+    print("Starting Prediction")
+    filename1 = "Classifier_%d.bin" % ii
+    filenamex = "clfx_%d.asv" % ii
+    filenamey = "clfy_%d.asv" % ii
     os.chdir(training_master)
-    loaded_model = xgb.Booster({'nthread': 4})  # init model
-    clfx = pickle.load(open(filenamex, 'rb'))
-    clfy = pickle.load(open(filenamey, 'rb'))  
-    loaded_model.load_model(filename1)  # load data    
+    loaded_model = xgb.Booster({"nthread": 4})  # init model
+    clfx = pickle.load(open(filenamex, "rb"))
+    clfy = pickle.load(open(filenamey, "rb"))
+    loaded_model.load_model(filename1)  # load data
     os.chdir(oldfolder)
-    inputtest=(clfx.transform(inputtest))
+    inputtest = clfx.transform(inputtest)
     labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
-    if nclusters==2:
-        labelDAX=1-labelDA
-        labelDA=np.reshape(labelDA,(-1,1))
-        labelDAX=np.reshape(labelDAX,(-1,1))
-        labelDA=np.concatenate((labelDAX,labelDA), axis=1)
-        
-    numrowstest=len(inputtest)
-    clementanswer=np.zeros((numrowstest,1))
-    #numcols=13
-    if pred_type==1: #Hard prediction
-        labelDA=np.argmax(labelDA, axis=-1)
-        labelDA=np.reshape(labelDA,(-1,1),'F')
+    if nclusters == 2:
+        labelDAX = 1 - labelDA
+        labelDA = np.reshape(labelDA, (-1, 1))
+        labelDAX = np.reshape(labelDAX, (-1, 1))
+        labelDA = np.concatenate((labelDAX, labelDA), axis=1)
+
+    numrowstest = len(inputtest)
+    clementanswer = np.zeros((numrowstest, 1))
+    # numcols=13
+    if pred_type == 1:  # Hard prediction
+        labelDA = np.argmax(labelDA, axis=-1)
+        labelDA = np.reshape(labelDA, (-1, 1), "F")
         for i in range(nclusters):
-            print('-- Predicting cluster: ' + str(i) + ' | ' + str(nclusters)) 
-            loaded_modelr = xgb.Booster({'nthread': 4})  # init model
-            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
-             
+            print("-- Predicting cluster: " + str(i) + " | " + str(nclusters))
+            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
 
             os.chdir(training_master)
             loaded_modelr.load_model(filename2)  # load data
-              
 
             os.chdir(oldfolder)
-            labelDA0=(np.asarray(np.where(labelDA == i))).T
-    #    ##----------------------##------------------------##
-            a00=inputtest[labelDA0[:,0],:]
-            a00=np.reshape(a00,(-1,numcols),'F')
-            if a00.shape[0]!=0:
-                clementanswer[labelDA0[:,0],:]=np.reshape\
-                    (predict_machine(a00,loaded_modelr),(-1,1))
-            
-        clementanswer=clfy.inverse_transform(clementanswer)
-    else: #soft prediction
-    #deg=4
-        big_out=np.zeros((numrowstest,nclusters))
+            labelDA0 = (np.asarray(np.where(labelDA == i))).T
+            #    ##----------------------##------------------------##
+            a00 = inputtest[labelDA0[:, 0], :]
+            a00 = np.reshape(a00, (-1, numcols), "F")
+            if a00.shape[0] != 0:
+                clementanswer[labelDA0[:, 0], :] = np.reshape(
+                    predict_machine(a00, loaded_modelr), (-1, 1)
+                )
+
+        clementanswer = clfy.inverse_transform(clementanswer)
+    else:  # soft prediction
+        # deg=4
+        big_out = np.zeros((numrowstest, nclusters))
         for i in range(nclusters):
-            print('-- predicting cluster: ' + str(i+1) + ' | ' + str(nclusters)) 
-            loaded_modelr = xgb.Booster({'nthread': 4})  # init model
-            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
+            print("-- predicting cluster: " + str(i + 1) + " | " + str(nclusters))
+            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
             os.chdir(training_master)
-            loaded_modelr.load_model(filename2)  # load data                
+            loaded_modelr.load_model(filename2)  # load data
             os.chdir(oldfolder)
-            aa=np.reshape\
-                    (predict_machine(inputtest,loaded_modelr),(-1,1))
-            aanew=np.multiply(aa,np.reshape(labelDA[:,i],(-1,1)))
-            big_out[:,i]=np.ravel(aanew)
-        clementanswer=np.reshape(np.sum(big_out,axis=1),(-1,1),'F')
-        #clementanswer=clfy.inverse_transform(clementanswer)
+            aa = np.reshape(predict_machine(inputtest, loaded_modelr), (-1, 1))
+            aanew = np.multiply(aa, np.reshape(labelDA[:, i], (-1, 1)))
+            big_out[:, i] = np.ravel(aanew)
+        clementanswer = np.reshape(np.sum(big_out, axis=1), (-1, 1), "F")
+        # clementanswer=clfy.inverse_transform(clementanswer)
     return clementanswer
-    print('Finished prediction')	
-
+    print("Finished prediction")
 
 
 # ------------------Begin Code-------------------------------------------------------------------#
-texta ="""
+texta = """
 MMMMMMMM               MMMMMMMM               EEEEEEEEEEEEEEEEEEEEEE                         CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRRRRRRRRRRR   
 M:::::::M             M:::::::M               E::::::::::::::::::::E                      CCC::::::::::::C   CCC::::::::::::R::::::::::::::::R  
 M::::::::M           M::::::::M               E::::::::::::::::::::E                    CC:::::::::::::::C CC:::::::::::::::R::::::RRRRRR:::::R 
@@ -567,10 +567,10 @@ inputsz = range(Y.shape[1])
 num_cores = 12  # multiprocessing.cpu_count()
 
 
-    
-bigs = Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(
-    startit)\
-    (ib,outpuut2,inpuut2,trainingmaster,oldfolder,degg)for ib in inputsz )
+bigs = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
+    delayed(startit)(ib, outpuut2, inpuut2, trainingmaster, oldfolder, degg)
+    for ib in inputsz
+)
 
 big = np.vstack(bigs)
 
@@ -588,10 +588,19 @@ cluster_all = np.genfromtxt("clustersizescost.dat", dtype="float")
 cluster_all = np.reshape(cluster_all, (-1, 1), "F")
 os.chdir(oldfolder)
 
-clemes=Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(
-    PREDICTION_CCR__MACHINE)(ib,int(cluster_all[ib,:]),X_test2,X.shape[1],\
-                trainingmaster,oldfolder,pred_type,degg)\
-        for ib in inputsz)
+clemes = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
+    delayed(PREDICTION_CCR__MACHINE)(
+        ib,
+        int(cluster_all[ib, :]),
+        X_test2,
+        X.shape[1],
+        trainingmaster,
+        oldfolder,
+        pred_type,
+        degg,
+    )
+    for ib in inputsz
+)
 outputpredenergy = np.hstack(clemes)
 
 print(" ")

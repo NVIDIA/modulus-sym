@@ -151,6 +151,7 @@ from imresize import *
 import matplotlib.colors
 from matplotlib import cm
 import yaml
+import gc
 
 
 colors = [
@@ -257,6 +258,22 @@ def ProgressBar(Total, Progress, BarLength=20, ProgressIcon="#", BarIcon="-"):
         )
         return Bar
     except:
+        return "ERROR"
+
+
+def ProgressBar2(Total, Progress):
+    try:
+        # Calcuting progress between 0 and 1 for percentage.
+        Progress = float(Progress) / float(Total)
+        # Doing this conditions at final progressing.
+        if Progress >= 1.0:
+            Progress = 1
+            # Show the completed status
+            return "100%"
+        # Show the percentage of completion
+        return "{:.0f}%".format(round(Progress * 100, 0))
+    except:
+        print("")
         return "ERROR"
 
 
@@ -684,7 +701,9 @@ def Forward_model_ensemble(
         innn = np.zeros((N, steppi, 90))
 
     for i in range(N):
-
+        # progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i-1)
+        # ShowBar(progressBar)
+        # time.sleep(1)
         ##INPUTS
         permuse = perm[i, 0, :, :, :]
         # Permeability
@@ -856,7 +875,7 @@ def Forward_model_ensemble(
         # ShowBar(progressBar)
         # time.sleep(1)
 
-        clemes = Parallel(n_jobs=8, backend="loky", verbose=10)(
+        clemes = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib,
                 int(cluster_all[ib, :]),
@@ -886,6 +905,9 @@ def Forward_model_ensemble(
 
         sim.append(use)
     sim = np.hstack(sim)
+    # progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i)
+    # ShowBar(progressBar)
+    # time.sleep(1)
     return sim, ouut_p, pressure, Swater, Sgas, Soil
 
 
@@ -911,7 +933,11 @@ def KalmanGain(G, params, Gamma, N, alpha):
 def PREDICTION_CCR__MACHINE(
     ii, nclusters, inputtest, numcols, training_master, oldfolder, pred_type, deg
 ):
-
+    # import numpy as np
+    # ii=0
+    # nclusters=2
+    # inputtest=X_test2
+    # print('Starting Prediction')
     filename1 = "Classifier_%d.bin" % ii
     filenamex = "clfx_%d.asv" % ii
     filenamey = "clfy_%d.asv" % ii
@@ -936,17 +962,12 @@ def PREDICTION_CCR__MACHINE(
         labelDA = np.argmax(labelDA, axis=-1)
         labelDA = np.reshape(labelDA, (-1, 1), "F")
         for i in range(nclusters):
-            # print('-- Predicting cluster: ' + str(i+1) + ' | ' + str(nclusters))
-            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
-            filename2a = "Regressor_Features_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
-            os.chdir(training_master)
-            # Load the model
-            with open(filename2, "rb") as model_file:
-                model0 = pickle.load(model_file)
+            # print('-- Predicting cluster: ' + str(i) + ' | ' + str(nclusters))
+            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
 
-            # Load the transformer
-            with open(filename2a, "rb") as transformer_file:
-                modell0 = pickle.load(transformer_file)
+            os.chdir(training_master)
+            loaded_modelr.load_model(filename2)  # load data
 
             os.chdir(oldfolder)
             labelDA0 = (np.asarray(np.where(labelDA == i))).T
@@ -955,7 +976,7 @@ def PREDICTION_CCR__MACHINE(
             a00 = np.reshape(a00, (-1, numcols), "F")
             if a00.shape[0] != 0:
                 clementanswer[labelDA0[:, 0], :] = np.reshape(
-                    predict_machine11(a00, deg, model0, modell0), (-1, 1)
+                    predict_machine11(a00, loaded_modelr), (-1, 1)
                 )
 
         clementanswer = clfy.inverse_transform(clementanswer)
@@ -964,32 +985,23 @@ def PREDICTION_CCR__MACHINE(
         big_out = np.zeros((numrowstest, nclusters))
         for i in range(nclusters):
             # print('-- predicting cluster: ' + str(i+1) + ' | ' + str(nclusters))
-            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
-            filename2a = "Regressor_Features_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
             os.chdir(training_master)
-            with open(filename2, "rb") as model_file:
-                model0 = pickle.load(model_file)
-
-            # Load the transformer
-            with open(filename2a, "rb") as transformer_file:
-                modell0 = pickle.load(transformer_file)
+            loaded_modelr.load_model(filename2)  # load data
             os.chdir(oldfolder)
-            aa = np.reshape(predict_machine11(inputtest, deg, model0, modell0), (-1, 1))
+            aa = np.reshape(predict_machine11(inputtest, loaded_modelr), (-1, 1))
             aanew = np.multiply(aa, np.reshape(labelDA[:, i], (-1, 1)))
-            # aanew[aanew<=0] = 0
             big_out[:, i] = np.ravel(aanew)
         clementanswer = np.reshape(np.sum(big_out, axis=1), (-1, 1), "F")
-        clementanswer[clementanswer <= 0] = 0
         # clementanswer=clfy.inverse_transform(clementanswer)
-    del model0, modell0
     return clementanswer
     # print('Finished prediction')
 
 
-def predict_machine11(a0, deg, model, model2):
-    x_new_poly = model2.transform(a0)
-    y_new = model.predict(x_new_poly)
-    return y_new
+def predict_machine11(a0, model):
+    ynew = model.predict(xgb.DMatrix(a0))
+    return ynew
 
 
 def Get_data_FFNN(
@@ -7680,37 +7692,116 @@ def Localisation(c, nx, ny, nz, N):
     return yoboschur
 
 
-# Create a 20x1 numpy array
-matrix = np.array(
-    [
-        [1],
-        [2],
-        [3],
-        [4],
-        [5],
-        [6],
-        [7],
-        [8],
-        [9],
-        [10],
-        [11],
-        [12],
-        [13],
-        [14],
-        [15],
-        [16],
-        [17],
-        [18],
-        [19],
-        [20],
-    ]
-)
+def process_step(
+    kk,
+    steppi,
+    dt,
+    pressure,
+    effectiveuse,
+    Swater,
+    Soil,
+    Sgas,
+    nx,
+    ny,
+    nz,
+    N_injw,
+    N_pr,
+    N_injg,
+    injectors,
+    producers,
+    gass,
+    fol,
+    fol1,
+):
+    os.chdir(fol)
+    progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk - 1, steppi - 1)
+    ShowBar(progressBar)
+    time.sleep(1)
 
-# Specify the rows to remove (rows 2 to 5 and 7 to 10)
-rows_to_remove = list(range(2, 6)) + list(range(7, 11))
+    current_time = dt[kk]
+    Time_vector[kk] = current_time
 
-# Use the remove_rows function to remove the specified rows
-modified_matrix = remove_rows(matrix, rows_to_remove)
+    f_3 = plt.figure(figsize=(20, 20), dpi=200)
+
+    look = ((pressure[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
+    ax1 = f_3.add_subplot(2, 2, 1, projection="3d")
+    Plot_Modulus(
+        ax1,
+        nx,
+        ny,
+        nz,
+        look,
+        N_injw,
+        N_pr,
+        N_injg,
+        "pressure Modulus",
+        injectors,
+        producers,
+        gass,
+    )
+
+    look = ((Swater[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
+    ax2 = f_3.add_subplot(2, 2, 2, projection="3d")
+    Plot_Modulus(
+        ax2,
+        nx,
+        ny,
+        nz,
+        look,
+        N_injw,
+        N_pr,
+        N_injg,
+        "water Modulus",
+        injectors,
+        producers,
+        gass,
+    )
+
+    look = Soil[0, kk, :, :, :]
+    look = (look * effectiveuse)[:, :, ::-1]
+
+    ax3 = f_3.add_subplot(2, 2, 3, projection="3d")
+    Plot_Modulus(
+        ax3,
+        nx,
+        ny,
+        nz,
+        look,
+        N_injw,
+        N_pr,
+        N_injg,
+        "oil Modulus",
+        injectors,
+        producers,
+        gass,
+    )
+
+    look = (((Sgas[0, kk, :, :, :])) * effectiveuse)[:, :, ::-1]
+    ax4 = f_3.add_subplot(2, 2, 4, projection="3d")
+    Plot_Modulus(
+        ax4,
+        nx,
+        ny,
+        nz,
+        look,
+        N_injw,
+        N_pr,
+        N_injg,
+        "gas Modulus",
+        injectors,
+        producers,
+        gass,
+    )
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+
+    tita = "Timestep --" + str(current_time) + " days"
+    plt.suptitle(tita, fontsize=16)
+    # plt.savefig('Dynamic' + str(int(kk)))
+    plt.savefig("Dynamic" + str(int(kk)))
+    plt.clf()
+    plt.close()
+    os.chdir(fol1)
 
 
 ##############################################################################
@@ -7728,6 +7819,10 @@ print(text)
 oldfolder = os.getcwd()
 os.chdir(oldfolder)
 cur_dir = oldfolder
+
+
+njobs = int((multiprocessing.cpu_count() // 4) - 1)
+num_cores = njobs
 
 print("------------------Download pre-trained models------------------------")
 if not os.path.exists("../PACKETS"):
@@ -7847,11 +7942,18 @@ print("Random Seed: ", seed)
 ra.seed(seed)
 torch.manual_seed(seed)
 
-cuda = 0
-device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+if torch.cuda.is_available():
+    num_gpus = torch.cuda.device_count()
+    if num_gpus >= 2:  # Choose GPU 1 (index 1)
+        device = torch.device(f"cuda:0")
+    else:  # If there's only one GPU or no GPUs, choose the first one (index 0)
+        device = torch.device(f"cuda:0")
+else:  # If CUDA is not available, use the CPU
+    raise RuntimeError("No GPU found. Please run on a system with a GPU.")
+torch.cuda.set_device(device)
 
 
-input_channel = 5  # [K,F,Fw,phi,dt,Pini,Sini]
+input_channel = 5  # [K,phi,FTM,Pini,Sini]
 output_channel = 1 * steppi
 
 
@@ -7980,104 +8082,37 @@ if not os.path.exists(("outputs/Forward_problem_PINO/ResSim/")):
 else:
     pass
 
-bb = os.path.isfile(
-    "outputs/Forward_problem_PINO/ResSim/fno_forward_model_pressure.0.pth"
-)
-if bb == False:
-    print("....Downloading Please hold.........")
-    download_file_from_google_drive(
-        "1lyojCxW4aHKVm5XM66zKWdW6W8aYbO2F",
-        "outputs/Forward_problem_PINO/ResSim/fno_forward_model_pressure.0.pth",
-    )
-    print("...Downlaod completed.......")
 
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
-
-    modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
-    modelP = modelP.to(device)
-    modelP.eval()
-    os.chdir(oldfolder)
-else:
-
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
-    print(" Surrogate model learned with PINO for dynamic properties pressure model")
-    modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
-    modelP = modelP.to(device)
-    modelP.eval()
-    os.chdir(oldfolder)
-
-bb = os.path.isfile("outputs/Forward_problem_PINO/ResSim/fno_forward_model_water.0.pth")
-if bb == False:
-    print("....Downloading Please hold.........")
-    download_file_from_google_drive(
-        "1QH4QnkwSwfoMgAqp_MxrVVt25ylbzUqv",
-        "outputs/Forward_problem_PINO/ResSim/fno_forward_model_water.0.pth",
-    )
-    print("...Downlaod completed.......")
-
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
-
-    modelW.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
-    modelW = modelW.to(device)
-    modelW.eval()
-    os.chdir(oldfolder)
-else:
-
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
-    print(" Surrogate model learned with PINO for dynamic properties- water model")
-    modelW.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
-    modelW = modelW.to(device)
-    modelW.eval()
-    os.chdir(oldfolder)
-
-bb = os.path.isfile("outputs/Forward_problem_PINO/ResSim/fno_forward_model_gas.0.pth")
-if bb == False:
-    print("....Downloading Please hold.........")
-    download_file_from_google_drive(
-        "1QvnH4kcRSu-Q0WgzY7LPWbWkohPOvSIT",
-        "outputs/Forward_problem_FNO/ResSim/fno_forward_model_gas.0.pth",
-    )
-    print("...Downlaod completed.......")
-
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
-
-    modelG.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
-    modelG = modelG.to(device)
-    modelG.eval()
-    os.chdir(oldfolder)
-else:
-
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
-    print(" Surrogate model learned with PINO for dynamic properties - Gas model")
-    modelG.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
-    modelG = modelG.to(device)
-    modelG.eval()
-    os.chdir(oldfolder)
+os.chdir("outputs/Forward_problem_PINO/ResSim")
+print(" Surrogate model learned with PINO for dynamic properties pressure model")
+modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
+modelP = modelP.to(device)
+modelP.eval()
+os.chdir(oldfolder)
 
 
-bba = os.path.isfile(
-    "outputs/Forward_problem_PINO/ResSim/fno_forward_model_peacemann.0.pth"
-)
-if bba == False:
-    print("....Downloading Please hold.........")
-    download_file_from_google_drive(
-        "1kyST2aMmqTAdfv-C6MI4CKd3Vi-4Ja4F",
-        "outputs/Forward_problem_PINO/ResSim/fno_forward_model_peacemann.0.pth",
-    )
-    print("...Downlaod completed.......")
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
+os.chdir("outputs/Forward_problem_PINO/ResSim")
+print(" Surrogate model learned with PINO for dynamic properties- water model")
+modelW.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
+modelW = modelW.to(device)
+modelW.eval()
+os.chdir(oldfolder)
 
-    model_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
-    model_peacemann = model_peacemann.to(device)
-    model_peacemann.eval()
-    os.chdir(oldfolder)
-else:
-    os.chdir("outputs/Forward_problem_PINO/ResSim")
-    print(" Surrogate model learned with PINO for peacemann well model")
-    model_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
-    model_peacemann = model_peacemann.to(device)
-    model_peacemann.eval()
-    os.chdir(oldfolder)
+
+os.chdir("outputs/Forward_problem_PINO/ResSim")
+print(" Surrogate model learned with PINO for dynamic properties - Gas model")
+modelG.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
+modelG = modelG.to(device)
+modelG.eval()
+os.chdir(oldfolder)
+
+
+os.chdir("outputs/Forward_problem_PINO/ResSim")
+print(" Surrogate model learned with PINO for peacemann well model")
+model_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
+model_peacemann = model_peacemann.to(device)
+model_peacemann.eval()
+os.chdir(oldfolder)
 
 print("********************Model Loaded*************************************")
 
@@ -8128,15 +8163,10 @@ if Trainmoe == 2:
 else:
     pred_type = 1
 degg = 3
-njobs = 12
-num_cores = njobs  # multiprocessing.cpu_count()
+
 
 rho = 1.05
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    raise RuntimeError("No GPU found. Please run on a system with a GPU.")
 
 # True model
 Truee = True_K
@@ -8610,6 +8640,69 @@ base_k = np.mean(ensemble, axis=1).reshape(-1, 1)
 base_p = np.mean(ensemblep, axis=1).reshape(-1, 1)
 base_f = np.mean(ensemblef, axis=1).reshape(-1, 1)
 
+text = """
+                                                                                                                                                                                   
+                  RRRRRRRRRRRRRRRRR   EEEEEEEEEEEEEEEEEEEEEEKKKKKKKKK    KKKKKKKIIIIIIIIII
+                  R::::::::::::::::R  E::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+                  R::::::RRRRRR:::::R E::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+                  RR:::::R     R:::::REE::::::EEEEEEEEE::::EK:::::::K   K::::::KII::::::II
+  aaaaaaaaaaaaa     R::::R     R:::::R  E:::::E       EEEEEEKK::::::K  K:::::KKK  I::::I  
+  a::::::::::::a    R::::R     R:::::R  E:::::E               K:::::K K:::::K     I::::I  
+  aaaaaaaaa:::::a   R::::RRRRRR:::::R   E::::::EEEEEEEEEE     K::::::K:::::K      I::::I  
+           a::::a   R:::::::::::::RR    E:::::::::::::::E     K:::::::::::K       I::::I  
+    aaaaaaa:::::a   R::::RRRRRR:::::R   E:::::::::::::::E     K:::::::::::K       I::::I  
+  aa::::::::::::a   R::::R     R:::::R  E::::::EEEEEEEEEE     K::::::K:::::K      I::::I  
+ a::::aaaa::::::a   R::::R     R:::::R  E:::::E               K:::::K K:::::K     I::::I  
+a::::a    a:::::a   R::::R     R:::::R  E:::::E       EEEEEEKK::::::K  K:::::KKK  I::::I  
+a::::a    a:::::a RR:::::R     R:::::REE::::::EEEEEEEE:::::EK:::::::K   K::::::KII::::::II
+a:::::aaaa::::::a R::::::R     R:::::RE::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+ a::::::::::aa:::aR::::::R     R:::::RE::::::::::::::::::::EK:::::::K    K:::::KI::::::::I
+  aaaaaaaaaa  aaaaRRRRRRRR     RRRRRRREEEEEEEEEEEEEEEEEEEEEEKKKKKKKKK    KKKKKKKIIIIIIIIII
+"""
+print(text)
+
+if Trainmoe == 2:
+    texta = """
+    PPPPPPPPPPPPPPPPP  IIIIIIIIINNNNNNNN        NNNNNNNN    OOOOOOOOO                              CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRRRRRRRRRRR   
+    P::::::::::::::::P I::::::::N:::::::N       N::::::N  OO:::::::::OO                         CCC::::::::::::C   CCC::::::::::::R::::::::::::::::R  
+    P::::::PPPPPP:::::PI::::::::N::::::::N      N::::::NOO:::::::::::::OO                     CC:::::::::::::::C CC:::::::::::::::R::::::RRRRRR:::::R 
+    PP:::::P     P:::::II::::::IN:::::::::N     N::::::O:::::::OOO:::::::O                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+      P::::P     P:::::P I::::I N::::::::::N    N::::::O::::::O   O::::::O                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+      P::::P     P:::::P I::::I N:::::::::::N   N::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::R     R:::::R
+      P::::PPPPPP:::::P  I::::I N:::::::N::::N  N::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::RRRRRR:::::R 
+      P:::::::::::::PP   I::::I N::::::N N::::N N::::::O:::::O     O:::::O --------------- C:::::C            C:::::C               R:::::::::::::RR  
+      P::::PPPPPPPPP     I::::I N::::::N  N::::N:::::::O:::::O     O:::::O -:::::::::::::- C:::::C            C:::::C               R::::RRRRRR:::::R 
+      P::::P             I::::I N::::::N   N:::::::::::O:::::O     O:::::O --------------- C:::::C            C:::::C               R::::R     R:::::R
+      P::::P             I::::I N::::::N    N::::::::::O:::::O     O:::::O                 C:::::C            C:::::C               R::::R     R:::::R
+      P::::P             I::::I N::::::N     N:::::::::O::::::O   O::::::O                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+    PP::::::PP         II::::::IN::::::N      N::::::::O:::::::OOO:::::::O                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+    P::::::::P         I::::::::N::::::N       N:::::::NOO:::::::::::::OO                     CC:::::::::::::::C CC:::::::::::::::R::::::R     R:::::R
+    P::::::::P         I::::::::N::::::N        N::::::N  OO:::::::::OO                         CCC::::::::::::C   CCC::::::::::::R::::::R     R:::::R
+    PPPPPPPPPP         IIIIIIIIINNNNNNNN         NNNNNNN    OOOOOOOOO                              CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRR     RRRRRRR
+                                                                                                                                                      
+    """
+    # print(texta)
+else:
+    texta = """
+                                                                                                                                                          
+    PPPPPPPPPPPPPPPPP  IIIIIIIIINNNNNNNN        NNNNNNNN    OOOOOOOOO                      FFFFFFFFFFFFFFFFFFFFFNNNNNNNN        NNNNNNNN    OOOOOOOOO     
+    P::::::::::::::::P I::::::::N:::::::N       N::::::N  OO:::::::::OO                    F::::::::::::::::::::N:::::::N       N::::::N  OO:::::::::OO   
+    P::::::PPPPPP:::::PI::::::::N::::::::N      N::::::NOO:::::::::::::OO                  F::::::::::::::::::::N::::::::N      N::::::NOO:::::::::::::OO 
+    PP:::::P     P:::::II::::::IN:::::::::N     N::::::O:::::::OOO:::::::O                 FF::::::FFFFFFFFF::::N:::::::::N     N::::::O:::::::OOO:::::::O
+      P::::P     P:::::P I::::I N::::::::::N    N::::::O::::::O   O::::::O                   F:::::F       FFFFFN::::::::::N    N::::::O::::::O   O::::::O
+      P::::P     P:::::P I::::I N:::::::::::N   N::::::O:::::O     O:::::O                   F:::::F            N:::::::::::N   N::::::O:::::O     O:::::O
+      P::::PPPPPP:::::P  I::::I N:::::::N::::N  N::::::O:::::O     O:::::O                   F::::::FFFFFFFFFF  N:::::::N::::N  N::::::O:::::O     O:::::O
+      P:::::::::::::PP   I::::I N::::::N N::::N N::::::O:::::O     O:::::O ---------------   F:::::::::::::::F  N::::::N N::::N N::::::O:::::O     O:::::O
+      P::::PPPPPPPPP     I::::I N::::::N  N::::N:::::::O:::::O     O:::::O -:::::::::::::-   F:::::::::::::::F  N::::::N  N::::N:::::::O:::::O     O:::::O
+      P::::P             I::::I N::::::N   N:::::::::::O:::::O     O:::::O ---------------   F::::::FFFFFFFFFF  N::::::N   N:::::::::::O:::::O     O:::::O
+      P::::P             I::::I N::::::N    N::::::::::O:::::O     O:::::O                   F:::::F            N::::::N    N::::::::::O:::::O     O:::::O
+      P::::P             I::::I N::::::N     N:::::::::O::::::O   O::::::O                   F:::::F            N::::::N     N:::::::::O::::::O   O::::::O
+    PP::::::PP         II::::::IN::::::N      N::::::::O:::::::OOO:::::::O                 FF:::::::FF          N::::::N      N::::::::O:::::::OOO:::::::O
+    P::::::::P         I::::::::N::::::N       N:::::::NOO:::::::::::::OO                  F::::::::FF          N::::::N       N:::::::NOO:::::::::::::OO 
+    P::::::::P         I::::::::N::::::N        N::::::N  OO:::::::::OO                    F::::::::FF          N::::::N        N::::::N  OO:::::::::OO   
+    PPPPPPPPPP         IIIIIIIIINNNNNNNN         NNNNNNN    OOOOOOOOO                      FFFFFFFFFFF          NNNNNNNN         NNNNNNN    OOOOOOOOO   
+    """
+print(texta)
 
 while snn < 1:
     print("Iteration --" + str(ii + 1) + " | " + str(Termm))
@@ -8787,17 +8880,26 @@ while snn < 1:
 
     (V, X, U) = pinvmatt((Cdd + (cp.asarray(alpha) * cp.eye(CDd.shape[1]))), tol)
 
-    update_term = (
-        (Cyd @ (X))
-        @ (inv_CDd)
-        @ (
-            (
-                cp.tile(cp.asarray(True_dataa), Ne)
-                + (cp.sqrt(cp.asarray(alpha)) * cp.asarray(pertubations))
-            )
-            - Sim1
-        )
-    )
+    pertubations_cu = cp.asarray(pertubations)
+    true_data_cu = cp.asarray(True_data)
+    alpha_cu = cp.asarray(alpha)
+    tile_true_ne = cp.tile(true_data_cu, Ne)
+    pertu_alpha = cp.sqrt(alpha_cu) * pertubations_cu
+    factor_sum = (tile_true_ne + pertu_alpha) - Sim1
+    del pertubations_cu, true_data_cu, alpha_cu, Usig, Vsig
+    gc.collect()
+
+    # print(f"Cyd {Cyd.shape}, X {X.shape}, inv_CDd {inv_CDd.shape}")
+    update_term = Cyd @ X
+    del Cyd, X
+    gc.collect()
+    update_term @= inv_CDd
+    del inv_CDd
+    gc.collect()
+    update_term @= factor_sum
+    del factor_sum
+    gc.collect()
+
     if do_localisation == 1:
 
         if ii == 0:
@@ -9273,7 +9375,7 @@ _, yycheck, pree, wats, oilss, gasss = Forward_model_ensemble(
 os.chdir("../HM_RESULTS/ADAPT_REKI")
 Plot_RSM_single(yycheck, Time_unie1)
 Plot_petrophysical(controlbest, controlbestp, nx, ny, nz, Low_K1, High_K1)
-# os.chdir(oldfolder)
+
 
 X_data1 = {
     "permeability": controlbest,
@@ -9287,104 +9389,46 @@ X_data1 = {
 
 with gzip.open("RESERVOIR_MODEL.pkl.gz", "wb") as f1:
     pickle.dump(X_data1, f1)
+os.chdir(oldfolder)
 
 Time_vector = np.zeros((steppi))
+
 for kk in range(steppi):
-
-    progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk - 1, steppi - 1)
-    ShowBar(progressBar)
-    time.sleep(1)
-
     current_time = dt[kk]
     Time_vector[kk] = current_time
 
-    f_3 = plt.figure(figsize=(20, 20), dpi=200)
 
-    look = ((pree[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
-
-    ax1 = f_3.add_subplot(2, 2, 1, projection="3d")
-    Plot_Modulus(
-        ax1,
+Parallel(n_jobs=num_cores)(
+    delayed(process_step)(
+        kk,
+        steppi,
+        dt,
+        pree,
+        effectiveuse,
+        wats,
+        oilss,
+        gasss,
         nx,
         ny,
         nz,
-        look,
         N_injw,
         N_pr,
         N_injg,
-        "pressure Modulus",
         injectors,
         producers,
         gass,
+        "../HM_RESULTS/ADAPT_REKI",
+        oldfolder,
     )
+    for kk in range(steppi)
+)
 
-    look = ((wats[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
-    ax2 = f_3.add_subplot(2, 2, 2, projection="3d")
-    Plot_Modulus(
-        ax2,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "water Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    look = oilss[0, kk, :, :, :]
-    look = (look * effectiveuse)[:, :, ::-1]
-
-    ax3 = f_3.add_subplot(2, 2, 3, projection="3d")
-    Plot_Modulus(
-        ax3,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "oil Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    look = (((gasss[0, kk, :, :, :])) * effectiveuse)[:, :, ::-1]
-    ax4 = f_3.add_subplot(2, 2, 4, projection="3d")
-    Plot_Modulus(
-        ax4,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "gas Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-    tita = "Timestep --" + str(current_time) + " days"
-    plt.suptitle(tita, fontsize=16)
-    plt.savefig("Dynamic" + str(int(kk)))
-    plt.clf()
-    plt.close()
-
-
-progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk, steppi - 1)
+progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, steppi - 1, steppi - 1)
 ShowBar(progressBar)
 time.sleep(1)
 
 
+os.chdir("../HM_RESULTS/ADAPT_REKI")
 print("-------------------------Creating GIF---------------------------------")
 import glob
 
@@ -9476,6 +9520,7 @@ ensemblepy = ensemble_pytorch(
     steppi_indices,
 )
 
+os.chdir(oldfolder)
 mazw = 0  # Dont smooth the presure field
 _, yycheck, preebest, watsbest, oilssbest, gasbest = Forward_model_ensemble(
     controlbest2.shape[1],
@@ -9523,102 +9568,39 @@ X_data1 = {
 with gzip.open("BEST_RESERVOIR_MODEL.pkl.gz", "wb") as f1:
     pickle.dump(X_data1, f1)
 
-Time_vector = np.zeros((steppi))
-for kk in range(steppi):
+os.chdir(oldfolder)
 
-    progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk - 1, steppi - 1)
-    ShowBar(progressBar)
-    time.sleep(1)
-
-    current_time = dt[kk]
-    Time_vector[kk] = current_time
-
-    f_3 = plt.figure(figsize=(20, 20), dpi=200)
-
-    look = ((preebest[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
-
-    ax1 = f_3.add_subplot(2, 2, 1, projection="3d")
-    Plot_Modulus(
-        ax1,
+Parallel(n_jobs=num_cores)(
+    delayed(process_step)(
+        kk,
+        steppi,
+        dt,
+        preebest,
+        effectiveuse,
+        watsbest,
+        oilssbest,
+        gasbest,
         nx,
         ny,
         nz,
-        look,
         N_injw,
         N_pr,
         N_injg,
-        "pressure Modulus",
         injectors,
         producers,
         gass,
+        "../HM_RESULTS/BEST_RESERVOIR_MODEL",
+        oldfolder,
     )
+    for kk in range(steppi)
+)
 
-    look = ((watsbest[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
-    ax2 = f_3.add_subplot(2, 2, 2, projection="3d")
-    Plot_Modulus(
-        ax2,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "water Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    look = oilssbest[0, kk, :, :, :]
-    look = (look * effectiveuse)[:, :, ::-1]
-
-    ax3 = f_3.add_subplot(2, 2, 3, projection="3d")
-    Plot_Modulus(
-        ax3,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "oil Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    look = (((gasbest[0, kk, :, :, :])) * effectiveuse)[:, :, ::-1]
-    ax4 = f_3.add_subplot(2, 2, 4, projection="3d")
-    Plot_Modulus(
-        ax4,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "gas Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-    tita = "Timestep --" + str(current_time) + " days"
-    plt.suptitle(tita, fontsize=16)
-    plt.savefig("Dynamic" + str(int(kk)))
-    plt.clf()
-    plt.close()
-
-
-progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk, steppi - 1)
+progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, steppi - 1, steppi - 1)
 ShowBar(progressBar)
 time.sleep(1)
 
+
+os.chdir("../HM_RESULTS/BEST_RESERVOIR_MODEL")
 print("Creating GIF")
 import glob
 
@@ -9652,6 +9634,8 @@ write_RSM(yycheck[0, :, :66], Time_vector, "Modulus")
 Plot_RSM_percentile_model(yycheck[0, :, :66], True_mat, Time_unie1)
 
 os.chdir(oldfolder)
+
+
 yycheck = yycheck[0, :, :66]
 # usesim=yycheck[:,1:]
 Oilz = yycheck[:, :22] / scalei
@@ -9704,6 +9688,7 @@ ensemblepy = ensemble_pytorch(
 )
 
 
+os.chdir(oldfolder)
 mazw = 0  # Dont smooth the presure field
 _, yycheck, preebest, watsbest, oilssbest, gasbest = Forward_model_ensemble(
     controlbest2.shape[1],
@@ -9751,101 +9736,38 @@ X_data1 = {
 with gzip.open("MEAN_RESERVOIR_MODEL.pkl.gz", "wb") as f1:
     pickle.dump(X_data1, f1)
 
-Time_vector = np.zeros((steppi))
-for kk in range(steppi):
+os.chdir(oldfolder)
 
-    progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk - 1, steppi - 1)
-    ShowBar(progressBar)
-    time.sleep(1)
-
-    current_time = dt[kk]
-    Time_vector[kk] = current_time
-
-    f_3 = plt.figure(figsize=(20, 20), dpi=200)
-
-    look = ((preebest[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
-
-    ax1 = f_3.add_subplot(2, 2, 1, projection="3d")
-    Plot_Modulus(
-        ax1,
+Parallel(n_jobs=num_cores)(
+    delayed(process_step)(
+        kk,
+        steppi,
+        dt,
+        preebest,
+        effectiveuse,
+        watsbest,
+        oilssbest,
+        gasbest,
         nx,
         ny,
         nz,
-        look,
         N_injw,
         N_pr,
         N_injg,
-        "pressure Modulus",
         injectors,
         producers,
         gass,
+        "../HM_RESULTS/MEAN_RESERVOIR_MODEL",
+        oldfolder,
     )
+    for kk in range(steppi)
+)
 
-    look = ((watsbest[0, kk, :, :, :]) * effectiveuse)[:, :, ::-1]
-    ax2 = f_3.add_subplot(2, 2, 2, projection="3d")
-    Plot_Modulus(
-        ax2,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "water Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    look = oilssbest[0, kk, :, :, :]
-    look = (look * effectiveuse)[:, :, ::-1]
-
-    ax3 = f_3.add_subplot(2, 2, 3, projection="3d")
-    Plot_Modulus(
-        ax3,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "oil Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    look = (((gasbest[0, kk, :, :, :])) * effectiveuse)[:, :, ::-1]
-    ax4 = f_3.add_subplot(2, 2, 4, projection="3d")
-    Plot_Modulus(
-        ax4,
-        nx,
-        ny,
-        nz,
-        look,
-        N_injw,
-        N_pr,
-        N_injg,
-        "gas Modulus",
-        injectors,
-        producers,
-        gass,
-    )
-
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-    tita = "Timestep --" + str(current_time) + " days"
-    plt.suptitle(tita, fontsize=16)
-    plt.savefig("Dynamic" + str(int(kk)))
-    plt.clf()
-    plt.close()
-
-progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk, steppi - 1)
+progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, steppi - 1, steppi - 1)
 ShowBar(progressBar)
 time.sleep(1)
 
+os.chdir("../HM_RESULTS/MEAN_RESERVOIR_MODEL")
 print("Creating GIF")
 import glob
 
@@ -9880,6 +9802,7 @@ Plot_RSM_percentile_model(yycheck[0, :, :66], True_mat, Time_unie1)
 
 
 os.chdir(oldfolder)
+
 yycheck = yycheck[0, :, :66]
 # usesim=yycheck[:,1:]
 Oilz = yycheck[:, :22] / scalei
@@ -9972,6 +9895,7 @@ ensemblepy = ensemble_pytorch(
     steppi_indices,
 )
 
+os.chdir(oldfolder)
 mazw = 0  # Dont smooth the presure field
 (
     _,
@@ -10100,13 +10024,29 @@ print("--------------------SECTION ADAPTIVE REKI ENDED--------------------------
 elapsed_time_secs = time.time() - start_time
 
 
-comment = "ADAPT_REKI (Vanilla Adaptive Ensemble Kalman Inversion)"
+comment = "Adaptive Regularised Ensemble Kalman Inversion"
 
+if Trainmoe == 2:
+    comment2 = "PINO-CCR"
+else:
+    comment2 = "PINO-FNO"
 
 print("Inverse problem solution used =: " + comment)
+print("Forward model surrogate =: " + comment2)
 print("Ensemble size = ", str(Ne))
 msg = "Execution took: %s secs (Wall clock time)" % timedelta(
     seconds=round(elapsed_time_secs)
 )
 print(msg)
+textaa = """
+______                                                      _____                    _           _   _ _ 
+| ___ \                                                    |  ___|                  | |         | | | | |
+| |_/ _ __ ___   __ _ _ __ __ _ _ __ ___  _ __ ___   ___   | |____  _____  ___ _   _| |_ ___  __| | | | |
+|  __| '__/ _ \ / _` | '__/ _` | '_ ` _ \| '_ ` _ \ / _ \  |  __\ \/ / _ \/ __| | | | __/ _ \/ _` | | | |
+| |  | | | (_) | (_| | | | (_| | | | | | | | | | | |  __/  | |___>  |  __| (__| |_| | ||  __| (_| | |_|_|
+\_|  |_|  \___/ \__, |_|  \__,_|_| |_| |_|_| |_| |_|\___|  \____/_/\_\___|\___|\__,_|\__\___|\__,_| (_(_)
+                 __/ |                                                                                   
+                |___/                                                                                                                                                               
+"""
+print(textaa)
 print("-------------------PROGRAM EXECUTED-----------------------------------")

@@ -284,27 +284,21 @@ def endit(i, testt, training_master, oldfolder, pred_type, degg):
     return clemzz
 
 
-def fit_machine(a0, b0, deg):
-
-    # dim = a0.shape[1]
-    poly_features = PolynomialFeatures(degree=deg, include_bias=False)
-    x_poly = poly_features.fit_transform(a0)
-
-    # Fit a linear regression model
-    lin_reg = LinearRegression()
-    lin_reg.fit(x_poly, b0)
-    return lin_reg, poly_features
+def fit_machine(a0, b0):
+    model = xgb.XGBRegressor(n_estimators=4000)
+    model.fit(a0, b0)
+    return model
 
 
-def predict_machine(a0, deg, model, model2):
-    x_new_poly = model2.transform(a0)
-    y_new = model.predict(x_new_poly)
-    return y_new
+def predict_machine(a0, model):
+    ynew = model.predict(xgb.DMatrix(a0))
+
+    return ynew
 
 
 def CCR_Machine(inpuutj, outputtj, ii, training_master, oldfolder, degg):
     # print('Starting CCR')
-    model = xgb.XGBClassifier(n_estimators=1000)
+    model = xgb.XGBClassifier(n_estimators=4000)
     # import numpy as np
     # import pickle
     X = inpuutj
@@ -361,23 +355,15 @@ def CCR_Machine(inpuutj, outputtj, ii, training_master, oldfolder, degg):
         b0 = np.reshape(b0, (-1, 1), "F")
         if a0.shape[0] != 0 and b0.shape[0] != 0:
             # model0.fit(a0, b0,verbose=False)
-            theta, con1 = fit_machine(a0, b0, degg)
+            theta = fit_machine(a0, b0)
 
-        filename = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
-        filename2 = "Regressor_Features_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+        filename = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
         os.chdir(training_master)
         # sio.savemat(filename, {'model0':model0})
-
-        with open(filename, "wb") as model_file:
-            pickle.dump(theta, model_file)
-
-        # Save the transformer
-        with open(filename2, "wb") as transformer_file:
-            pickle.dump(con1, transformer_file)
-
+        theta.save_model(filename)
         os.chdir(oldfolder)
     return nclusters
-    print("Finished CCR")
+    # print('Finished CCR')
 
 
 def PREDICTION_CCR__MACHINE(
@@ -413,16 +399,11 @@ def PREDICTION_CCR__MACHINE(
         labelDA = np.reshape(labelDA, (-1, 1), "F")
         for i in range(nclusters):
             print("-- Predicting cluster: " + str(i) + " | " + str(nclusters))
-            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
-            filename2a = "Regressor_Features_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
-            os.chdir(training_master)
-            # Load the model
-            with open(filename2, "rb") as model_file:
-                model0 = pickle.load(model_file)
+            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
 
-            # Load the transformer
-            with open(filename2a, "rb") as transformer_file:
-                modell0 = pickle.load(transformer_file)
+            os.chdir(training_master)
+            loaded_modelr.load_model(filename2)  # load data
 
             os.chdir(oldfolder)
             labelDA0 = (np.asarray(np.where(labelDA == i))).T
@@ -431,7 +412,7 @@ def PREDICTION_CCR__MACHINE(
             a00 = np.reshape(a00, (-1, numcols), "F")
             if a00.shape[0] != 0:
                 clementanswer[labelDA0[:, 0], :] = np.reshape(
-                    predict_machine(a00, deg, model0, modell0), (-1, 1)
+                    predict_machine(a00, loaded_modelr), (-1, 1)
                 )
 
         clementanswer = clfy.inverse_transform(clementanswer)
@@ -440,17 +421,12 @@ def PREDICTION_CCR__MACHINE(
         big_out = np.zeros((numrowstest, nclusters))
         for i in range(nclusters):
             print("-- predicting cluster: " + str(i + 1) + " | " + str(nclusters))
-            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
-            filename2a = "Regressor_Features_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
             os.chdir(training_master)
-            with open(filename2, "rb") as model_file:
-                model0 = pickle.load(model_file)
-
-            # Load the transformer
-            with open(filename2a, "rb") as transformer_file:
-                modell0 = pickle.load(transformer_file)
+            loaded_modelr.load_model(filename2)  # load data
             os.chdir(oldfolder)
-            aa = np.reshape(predict_machine(inputtest, deg, model0, modell0), (-1, 1))
+            aa = np.reshape(predict_machine(inputtest, loaded_modelr), (-1, 1))
             aanew = np.multiply(aa, np.reshape(labelDA[:, i], (-1, 1)))
             big_out[:, i] = np.ravel(aanew)
         clementanswer = np.reshape(np.sum(big_out, axis=1), (-1, 1), "F")
@@ -460,6 +436,25 @@ def PREDICTION_CCR__MACHINE(
 
 
 # ------------------Begin Code-------------------------------------------------------------------#
+texta = """
+MMMMMMMM               MMMMMMMM               EEEEEEEEEEEEEEEEEEEEEE                         CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRRRRRRRRRRR   
+M:::::::M             M:::::::M               E::::::::::::::::::::E                      CCC::::::::::::C   CCC::::::::::::R::::::::::::::::R  
+M::::::::M           M::::::::M               E::::::::::::::::::::E                    CC:::::::::::::::C CC:::::::::::::::R::::::RRRRRR:::::R 
+M:::::::::M         M:::::::::M               EE::::::EEEEEEEEE::::E                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+M::::::::::M       M::::::::::M  ooooooooooo    E:::::E       EEEEEE                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+M:::::::::::M     M:::::::::::Moo:::::::::::oo  E:::::E                              C:::::C            C:::::C               R::::R     R:::::R
+M:::::::M::::M   M::::M:::::::o:::::::::::::::o E::::::EEEEEEEEEE                    C:::::C            C:::::C               R::::RRRRRR:::::R 
+M::::::M M::::M M::::M M::::::o:::::ooooo:::::o E:::::::::::::::E    --------------- C:::::C            C:::::C               R:::::::::::::RR  
+M::::::M  M::::M::::M  M::::::o::::o     o::::o E:::::::::::::::E    -:::::::::::::- C:::::C            C:::::C               R::::RRRRRR:::::R 
+M::::::M   M:::::::M   M::::::o::::o     o::::o E::::::EEEEEEEEEE    --------------- C:::::C            C:::::C               R::::R     R:::::R
+M::::::M    M:::::M    M::::::o::::o     o::::o E:::::E                              C:::::C            C:::::C               R::::R     R:::::R
+M::::::M     MMMMM     M::::::o::::o     o::::o E:::::E       EEEEEE                  C:::::C       CCCCCC:::::C       CCCCCC R::::R     R:::::R
+M::::::M               M::::::o:::::ooooo:::::EE::::::EEEEEEEE:::::E                   C:::::CCCCCCCC::::CC:::::CCCCCCCC::::RR:::::R     R:::::R
+M::::::M               M::::::o:::::::::::::::E::::::::::::::::::::E                    CC:::::::::::::::C CC:::::::::::::::R::::::R     R:::::R
+M::::::M               M::::::Moo:::::::::::ooE::::::::::::::::::::E                      CCC::::::::::::C   CCC::::::::::::R::::::R     R:::::R
+MMMMMMMM               MMMMMMMM  ooooooooooo  EEEEEEEEEEEEEEEEEEEEEE                         CCCCCCCCCCCCC      CCCCCCCCCCCCRRRRRRRR     RRRRRRR
+"""
+print(texta)
 print("")
 print("-------------------LOAD INPUT DATA-------------------------------------")
 mat = sio.loadmat(("../PACKETS/conversions.mat"))
@@ -571,15 +566,11 @@ print("--------------------- Learn the Forward model with CCR----------------")
 inputsz = range(Y.shape[1])
 num_cores = 12  # multiprocessing.cpu_count()
 
-from loky import get_reusable_executor
 
-executor_run = get_reusable_executor(max_workers=num_cores)
-with executor_run:
-    bigs = Parallel(n_jobs=num_cores, backend="multiprocessing", verbose=50)(
-        delayed(startit)(ib, outpuut2, inpuut2, trainingmaster, oldfolder, degg)
-        for ib in inputsz
-    )
-    executor_run.shutdown(wait=False)
+bigs = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
+    delayed(startit)(ib, outpuut2, inpuut2, trainingmaster, oldfolder, degg)
+    for ib in inputsz
+)
 
 big = np.vstack(bigs)
 
@@ -597,22 +588,19 @@ cluster_all = np.genfromtxt("clustersizescost.dat", dtype="float")
 cluster_all = np.reshape(cluster_all, (-1, 1), "F")
 os.chdir(oldfolder)
 
-executor_run1 = get_reusable_executor(max_workers=num_cores)
-with executor_run1:
-    clemes = Parallel(n_jobs=num_cores, backend="multiprocessing", verbose=50)(
-        delayed(PREDICTION_CCR__MACHINE)(
-            ib,
-            int(cluster_all[ib, :]),
-            X_test2,
-            X.shape[1],
-            trainingmaster,
-            oldfolder,
-            pred_type,
-            degg,
-        )
-        for ib in inputsz
+clemes = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
+    delayed(PREDICTION_CCR__MACHINE)(
+        ib,
+        int(cluster_all[ib, :]),
+        X_test2,
+        X.shape[1],
+        trainingmaster,
+        oldfolder,
+        pred_type,
+        degg,
     )
-    executor_run1.shutdown(wait=False)
+    for ib in inputsz
+)
 outputpredenergy = np.hstack(clemes)
 
 print(" ")

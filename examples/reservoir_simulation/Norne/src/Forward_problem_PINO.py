@@ -447,6 +447,7 @@ class Black_oil(torch.nn.Module):
         max_inn_fcn,
         max_out_fcn,
         DZ,
+        device,
     ):
         super().__init__()
         self.neededM = neededM
@@ -477,6 +478,7 @@ class Black_oil(torch.nn.Module):
         self.max_inn_fcn = max_inn_fcn
         self.max_out_fcn = max_out_fcn
         self.DZ = DZ
+        self.device = device
 
     def forward(self, input_var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
 
@@ -516,8 +518,7 @@ class Black_oil(torch.nn.Module):
         permyes = a
 
         # Pressure equation Loss
-        cuda = 0
-        device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+        device = self.device
 
         # print(pressurey.shape)
         p_loss = torch.zeros_like(u).to(device, torch.float32)
@@ -1423,10 +1424,21 @@ def run(cfg: ModulusConfig) -> None:
         else:
             pass
 
+    """
     if torch.cuda.is_available():
-        device = torch.device("cuda")
+        device = torch.device('cuda')
     else:
+        raise RuntimeError("No GPU found. Please run on a system with a GPU.") 
+    """
+    if torch.cuda.is_available():
+        num_gpus = torch.cuda.device_count()
+        if num_gpus >= 2:  # Choose GPU 1 (index 1)
+            device = torch.device(f"cuda:0")
+        else:  # If there's only one GPU or no GPUs, choose the first one (index 0)
+            device = torch.device(f"cuda:0")
+    else:  # If CUDA is not available, use the CPU
         raise RuntimeError("No GPU found. Please run on a system with a GPU.")
+    torch.cuda.set_device(device)
 
     # Varaibles needed for NVRS
 
@@ -1928,8 +1940,17 @@ def run(cfg: ModulusConfig) -> None:
     else:
         pass
 
-    cuda = 0
-    device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+    """    
+    if torch.cuda.is_available():     
+        num_gpus = torch.cuda.device_count()     
+        if num_gpus >= 2:         # Choose GPU 1 (index 1)        
+            device = torch.device(f"cuda:0")     
+        else:         # If there's only one GPU or no GPUs, choose the first one (index 0)        
+            device = torch.device(f"cuda:0")
+    else:     # If CUDA is not available, use the CPU    
+        raise RuntimeError("No GPU found. Please run on a system with a GPU.") 
+    torch.cuda.set_device(device)
+    """
 
     SWI = torch.from_numpy(np.array(SWI)).to(device)
     SWR = torch.from_numpy(np.array(SWR)).to(device)
@@ -2593,7 +2614,7 @@ def run(cfg: ModulusConfig) -> None:
 
     #     evaluate = Black_oil(neededM,SWI,SWR,UW,BW,UO,BO,
     #                   nx,ny,nz,SWOW,SWOG,target_min,target_max,minKx,maxKx,
-    #                   minPx,maxPx,p_bub,p_atm,CFO,Relperm,params,pde_method,RE,max_inn_fcnx,max_out_fcnx,DZ),
+    #                   minPx,maxPx,p_bub,p_atm,CFO,Relperm,params,pde_method,RE,max_inn_fcnx,max_out_fcnx,DZ,device),
     #     name="Darcy node",
     # )
 

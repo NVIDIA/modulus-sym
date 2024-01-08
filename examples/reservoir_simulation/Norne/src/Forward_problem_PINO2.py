@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from NVRS import *
 
 torch.cuda.empty_cache()
@@ -239,6 +238,7 @@ def Black_oil_peacemann(
     p_bub,
     p_atm,
     CFO,
+    device,
 ):
 
     skin = 0
@@ -336,6 +336,7 @@ def Black_oil(
     Relperm,
     params,
     pde_method,
+    device,
 ):
 
     u = input_var["pressure"]
@@ -375,8 +376,6 @@ def Black_oil(
     a = perm  # * maxK
 
     # Pressure equation Loss
-    cuda = 0
-    device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
 
     # print(pressurey.shape)
     p_loss = torch.zeros_like(u).to(device, torch.float32)
@@ -1024,8 +1023,10 @@ class Labelledset:
         x11 = self.data11[index]
         x12 = self.data12[index]
 
+        """
         cuda = 0
         device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+        """
 
         return {
             "perm": x1.to(device, torch.float32),
@@ -1051,8 +1052,10 @@ class LabelledsetP:
         x1 = self.data1[index]
         x2 = self.data2[index]
 
+        """
         cuda = 0
         device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
+        """
 
         return {"X": x1.to(device, torch.float32), "Y": x2.to(device, torch.float32)}
 
@@ -1160,9 +1163,14 @@ def run(cfg: ModulusConfig) -> None:
             pass
 
     if torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
+        num_gpus = torch.cuda.device_count()
+        if num_gpus >= 2:  # Choose GPU 1 (index 1)
+            device = torch.device(f"cuda:0")
+        else:  # If there's only one GPU or no GPUs, choose the first one (index 0)
+            device = torch.device(f"cuda:0")
+    else:  # If CUDA is not available, use the CPU
         raise RuntimeError("No GPU found. Please run on a system with a GPU.")
+    torch.cuda.set_device(device)
 
     # Varaibles needed for NVRS
 
@@ -1663,9 +1671,6 @@ def run(cfg: ModulusConfig) -> None:
         rmtree(to_absolute_path("../RUNS"))
     else:
         pass
-
-    cuda = 0
-    device = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")
 
     SWI = torch.from_numpy(np.array(SWI)).to(device)
     SWR = torch.from_numpy(np.array(SWR)).to(device)
@@ -2283,6 +2288,7 @@ def run(cfg: ModulusConfig) -> None:
                 Relperm,
                 params,
                 pde_method,
+                device,
             )
 
             f_loss21, f_water21, f_gass21 = Black_oil(
@@ -2315,6 +2321,7 @@ def run(cfg: ModulusConfig) -> None:
                 Relperm,
                 params,
                 pde_method,
+                device,
             )
 
             loss_pde2 = f_loss2 + f_water2 + f_gass2 + f_loss21 + f_water21 + f_gass21
@@ -2335,6 +2342,7 @@ def run(cfg: ModulusConfig) -> None:
                 p_bub,
                 p_atm,
                 CFO,
+                device,
             )
             loss_pdeb = Black_oil_peacemann(
                 UO,
@@ -2352,6 +2360,7 @@ def run(cfg: ModulusConfig) -> None:
                 p_bub,
                 p_atm,
                 CFO,
+                device,
             )
 
             loss_pde = loss_pdea + loss_pdeb

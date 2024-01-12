@@ -403,7 +403,35 @@ h_l( x; \theta_c^l )
 ```
 are some standard parametric regressors.
 
+## Docker Installation instructions (short version)
+- Step1: Build and run the docker container.
+```bash
+# enable shell script execution.
+sudo chmod +x ./scripts/docker/docker-build.sh
+sudo chmod +x set_env.sh
+# Build docker image
+./scripts/docker/docker-build.sh
 
+# enable shell script execution.
+sudo chmod +x ./scripts/docker/docker-run.sh
+# Run docker container (also enables X server for docker)
+./scripts/docker/docker-run.sh
+```
+- Step 2. Fetch the necessary input files.
+
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+
+- Step 3. Run the python scripts
+cd src
+python Forward_problem_PINO.py
+python Learn_CCR.py
+python Compare_FVM_Surrogate.py
+
+
+# Installation instructions (long version)
 
 ## Important Dependencies & Prerequisites:
 - Nvidia's Modulus symbolic v23.09 :[link](https://github.com/NVIDIA/modulus-sym)
@@ -534,12 +562,6 @@ cd ..
 
 ##### Bare Metal
 ```bash
-conda activate MDLO
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_norne_supplemental_material.zip
-cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
-cd src
 python Compare_FVM_Surrogate.py
 cd ..
 conda deactivate
@@ -547,11 +569,6 @@ conda deactivate
 
 ##### Docker
 ```bash
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_norne_supplemental_material.zip
-cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
-cd src
 python Compare_FVM_Surrogate.py
 cd ..
 ```

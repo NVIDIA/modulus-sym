@@ -31,7 +31,7 @@ body:
     attributes:
       label: Version
       description: What version of Modulus and Modulus Symbolic are you running?
-      placeholder: "example: 1.3.0"
+      placeholder: "example: 1.4.0"
     validations:
       required: true
 

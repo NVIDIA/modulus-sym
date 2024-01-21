@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix bug for `ConvFullyConnectedArch`.
+- Updating `Activation.SILU` test to conform with updated nvFuser kernel generation.
 
 ### Security
 

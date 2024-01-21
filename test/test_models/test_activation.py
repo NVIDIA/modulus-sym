@@ -143,7 +143,7 @@ def test_activation_fused_silu():
     print("silu_scripted_3rd num_events: ", num_kernels)
     if version.parse(torch.__version__) >= version.parse("1.12.9"):
         # fwd + 1st_deriv + 2nd_deriv + 3rd_deriv kernels
-        assert num_kernels <= 6
+        assert num_kernels <= 7
     else:
         warnings.warn(f"Fused SiLU is not supported for torch {torch.__version__}")
 

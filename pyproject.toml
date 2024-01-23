@@ -19,7 +19,7 @@ dependencies = [
     "Cython==0.29.28",
     "numpy-stl==2.16.3",
     "opencv-python==4.5.5.64",
-    "scikit-learn==1.0.2",
+    "scikit-learn>=1.2.0",
     "symengine>=0.10.0",
     "sympy==1.12",
     "timm==0.5.4",

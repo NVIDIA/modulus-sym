@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Upgrade Pillow and Sympy to their latest versions.
+- Upgrade Scikit-Learn version.
 
 ### Dependencies
 

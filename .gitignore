@@ -157,6 +157,7 @@ cython_debug/
 # Example output folders
 outputs/
 multirun/
+.hydra/
 
 # Dataset folders
 datasets/

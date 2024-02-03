@@ -49,7 +49,7 @@ pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.2
 The recommended Modulus docker image can be pulled from the [NVIDIA Container Registry](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/containers/modulus):
 
 ```bash
-docker pull nvcr.io/nvidia/modulus/modulus:23.11
+docker pull nvcr.io/nvidia/modulus/modulus:24.01
 ```
 
 ## From Source

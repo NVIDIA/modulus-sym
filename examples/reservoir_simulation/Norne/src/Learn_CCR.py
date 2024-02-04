@@ -235,8 +235,7 @@ def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
 def run_model(inn, ouut, i, training_master,oldfolder, nclus):
     model=xgb.XGBClassifier(n_estimators=1000,
                             objective='multi:softmax',
-                            num_class= nclus,
-                            max_depth=50)
+                            num_class= nclus)
     model.fit(inn, ouut)
     filename = "Classifier_%d.bin" % i
     os.chdir(training_master)
@@ -286,8 +285,9 @@ def endit(i, testt, training_master, oldfolder, pred_type, degg,big):
 
 
 def fit_machine (a0, b0):
-    model =xgb.XGBRegressor(n_estimators=1000,objective ='reg:squarederror',
-                learning_rate = 0.1)
+    model =xgb.XGBRegressor(n_estimators=1000,
+                            objective ='reg:squarederror',
+                            learning_rate = 0.1)
     model.fit(a0,b0)
     return model
         

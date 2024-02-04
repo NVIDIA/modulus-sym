@@ -102,7 +102,7 @@ from tensorflow.keras.layers import Dense
 from shutil import rmtree
 from modulus.sym.models.fno import *
 from modulus.sym.key import Key
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed,dump,load
 from collections import OrderedDict
 import os.path
 from numpy.linalg import inv
@@ -513,7 +513,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
                  target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP1
                  ,modelW1,modelG1,device,modelP2,
                  min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                 oldfolder):
+                 oldfolder,degg,experts):
 
 #### ===================================================================== ####
 #                     RESERVOIR SIMULATOR WITH MODULUS
@@ -766,7 +766,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         clemes = Parallel(n_jobs=num_cores, backend='loky', verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
-                "../ML_MACHINE", oldfolder, pred_type, 3
+                "../ML_MACHINE", oldfolder, pred_type, degg,experts
             ) for ib in range(66))           
             
         ouut_p = np.array(Split_Matrix (np.hstack(clemes), N))
@@ -809,84 +809,12 @@ def KalmanGain(G, params, Gamma, N, alpha):
     K = (1/(N-1))*Cyd@inv_denominator
     return K
 
-
-
-# def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
-#                             training_master,oldfolder,pred_type,deg):
-#     #import numpy as np
-#     # ii=0
-#     # nclusters=2
-#     #inputtest=X_test2
-#     #print('Starting Prediction')
-#     filename1='Classifier_%d.bin'%ii
-#     filenamex='clfx_%d.asv'%ii
-#     filenamey='clfy_%d.asv'%ii      
-#     os.chdir(training_master)
-#     loaded_model = xgb.Booster({'nthread': 4})  # init model
-#     clfx = pickle.load(open(filenamex, 'rb'))
-#     clfy = pickle.load(open(filenamey, 'rb'))  
-#     loaded_model.load_model(filename1)  # load data    
-#     os.chdir(oldfolder)
-#     inputtest=(clfx.transform(inputtest))
-#     labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
-#     if nclusters==2:
-#         labelDAX=1-labelDA
-#         labelDA=np.reshape(labelDA,(-1,1))
-#         labelDAX=np.reshape(labelDAX,(-1,1))
-#         labelDA=np.concatenate((labelDAX,labelDA), axis=1)
-        
-#     numrowstest=len(inputtest)
-#     clementanswer=np.zeros((numrowstest,1))
-#     #numcols=13
-#     if pred_type==1: #Hard prediction
-#         labelDA=np.argmax(labelDA, axis=-1)
-#         labelDA=np.reshape(labelDA,(-1,1),'F')
-#         for i in range(nclusters):
-#             #print('-- Predicting cluster: ' + str(i) + ' | ' + str(nclusters)) 
-#             loaded_modelr = xgb.Booster({'nthread': 4})  # init model
-#             filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
-             
-
-#             os.chdir(training_master)
-#             loaded_modelr.load_model(filename2)  # load data
-              
-
-#             os.chdir(oldfolder)
-#             labelDA0=(np.asarray(np.where(labelDA == i))).T
-#     #    ##----------------------##------------------------##
-#             a00=inputtest[labelDA0[:,0],:]
-#             a00=np.reshape(a00,(-1,numcols),'F')
-#             if a00.shape[0]!=0:
-#                 clementanswer[labelDA0[:,0],:]=np.reshape\
-#                     (predict_machine11(a00,loaded_modelr),(-1,1))
-            
-#         clementanswer=clfy.inverse_transform(clementanswer)
-#     else: #soft prediction
-#     #deg=4
-#         big_out=np.zeros((numrowstest,nclusters))
-#         for i in range(nclusters):
-#             #print('-- predicting cluster: ' + str(i+1) + ' | ' + str(nclusters)) 
-#             loaded_modelr = xgb.Booster({'nthread': 4})  # init model
-#             filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
-#             os.chdir(training_master)
-#             loaded_modelr.load_model(filename2)  # load data                
-#             os.chdir(oldfolder)
-#             aa=np.reshape\
-#                     (predict_machine11(inputtest,loaded_modelr),(-1,1))
-#             aanew=np.multiply(aa,np.reshape(labelDA[:,i],(-1,1)))
-#             big_out[:,i]=np.ravel(aanew)
-#         clementanswer=np.reshape(np.sum(big_out,axis=1),(-1,1),'F')
-#         #clementanswer=clfy.inverse_transform(clementanswer)
-#     return clementanswer
-#     #print('Finished prediction')
+def predict_machine3(a0,deg,model,poly):
+    predicted = model.predict(poly.fit_transform(a0))
+    return predicted 
 
 def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
-                            training_master,oldfolder,pred_type,deg):
-    #import numpy as np
-    # ii=0
-    # nclusters=2
-    #inputtest=X_test2
-    print('Starting Prediction')
+                            training_master,oldfolder,pred_type,deg,experts):
     filename1='Classifier_%d.bin'%ii
     filenamex='clfx_%d.asv'%ii
     filenamey='clfy_%d.asv'%ii      
@@ -898,65 +826,52 @@ def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
     os.chdir(oldfolder)
     inputtest=(clfx.transform(inputtest))
     labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
-    if nclusters==2:
-        labelDAX=1-labelDA
-        labelDA=np.reshape(labelDA,(-1,1))
-        labelDAX=np.reshape(labelDAX,(-1,1))
-        labelDA=np.concatenate((labelDAX,labelDA), axis=1)
         
     numrowstest=len(inputtest)
     clementanswer=np.zeros((numrowstest,1))
     #numcols=13
-    if pred_type==1: #Hard prediction
-        labelDA=np.argmax(labelDA, axis=-1)
-        labelDA=np.reshape(labelDA,(-1,1),'F')
-        for i in range(nclusters):
-            print('-- Predicting cluster: ' + str(i) + ' | ' + str(nclusters)) 
-            loaded_modelr = xgb.Booster({'nthread': 4})  # init model
-            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
-             
-
+    labelDA = np.reshape(labelDA, (-1, 1), 'F')
+    for i in range(nclusters):
+        print('-- Predicting cluster: ' + str(i+1) + ' | ' + str(nclusters))
+        if experts ==1:#Polynomial regressor experts
+            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".pkl"
+            filename2b="polfeat_" + str(ii) + "_Cluster_" + str(i) +".pkl"
             os.chdir(training_master)
-            loaded_modelr.load_model(filename2)  # load data
-              
+
+            with open(filename2, 'rb') as file:
+                model0 = pickle.load(file)
+
+            with open(filename2b, 'rb') as filex:
+                poly0 = pickle.load(filex)
 
             os.chdir(oldfolder)
             labelDA0=(np.asarray(np.where(labelDA == i))).T
-            #a00=inputtest[labelDA0[:,0],:]
-            
-            #labelDA0 = np.where(labelDA == i)[0]
-            # Check if labelDA0 is empty before attempting to use it
-            if labelDA0[:,0].size > 0:
-                valid_indices = labelDA0[:,0] < inputtest.shape[0]
-                labelDA0_valid = labelDA0[:,0][valid_indices]
-
-                if labelDA0_valid.size > 0:
-                    a00 = inputtest[labelDA0_valid, :]
-                    a00 = np.reshape(a00, (-1, numcols), 'F')
-                    if a00.shape[0] != 0:
-                        clementanswer[labelDA0_valid, :] = np.reshape(predict_machine11(a00, loaded_modelr), (-1, 1))
-            else:
-                print("labelDA0 is empty for cluster:", i)
-            
-        clementanswer=clfy.inverse_transform(clementanswer)
-    else: #soft prediction
-    #deg=4
-        big_out=np.zeros((numrowstest,nclusters))
-        for i in range(nclusters):
-            print('-- predicting cluster: ' + str(i+1) + ' | ' + str(nclusters)) 
+    #    ##----------------------##------------------------##
+            a00=inputtest[labelDA0[:,0],:]
+            a00=np.reshape(a00,(-1,numcols),'F')
+            if a00.shape[0]!=0:
+                clementanswer[labelDA0[:,0],:]=np.reshape\
+                    (predict_machine3(a00,deg,model0,poly0),(-1,1))
+        else: #XGBoost experts
             loaded_modelr = xgb.Booster({'nthread': 4})  # init model
-            filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
+    
             os.chdir(training_master)
-            loaded_modelr.load_model(filename2)  # load data                
+            loaded_modelr.load_model(filename2)  # load data
+    
             os.chdir(oldfolder)
-            aa=np.reshape\
-                    (predict_machine11(inputtest,loaded_modelr),(-1,1))
-            aanew=np.multiply(aa,np.reshape(labelDA[:,i],(-1,1)))
-            big_out[:,i]=np.ravel(aanew)
-        clementanswer=np.reshape(np.sum(big_out,axis=1),(-1,1),'F')
-        #clementanswer=clfy.inverse_transform(clementanswer)
+                        
+            labelDA0 = (np.asarray(np.where(labelDA == i))).T
+            #    ##----------------------##------------------------##
+            a00 = inputtest[labelDA0[:, 0], :]
+            a00 = np.reshape(a00, (-1, numcols), "F")
+            if a00.shape[0] != 0:
+                clementanswer[labelDA0[:, 0], :] = np.reshape(
+                    predict_machine11(a00, loaded_modelr), (-1, 1)
+                )
+
+    clementanswer = clfy.inverse_transform(clementanswer)
     return clementanswer
-    #print('Finished prediction')
     
 def predict_machine11(a0,model):
     ynew = model.predict(xgb.DMatrix(a0))
@@ -7201,7 +7116,8 @@ fname = 'conf/config_PINO.yaml'
 
 sizq = 1e4
 
-
+exper = sio.loadmat("../PACKETS/exper.mat")
+experts = exper['expert']
 mat = sio.loadmat('../PACKETS/conversions.mat')
 minK = mat['minK']
 maxK = mat['maxK']
@@ -7461,8 +7377,6 @@ degg=3
 
 rho = 1.05
 
-
-
 #True model            
 Truee = True_K
 Truee = np.reshape(Truee,(-1,))
@@ -7695,7 +7609,7 @@ TEMPLATEFILE['Iterations'] = Termm
 print('')
 
 if DEFAULT ==1:
-    Ne = 130
+    Ne = 150
 else:
     Ne = None
     while True:
@@ -8006,7 +7920,7 @@ while (snn<1):
                          target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP
                          ,modelW,modelG,device,model_peacemann,
                          min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                         oldfolder)                 
+                         oldfolder,degg,experts)                 
 
 
     if ii==0:
@@ -8407,7 +8321,7 @@ simDatafinal,predMatrix,pressure_ensemble,water_ensemble,oil_ensemble,gas_ensemb
                      target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP
                      ,modelW,modelG,device,model_peacemann,
                      min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                     oldfolder)              
+                     oldfolder,degg,experts)              
 
     
 ensemblepya = ensemble_pytorch(all_ensemble,all_ensemblep,all_ensemblef,\
@@ -8424,7 +8338,7 @@ Forward_model_ensemble(all_ensemble.shape[1],\
                      target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP
                      ,modelW,modelG,device,model_peacemann,
                      min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                     oldfolder)                               
+                     oldfolder,degg,experts)                               
 
 os.chdir('../HM_RESULTS')                       
 Plot_RSM(predMatrix,True_mat,"Final.png",Ne,Time_unie1)
@@ -8471,7 +8385,7 @@ _,yycheck,pree,wats,oilss,gasss = \
                          target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP
                          ,modelW,modelG,device,model_peacemann,
                          min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                         oldfolder)       
+                         oldfolder,degg,experts)       
 
 os.chdir('../HM_RESULTS/ADAPT_REKI') 
 Plot_RSM_single(yycheck,Time_unie1)
@@ -8579,7 +8493,7 @@ _,yycheck,preebest,watsbest,oilssbest,gasbest = \
                          target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP
                          ,modelW,modelG,device,model_peacemann,
                          min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                         oldfolder)     
+                         oldfolder,degg,experts)     
 
 os.chdir('../HM_RESULTS/BEST_RESERVOIR_MODEL' )
 Plot_RSM_single(yycheck,Time_unie1)
@@ -8677,7 +8591,7 @@ _,yycheck,preebest,watsbest,oilssbest,gasbest = \
                          target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP
                          ,modelW,modelG,device,model_peacemann,
                          min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                         oldfolder)     
+                         oldfolder,degg,experts)     
 
 os.chdir('../HM_RESULTS/MEAN_RESERVOIR_MODEL' )
 Plot_RSM_single(yycheck,Time_unie1)
@@ -8795,7 +8709,7 @@ _,yzout,pressure_percentile,water_percentile,oil_percentile,gas_percentile = \
                          target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP
                          ,modelW,modelG,device,model_peacemann,
                          min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                         oldfolder)      
+                         oldfolder,degg,experts)      
 
 os.chdir('../HM_RESULTS/PERCENTILE')
 Plot_RSM_percentile(yzout,True_mat,Time_unie1)        

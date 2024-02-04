@@ -326,7 +326,7 @@ def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg):
     pickle.dump(scaler1a, open(filenamex, 'wb'))
     pickle.dump(scaler2a, open(filenamey, 'wb'))
     os.chdir(oldfolder)    
-    y_traind=numruth*100*y
+    y_traind=numruth*10*y
     matrix=np.concatenate((X,y_traind), axis=1)
     #matrix=y
     k=getoptimumk(matrix,ii,training_master,oldfolder)

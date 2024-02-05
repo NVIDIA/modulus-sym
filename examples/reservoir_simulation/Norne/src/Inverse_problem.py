@@ -745,24 +745,10 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         ouut_p = np.transpose(ouut_p, (0, 2, 1))
         ouut_p[ouut_p<=0] = 0 
     else:
-        innn = np.vstack(innn)
-        cluster_all = np.genfromtxt("../ML_MACHINE/clustersizescost.dat", dtype='float')
-        cluster_all=np.reshape(cluster_all,(-1,1),'F')
+        innn = np.vstack(innn)        
+        cluster_all = sio.loadmat("../ML_MACHINE/clustersizescost.mat")['cluster']
+        cluster_all = np.reshape(cluster_all, (-1, 1), "F")
         
-
-
-        # clemes = []
-        # for ib in range(66):
-        #     progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib-1, 66-1)
-        #     ShowBar(progressBar)
-        #     time.sleep(1) 
-        #     see = PREDICTION_CCR__MACHINE(ib,int(cluster_all[ib,:]),innn,innn.shape[1],\
-        #                 "../ML_MACHINE",oldfolder,pred_type,3)
-        #     clemes.append(see)
-        # progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib, 66-1)
-        # ShowBar(progressBar)
-        # time.sleep(1) 
-
         clemes = Parallel(n_jobs=num_cores, backend='loky', verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
@@ -815,17 +801,37 @@ def predict_machine3(a0,deg,model,poly):
 
 def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
                             training_master,oldfolder,pred_type,deg,experts):
-    filename1='Classifier_%d.bin'%ii
+    
     filenamex='clfx_%d.asv'%ii
-    filenamey='clfy_%d.asv'%ii      
+    filenamey='clfy_%d.asv'%ii 
+     
     os.chdir(training_master)
-    loaded_model = xgb.Booster({'nthread': 4})  # init model
+    if experts ==1:
+        filename1='Classifier_%d.bin'%ii
+        loaded_model = xgb.Booster({'nthread': 4})  # init model
+        loaded_model.load_model(filename1)  # load data 
+    else:
+        filename1='Classifier_%d.pkl'%ii
+        with open(filename1, 'rb') as file:
+            loaded_model = pickle.load(file)        
     clfx = pickle.load(open(filenamex, 'rb'))
-    clfy = pickle.load(open(filenamey, 'rb'))  
-    loaded_model.load_model(filename1)  # load data    
+    clfy = pickle.load(open(filenamey, 'rb'))         
     os.chdir(oldfolder)
+    
     inputtest=(clfx.transform(inputtest))
-    labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+    if experts ==2:
+        labelDA = loaded_model.predict(inputtest)
+    else:
+        labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+        if nclusters==2:
+            labelDAX=1-labelDA
+            labelDA=np.reshape(labelDA,(-1,1))
+            labelDAX=np.reshape(labelDAX,(-1,1))
+            labelDA=np.concatenate((labelDAX,labelDA), axis=1)
+            labelDA=np.argmax(labelDA, axis=-1)
+        else:
+            labelDA=np.argmax(labelDA, axis=-1)
+        labelDA=np.reshape(labelDA,(-1,1),'F')
         
     numrowstest=len(inputtest)
     clementanswer=np.zeros((numrowstest,1))
@@ -872,6 +878,7 @@ def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
 
     clementanswer = clfy.inverse_transform(clementanswer)
     return clementanswer
+
     
 def predict_machine11(a0,model):
     ynew = model.predict(xgb.DMatrix(a0))
@@ -7069,7 +7076,8 @@ os.chdir(oldfolder)
 cur_dir = oldfolder
 
 
-njobs = int((multiprocessing.cpu_count() // 4) - 1)
+#njobs = int((multiprocessing.cpu_count() // 4) - 1)
+njobs = 3
 num_cores = njobs
 
 print('------------------Download pre-trained models------------------------')
@@ -7338,7 +7346,7 @@ print('********************Model Loaded*************************************')
 
 print('')
 if (DEFAULT==1):
-    Trainmoe = 2
+    Trainmoe = 1
     print('Inference peacemann with Mixture of Experts\n')
 else: 
     Trainmoe = None
@@ -7609,7 +7617,7 @@ TEMPLATEFILE['Iterations'] = Termm
 print('')
 
 if DEFAULT ==1:
-    Ne = 150
+    Ne = 130
 else:
     Ne = None
     while True:
@@ -8408,7 +8416,7 @@ for kk in range(steppi):
     Time_vector[kk] = current_time
     
 
-Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt,pree, 
+Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt,pree, 
                     effectiveuse,wats,oilss, 
                     gasss,nx, ny, nz, N_injw, 
                     N_pr, N_injg, 
@@ -8509,7 +8517,7 @@ with gzip.open('BEST_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
 
 os.chdir(oldfolder)
 
-Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt,preebest, 
+Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, 
@@ -8607,7 +8615,7 @@ with gzip.open('MEAN_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
 
 os.chdir(oldfolder )
     
-Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt,preebest, 
+Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, 

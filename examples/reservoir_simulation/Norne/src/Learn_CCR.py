@@ -38,6 +38,8 @@ from kneed import KneeLocator
 import scipy.io as sio
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
+from sklearn.cluster import KMeans
+from sklearn.ensemble import RandomForestClassifier
 # import gen
 # from gen import indeces_K_cut, GenMat, test_points_gen
 import warnings
@@ -85,7 +87,7 @@ def getoptimumk(X, i, training_master, oldfolder):
     Kss = range(1, 10)
 
     for k in Kss:
-        kmeanModel = MiniBatchKMeans(n_clusters=k).fit(X)
+        kmeanModel = KMeans(n_clusters=k).fit(X)
         kmeanModel.fit(X)
         distortions.append(
             sum(np.min(cdist(X, kmeanModel.cluster_centers_, "euclidean"), axis=1))
@@ -231,11 +233,11 @@ def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
     os.chdir(oldfolder)
     return CoDoverall, R2overall, CoDview, R2view
 
-
 def run_model(inn, ouut, i, training_master,oldfolder, nclus):
-    model=xgb.XGBClassifier(n_estimators=1000,
-                            objective='multi:softmax',
-                            num_class= nclus)
+    # model=xgb.XGBClassifier(n_estimators=4000,
+    #                         objective='multi:softmax',
+    #                         num_class= nclus)
+    model=xgb.XGBClassifier(n_estimators=4000)
     model.fit(inn, ouut)
     filename = "Classifier_%d.bin" % i
     os.chdir(training_master)
@@ -243,17 +245,7 @@ def run_model(inn, ouut, i, training_master,oldfolder, nclus):
     os.chdir(oldfolder)
     return model
 
-
-def run_modelcost(model, inn, ouut, i, training_master, oldfolder):
-    model.fit(inn, ouut)
-    filename = "Classifiercost_%d.bin" % i
-    os.chdir(training_master)
-    model.save_model(filename)
-    os.chdir(oldfolder)
-    return model
-
-
-def startit(i, outpuut2, inpuut2, training_master, oldfolder, degg):
+def startit(i, outpuut2, inpuut2, training_master, oldfolder, deg,use_elbow):
     print("")
     print("Starting CCR training machine %d" % (i + 1))
     useeo = outpuut2[:, i]
@@ -262,7 +254,7 @@ def startit(i, outpuut2, inpuut2, training_master, oldfolder, degg):
     usein = inpuut2
     usein = np.reshape(usein, (-1, 90), "F")  # 9+4
 
-    clust = CCR_Machine(usein, useeo, i, training_master, oldfolder, degg)
+    clust = CCR_Machine(usein, useeo, i, training_master, oldfolder, degg,use_elbow)
 
     bigs = clust
     return bigs
@@ -307,7 +299,7 @@ def predict_machine3(a0,deg,model,poly):
     predicted = model.predict(poly.fit_transform(a0))
     return predicted 
  
-def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg):
+def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg,use_elbow):
     X=inpuutj
     y=outputtj
     numruth = len(X[0])    
@@ -328,12 +320,15 @@ def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg):
     os.chdir(oldfolder)    
     y_traind=numruth*10*y
     matrix=np.concatenate((X,y_traind), axis=1)
-    #matrix=y
-    k=getoptimumk(matrix,ii,training_master,oldfolder)
-    nclusters=k
-    #nclusters=3
+    #matrix=y.reshape(-1,1)
+    if use_elbow ==1:
+        k=getoptimumk(matrix,ii,training_master,oldfolder)
+        nclusters=k
+    else:
+        nclusters=4
     print ('Optimal k is: ', nclusters)
-    kmeans =MiniBatchKMeans(n_clusters=nclusters,max_iter=2000).fit(matrix)
+    #kmeans = MiniBatchKMeans(n_clusters=nclusters,max_iter=2000).fit(matrix)
+    kmeans = KMeans(n_clusters=nclusters).fit(matrix)
     filename='Clustering_%d.asv'%ii
     os.chdir(training_master)
     pickle.dump(kmeans, open(filename, 'wb'))
@@ -345,19 +340,38 @@ def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg):
     #-------------------#---------------------------------#
     inputtrainclass=X
     outputtrainclass=np.reshape(dd,(-1,1))
-    run_model(inputtrainclass,outputtrainclass,ii,\
-                     training_master,oldfolder,nclusters)        
-    #print('Split for classifier problem')
+    if experts ==2:
+        clf = RandomForestClassifier(n_estimators=500, random_state=42)
+        clf.fit(inputtrainclass,outputtrainclass)
+        filename1='Classifier_%d.pkl'%ii
+        
+        os.chdir(training_master)
+        with open(filename1, 'wb') as file1:
+            pickle.dump(clf, file1)
 
-    print('Starting Prediction')
-    filename1='Classifier_%d.bin'%ii     
-    os.chdir(training_master)
-    loaded_model = xgb.Booster({'nthread': 4})  # init model  
-    loaded_model.load_model(filename1)  # load data    
-    os.chdir(oldfolder)
-
-    labelDA = loaded_model.predict(xgb.DMatrix(X))
-    labelDA = np.reshape((labelDA), (-1, 1), 'F')
+        with open(filename1, 'rb') as file2:
+            loaded_model = pickle.load(file2)
+        labelDA = loaded_model.predict(X)
+        labelDA = np.reshape((labelDA), (-1, 1), 'F')
+        os.chdir(oldfolder)            
+    else:
+        run_model(inputtrainclass,outputtrainclass,ii,\
+                         training_master,oldfolder,nclusters)        
+        filename1='Classifier_%d.bin'%ii     
+        os.chdir(training_master)
+        loaded_model = xgb.Booster({'nthread': 4})  # init model  
+        loaded_model.load_model(filename1)  # load data    
+        os.chdir(oldfolder)
+    
+        labelDA = loaded_model.predict(xgb.DMatrix(X))
+        if nclusters==2:
+            labelDAX=1-labelDA
+            labelDA=np.reshape(labelDA,(-1,1))
+            labelDAX=np.reshape(labelDAX,(-1,1))
+            labelDA=np.concatenate((labelDAX,labelDA), axis=1)
+        else:
+            labelDA=np.argmax(labelDA, axis=-1)
+        labelDA = np.reshape((labelDA), (-1, 1), 'F')
     
     #y_train = labelDA
     y_train = dd1
@@ -400,17 +414,37 @@ def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg):
  
 def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
                             training_master,oldfolder,pred_type,deg,experts):
-    filename1='Classifier_%d.bin'%ii
+    
     filenamex='clfx_%d.asv'%ii
-    filenamey='clfy_%d.asv'%ii      
+    filenamey='clfy_%d.asv'%ii 
+     
     os.chdir(training_master)
-    loaded_model = xgb.Booster({'nthread': 4})  # init model
+    if experts ==1:
+        filename1='Classifier_%d.bin'%ii
+        loaded_model = xgb.Booster({'nthread': 4})  # init model
+        loaded_model.load_model(filename1)  # load data 
+    else:
+        filename1='Classifier_%d.pkl'%ii
+        with open(filename1, 'rb') as file:
+            loaded_model = pickle.load(file)        
     clfx = pickle.load(open(filenamex, 'rb'))
-    clfy = pickle.load(open(filenamey, 'rb'))  
-    loaded_model.load_model(filename1)  # load data    
+    clfy = pickle.load(open(filenamey, 'rb'))         
     os.chdir(oldfolder)
+    
     inputtest=(clfx.transform(inputtest))
-    labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+    if experts ==2:
+        labelDA = loaded_model.predict(inputtest)
+    else:
+        labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+        if nclusters==2:
+            labelDAX=1-labelDA
+            labelDA=np.reshape(labelDA,(-1,1))
+            labelDAX=np.reshape(labelDAX,(-1,1))
+            labelDA=np.concatenate((labelDAX,labelDA), axis=1)
+            labelDA=np.argmax(labelDA, axis=-1)
+        else:
+            labelDA=np.argmax(labelDA, axis=-1)
+        labelDA=np.reshape(labelDA,(-1,1),'F')
         
     numrowstest=len(inputtest)
     clementanswer=np.zeros((numrowstest,1))
@@ -593,32 +627,43 @@ inputsz = range(Y.shape[1])
 num_cores = 12  # multiprocessing.cpu_count()
 
 if inpuut2.shape[0]< 2000:
-    print(' Use Polynomial regressor Experts')
+    print('Use Polynomial regressor Experts')
     experts =1
 else:
     print('Use XGBoost Experts')
     experts = 2
 
+print('')
 choice = {'expert':experts}
 sio.savemat("../PACKETS/exper.mat", choice)
+
+use_elbow = None
+while True:
+    use_elbow = int(input('Enter number of experts selection (select 2 - recommended)\
+:\n1 = Elbow method\n2 = Constant cluster size\n'))
+    if (use_elbow>2) or (use_elbow<1):
+        print('')
+        print('please try again and select value between 1-2')
+    else:        
+        break 
     
 bigs = Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(
     startit)\
-    (ib,outpuut2,inpuut2,trainingmaster,oldfolder,degg)for ib in inputsz )
+    (ib,outpuut2,inpuut2,trainingmaster,oldfolder,degg,use_elbow)for ib in inputsz )
 
 big = np.vstack(bigs)
 
 os.chdir(trainingmaster)
-for i in range(Y.shape[1]):
-    a = open("clustersizescost.dat", "a+")
-    a.write("%d \n" % (big[i, :]))
-    a.close()
+print(Y.shape[1])
+print(big.shape)
+cluster = {'cluster':big}
+sio.savemat("clustersizescost.mat", cluster)
 os.chdir(oldfolder)
 
 
 print(" -------------------------Predict For Energy Machine-----------------")
 os.chdir(trainingmaster)
-cluster_all = np.genfromtxt("clustersizescost.dat", dtype="float")
+cluster_all = sio.loadmat("clustersizescost.mat")['cluster']
 cluster_all = np.reshape(cluster_all, (-1, 1), "F")
 os.chdir(oldfolder)
 

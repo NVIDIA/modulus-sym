@@ -56,15 +56,15 @@ from sklearn.cluster import MiniBatchKMeans
 import os.path
 import torch
 torch.set_default_dtype(torch.float32)
-from joblib import Parallel, delayed,load,dump
+from struct import unpack
+import fnmatch
+from joblib import Parallel, delayed
 from scipy import interpolate
 import multiprocessing
 import mpslib as mps
 from shutil import rmtree
 import numpy.matlib
 import re
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
 from numpy import linalg as LA
 from scipy.spatial.distance import cdist
 from pyDOE import lhs
@@ -2374,7 +2374,128 @@ def ensemble_pytorch(param_perm,param_poro,param_fault,\
      'Swini': torch.from_numpy(ini_ensemble10).to(device,dtype=torch.float32)}    
     return inn
 
-def Geta_all(folder,nx,ny,nz,effective,oldfolder,check,string_Jesus,steppi,steppi_indices):
+SUPPORTED_DATA_TYPES = {
+    'INTE': (4, 'i', 1000),
+    'REAL': (4, 'f', 1000),
+    'LOGI': (4, 'i', 1000),
+    'DOUB': (8, 'd', 1000),
+    'CHAR': (8, '8s', 105),
+    'MESS': (8, '8s', 105),
+    'C008': (8, '8s', 105)
+}
+
+def parse_egrid(path_to_result):
+
+    egrid_path = path_to_result
+    attrs = ('GRIDHEAD', 'ACTNUM')
+    egrid = _parse_ech_bin(egrid_path, attrs)
+
+    return egrid
+
+def parse_unrst(path_to_result):
+
+    unrst_path = path_to_result
+    attrs = ('PRESSURE', 'SGAS', 'SWAT')
+    states = _parse_ech_bin(unrst_path, attrs)
+    return states
+
+
+
+def _check_and_fetch_type_info( data_type):
+    """Returns element size, format and element skip for the given data type.
+
+    Parameters
+    ----------
+    data_type: str
+        Should be a key from the SUPPORTED_DATA_TYPES
+
+    Returns
+    -------
+    type_info: tuple
+    """
+    try:
+        return SUPPORTED_DATA_TYPES[data_type]
+    except KeyError as exc:
+        raise ValueError('Unknown datatype %s.' % data_type) from exc
+
+def _check_and_fetch_file(path, pattern, return_relative=False):
+
+    found = []
+    reg_expr = re.compile(fnmatch.translate(pattern), re.IGNORECASE)
+
+    # Listing files in the specified directory
+    for f in os.listdir(path):
+        # Check if the file matches the pattern
+        if re.match(reg_expr, f):
+            f_path = os.path.join(path, f)
+            if return_relative:
+                found.append(os.path.relpath(f_path, start=path))
+            else:
+                found.append(f_path)
+
+    return found
+
+def _parse_keywords(path, attrs=None):
+
+    sections_counter = {} if attrs is None else {attr: 0 for attr in attrs}
+
+    with open(path, 'rb') as f:
+        header = f.read(4)
+        sections = dict()
+        while True:
+            try:
+                section_name = unpack('8s', f.read(8))[0].decode('ascii').strip().upper()
+            except:
+                break
+            n_elements = unpack('>i', f.read(4))[0]
+            data_type = unpack('4s', f.read(4))[0].decode('ascii')
+            f.read(8)
+            element_size, fmt, element_skip = _check_and_fetch_type_info(data_type)
+            f.seek(f.tell() - 24)
+            binary_data = f.read(24 + element_size * n_elements + 8 * (math.floor((n_elements - 1) / element_skip) + 1))
+            if (attrs is None) or (section_name in attrs):
+                sections_counter[section_name] = sections_counter.get(section_name, 0) + 1
+                if section_name not in sections:
+                    sections[section_name] = []
+                section = (n_elements, data_type, element_size, fmt, element_skip, binary_data)
+                section = _fetch_keyword_data(section)
+                sections[section_name].append(section)
+
+    return header, sections
+def _parse_ech_bin(path, attrs=None):
+
+    if attrs is None:
+        raise ValueError('Keyword attribute cannot be empty')
+ 
+    if isinstance(attrs, str):
+        attrs = [attrs]
+
+    attrs = [attr.strip().upper() for attr in attrs]
+    _, sections = _parse_keywords(path, attrs)
+
+    return sections
+
+def _fetch_keyword_data(section):
+
+    n_elements, data_type, element_size, fmt, element_skip, binary_data = section
+
+    n_skip = math.floor((n_elements - 1) / element_skip)
+    skip_elements = 8 // element_size
+    skip_elements_total = n_skip * skip_elements
+    data_format = fmt * (n_elements + skip_elements_total)
+    data_size = element_size * (n_elements + skip_elements_total)
+    if data_type in ['INTE', 'REAL', 'LOGI', 'DOUB']:
+        data_format = '>' + data_format
+    decoded_section = list(unpack(data_format, binary_data[24: 24 + data_size]))
+    del_ind = np.repeat(np.arange(1, 1 + n_skip) * element_skip, skip_elements)
+    del_ind += np.arange(len(del_ind))
+    decoded_section = np.delete(decoded_section, del_ind)
+    if data_type in ['CHAR', 'C008']:
+        decoded_section = np.char.decode(decoded_section, encoding='ascii')
+    return decoded_section
+
+def Geta_all(folder,nx,ny,nz,effective,oldfolder,check,steppi,steppi_indices):
+    
     os.chdir(folder)
     
     #os.system(string_Jesus)
@@ -2405,91 +2526,54 @@ def Geta_all(folder,nx,ny,nz,effective,oldfolder,check,string_Jesus,steppi,stepp
         aa = np_array2[zz] *  check
         unie.append(aa)
     Time = np.stack(unie, axis=0)
-
-    indices = np.where(effective == 1)[0]
-    size1 = len(indices)
     
     pressure =[]
     swat = [] 
     sgas = []
     
-    for ii in range(1, 247):
-        filename2 = f'FULLNORNE.A{str(ii).zfill(4)}'  # zfill pads the string with zeroes to reach a length of 4
-        os.remove(filename2)        
+
+    attrs = ('GRIDHEAD', 'ACTNUM')
+    egrid = _parse_ech_bin('FULLNORNE2.EGRID', attrs)
+    nx, ny, nz = egrid["GRIDHEAD"][0][1:4]
+    actnum = egrid["ACTNUM"][0] # numpy array of size nx * ny * nz
     
-    steppi_indices = steppi_indices.flatten()
-    for i in steppi_indices:  # 248 because range's end is exclusive
-        filename = f'FULLNORNE.F{str(i).zfill(4)}'  # zfill pads the string with zeroes to reach a length of 4
-
-        with open(filename, 'r') as f:
-            pressure_flag = False
-            all_values = []
-            for line in f:
-                stripped_line = line.strip()  # Remove leading and trailing spaces
-                if 'PRESSURE' in stripped_line and 'REAL' in stripped_line:
-                    pressure_flag = True  # Start capturing pressure data
-                elif pressure_flag:  # We're in pressure data capture mode
-                    if stripped_line[0].isdigit():  # If the stripped line starts with a digit
-                        values = list(map(float, stripped_line.split()))
-                        all_values.extend(values)  # Add values to the list
-                    else:
-                        break  # Stop capturing pressure data
-
-        # Convert list to numpy array
-        np_array = np.array(all_values)
-        vector1 = np.zeros((nx*ny*nz,1))
-        vector1[indices] = rzz(np_array.reshape(-1,1), (size1,), order=1, preserve_range=True)
-        vector1 = np.reshape(vector1,(nx,ny,nz),'F')
-        pressure.append(vector1)
-
-
-        with open(filename, 'r') as f:
-            pressure_flag = False
-            all_values = []
-            for line in f:
-                stripped_line = line.strip()  # Remove leading and trailing spaces
-                if 'SWAT' in stripped_line and 'REAL' in stripped_line:
-                    pressure_flag = True  # Start capturing pressure data
-                elif pressure_flag:  # We're in pressure data capture mode
-                    if stripped_line[0].isdigit():  # If the stripped line starts with a digit
-                        values = list(map(float, stripped_line.split()))
-                        all_values.extend(values)  # Add values to the list
-                    else:
-                        break  # Stop capturing swat data
-
-        # Convert list to numpy array
-        np_array = np.array(all_values)
-        vector1 = np.zeros((nx*ny*nz,1))
-        vector1[indices] = rzz(np_array.reshape(-1,1), (size1,), order=1, preserve_range=True)
-        vector1 = np.reshape(vector1,(nx,ny,nz),'F')
-        swat.append(vector1)
-
-
-
-        with open(filename, 'r') as f:
-            pressure_flag = False
-            all_values = []
-            for line in f:
-                stripped_line = line.strip()  # Remove leading and trailing spaces
-                if 'SGAS' in stripped_line and 'REAL' in stripped_line:
-                    pressure_flag = True  # Start capturing pressure data
-                elif pressure_flag:  # We're in pressure data capture mode
-                    if stripped_line[0].isdigit():  # If the stripped line starts with a digit
-                        values = list(map(float, stripped_line.split()))
-                        all_values.extend(values)  # Add values to the list
-                    else:
-                        break  # Stop capturing sgas data
-        try:
-            os.remove(filename)
-        except OSError as e:
-            print(f"Error: {filename} : {e.strerror}")
-        # Convert list to numpy array
-        np_array = np.array(all_values)
-        vector1 = np.zeros((nx*ny*nz,1))
-        vector1[indices] = rzz(np_array.reshape(-1,1), (size1,), order=1, preserve_range=True)
-        vector1 = np.reshape(vector1,(nx,ny,nz),'F')
-        sgas.append(vector1)
-
+    states = parse_unrst('FULLNORNE2.UNRST')
+    pressuree = states["PRESSURE"]
+    swatt = states["SWAT"]
+    sgass = states["SGAS"]
+    
+    active_index_array = np.where(actnum == 1)[0]
+    len_act_indx = len(active_index_array)
+    
+    
+    # Filter the slices of interest before the loop
+    filtered_pressure = [pressuree[i] for i in steppi_indices-1]
+    filtered_swat = [swatt[i] for i in steppi_indices-1]
+    filtered_sgas = [sgass[i] for i in steppi_indices-1]
+    
+    # Active index array and its length
+    active_index_array = np.where(actnum == 1)[0]
+    len_act_indx = len(active_index_array)
+    
+    # Iterate over the filtered slices
+    for pr_slice, sw_slice, sg_slice in zip(filtered_pressure, filtered_swat, filtered_sgas):
+        for state_var, all_slices in zip([pr_slice, sw_slice, sg_slice], 
+                                          [pressure, swat, sgas]):
+            # Initialize an array of zeros
+            resize_state_var = np.zeros((nx * ny * nz, 1))
+            
+            # Resize and update the array at active indices
+            resize_state_var[active_index_array] = rzz(
+                state_var.reshape(-1, 1), (len_act_indx, ), order=1, preserve_range=True
+            )
+            
+            # Reshape to 3D grid
+            resize_state_var = np.reshape(resize_state_var, (nx, ny, nz), "F")
+            
+            # Append to the corresponding list
+            all_slices.append(resize_state_var)
+    
+    # Stack the lists to create 3D arrays for each variable
     sgas = np.stack(sgas, axis=0)
     pressure = np.stack(pressure, axis=0)
     swat = np.stack(swat, axis=0)
@@ -2997,9 +3081,8 @@ def save_files(perm,poro,perm2,dest_dir,oldfolder):
         
     os.chdir(oldfolder) 
 
-def Run_simulator(dest_dir,oldfolder,string_jesus,string_jesus2):
+def Run_simulator(dest_dir,oldfolder,string_jesus2):
     os.chdir(dest_dir)
-    os.system(string_jesus)
     os.system(string_jesus2)
     os.chdir(oldfolder) 
 
@@ -3167,7 +3250,7 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
                  target_min,target_max,minK,maxK,minT,maxT,minP,maxP,modelP1
                  ,modelW1,modelG1,device,modelP2,
                  min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                 oldfolder):
+                 oldfolder,degg,experts):
     
     
 #### ===================================================================== ####
@@ -3399,26 +3482,12 @@ def Forward_model_ensemble(N,x_true,steppi,min_inn_fcn,max_inn_fcn,
         ouut_p = np.transpose(ouut_p, (0, 2, 1))
     else:
         innn = np.vstack(innn)
-        cluster_all = np.genfromtxt("../ML_MACHINE/clustersizescost.dat", dtype='float')
-        cluster_all=np.reshape(cluster_all,(-1,1),'F')
-        
-        # clemes = []
-        # for ib in range(66):
-        #     progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib-1, 66-1)
-        #     ShowBar(progressBar)
-        #     time.sleep(1) 
-        #     see = PREDICTION_CCR__MACHINE(ib,int(cluster_all[ib,:]),innn,innn.shape[1],\
-        #                 "../ML_MACHINE",oldfolder,pred_type,3)
-        #     clemes.append(see)
-        # progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib, 66-1)
-        # ShowBar(progressBar)
-        # time.sleep(1) 
-
-        
+        cluster_all = sio.loadmat("../ML_MACHINE/clustersizescost.mat")['cluster']
+        cluster_all = np.reshape(cluster_all, (-1, 1), "F")
         clemes = Parallel(n_jobs=num_cores, backend='loky', verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
                 ib, int(cluster_all[ib, :]), innn, innn.shape[1],
-                "../ML_MACHINE", oldfolder, pred_type, 3
+                "../ML_MACHINE", oldfolder, pred_type, degg,experts
             ) for ib in range(66))  
         
         ouut_p = np.array(Split_Matrix (np.hstack(clemes), N))
@@ -5182,199 +5251,124 @@ def preprocess_FNO_mat(path):
                 k, data=x, dtype="float16",compression="gzip",compression_opts=9 
             )  # note h5 files larger than .mat because no compression used
 
-def gaussianizeit(input1):
-    numrows1=len(input1)
-    numcols = len(input1[0])
-    newbig=np.zeros((numrows1,numcols))
+def interpolatebetween(xtrain, cdftrain, xnew):
+    numrows1 = len(xnew)
+    numcols = len(xnew[0])
+    norm_cdftest2 = np.zeros((numrows1, numcols))
     for i in range(numcols):
-        input11=input1[:,i]
-        newX = norm.ppf(rankdata(input11)/(len(input11) + 1))
-        newbig[:,i]=newX.T
+        f = interpolate.interp1d((xtrain[:, i]), cdftrain[:, i], kind="linear")
+        cdftest = f(xnew[:, i])
+        norm_cdftest2[:, i] = np.ravel(cdftest)
+    return norm_cdftest2
+
+
+
+
+def gaussianizeit(input1):
+    numrows1 = len(input1)
+    numcols = len(input1[0])
+    newbig = np.zeros((numrows1, numcols))
+    for i in range(numcols):
+        input11 = input1[:, i]
+        newX = norm.ppf(rankdata(input11) / (len(input11) + 1))
+        newbig[:, i] = newX.T
     return newbig
 
-def interpolatebetween(xtrain,cdftrain,xnew):
-    numrows1=len(xnew)
-    numcols = len(xnew[0])
-    norm_cdftest2=np.zeros((numrows1,numcols))
-    for i in range(numcols):
-        f = interpolate.interp1d((xtrain[:,i]), cdftrain[:,i],kind='linear')
-        cdftest = f(xnew[:,i])
-        norm_cdftest2[:,i]=np.ravel(cdftest)
-    return norm_cdftest2
-	
-def getoptimumkk(X,i,training_master,oldfolder):
-    distortions = []
-    Kss = range(1,10)
-    
-    for k in Kss:
-        kmeanModel = MiniBatchKMeans(n_clusters=k).fit(X)
-        kmeanModel.fit(X)
-        distortions.append(sum(np.min(cdist(X, kmeanModel.cluster_centers_, \
-                                            'euclidean'), axis=1)) / X.shape[0])
-    
-    myarray = np.array(distortions)
-    
-    knn = KneeLocator(Kss,myarray,curve='convex',direction='decreasing',\
-                      interp_method='interp1d')
-    kuse=knn.knee
-    
-    # Plot the elbow
-    plt.figure(figsize=(10, 10))
-    plt.plot(Kss, distortions, 'bx-')
-    plt.xlabel('cluster size')
-    plt.ylabel('Distortion')
-    plt.title('Elbow Method showing the optimal n_clusters for machine %d'%(i))
-    os.chdir(training_master)
-    plt.savefig("machine_%d.jpg"%(i+1))
-    os.chdir(oldfolder)
-    #plt.show()
-    plt.close()
-    plt.clf()
-    return kuse	
 
 
-def getoptimumkcost(X,i,training_master,oldfolder):
-    distortions = []
-    Kss = range(1,10)
-    
-    for k in Kss:
-        kmeanModel = MiniBatchKMeans(n_clusters=k).fit(X)
-        kmeanModel.fit(X)
-        distortions.append(sum(np.min(cdist(X, kmeanModel.cluster_centers_, \
-                                            'euclidean'), axis=1)) / X.shape[0])
-    
-    myarray = np.array(distortions)
-    
-    knn = KneeLocator(Kss,myarray,curve='convex',direction='decreasing',\
-                      interp_method='interp1d')
-    kuse=knn.knee
-    
-    # Plot the elbow
-    plt.figure(figsize=(10, 10))
-    plt.plot(Kss, distortions, 'bx-')
-    plt.xlabel('cluster size')
-    plt.ylabel('Distortion')
-    plt.title('Elbow Method showing the optimal n_clusters for machine %d'%(i))
-    os.chdir(training_master)
-    plt.savefig("machine_Energy__%d.jpg"%(i+1))
-    os.chdir(oldfolder)
-    plt.show()
-    return kuse	
-	   
 def best_fit(X, Y):
 
-    xbar = sum(X)/len(X)
-    ybar = sum(Y)/len(Y)
-    n = len(X) # or len(Y)
-    numer = sum([xi*yi for xi,yi in zip(X, Y)]) - n * xbar * ybar
+    xbar = sum(X) / len(X)
+    ybar = sum(Y) / len(Y)
+    n = len(X)  # or len(Y)
+    numer = sum([xi * yi for xi, yi in zip(X, Y)]) - n * xbar * ybar
     denum = sum([xi**2 for xi in X]) - n * xbar**2
     b = numer / denum
     a = ybar - b * xbar
 
-    print('best fit line:\ny = {:.2f} + {:.2f}x'.format(a, b))
+    print("best fit line:\ny = {:.2f} + {:.2f}x".format(a, b))
     return a, b
 
+from copy import copy
+def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
 
-def Performance_plot_cost(CCR,Trued,stringg,training_master,oldfolder):
-    
-    
-    CoDview=np.zeros((1,Trued.shape[1]))
-    R2view=np.zeros((1,Trued.shape[1]))
-    
-    plt.figure(figsize =(40,40))
-    
+    CoDview = np.zeros((1, Trued.shape[1]))
+    R2view = np.zeros((1, Trued.shape[1]))
+
+    plt.figure(figsize=(40, 40))
+
     for jj in range(Trued.shape[1]):
-        print(' Compute L2 and R2 for the machine _' + str(jj+1))
-        
-        
-        clementanswer2=np.reshape(CCR[:,jj],(-1,1))
-        outputtest2=np.reshape(Trued[:,jj],(-1,1))
-        numrowstest=len(outputtest2)    
+        print(" Compute L2 and R2 for the machine _" + str(jj + 1))
+
+        clementanswer2 = np.reshape(CCR[:, jj], (-1, 1))
+        outputtest2 = np.reshape(Trued[:, jj], (-1, 1))
+        numrowstest = len(outputtest2)
         outputtest2 = np.reshape(outputtest2, (-1, 1))
-        Lerrorsparse=(LA.norm(outputtest2-clementanswer2)/LA.norm(outputtest2))**0.5
-        L_22=1-(Lerrorsparse**2)
-        #Coefficient of determination
-        outputreq=np.zeros((numrowstest,1))
+        Lerrorsparse = (
+            LA.norm(outputtest2 - clementanswer2) / LA.norm(outputtest2)
+        ) ** 0.5
+        L_22 = 1 - (Lerrorsparse**2)
+        # Coefficient of determination
+        outputreq = np.zeros((numrowstest, 1))
         for i in range(numrowstest):
-        	outputreq[i,:]=outputtest2[i,:]-np.mean(outputtest2)
-        CoDspa=1-(LA.norm(outputtest2-clementanswer2)/LA.norm(outputreq))
-        CoD2=1 - (1-CoDspa)**2 ;
-        print('')        	
-   
+            outputreq[i, :] = outputtest2[i, :] - np.mean(outputtest2)
+        CoDspa = 1 - (LA.norm(outputtest2 - clementanswer2) / LA.norm(outputreq))
+        CoD2 = 1 - (1 - CoDspa) ** 2
+        print("")
 
-        CoDview[:,jj]=CoD2
-        R2view[:,jj]=L_22
+        CoDview[:, jj] = CoD2
+        R2view[:, jj] = L_22
 
-        jk=jj+1
-        plt.subplot(9,9,jk)
-        #palette = copy(plt.get_cmap('inferno_r'))
-        # palette.set_under('white')  # 1.0 represents not transparent
-        # palette.set_over('black')  # 1.0 represents not transparent
-        vmin=min(np.ravel(outputtest2))
-        vmax=max(np.ravel(outputtest2))
-        sc=plt.scatter(np.ravel(clementanswer2),np.ravel(outputtest2),\
-                       c=np.ravel(outputtest2), vmin=vmin, vmax=vmax, s=35, cmap='inferno_r')
+        jk = jj + 1
+        plt.subplot(9, 9, jk)
+        palette = copy(plt.get_cmap("inferno_r"))
+        palette.set_under("white")  # 1.0 represents not transparent
+        palette.set_over("black")  # 1.0 represents not transparent
+        vmin = min(np.ravel(outputtest2))
+        vmax = max(np.ravel(outputtest2))
+        sc = plt.scatter(
+            np.ravel(clementanswer2),
+            np.ravel(outputtest2),
+            c=np.ravel(outputtest2),
+            vmin=vmin,
+            vmax=vmax,
+            s=35,
+            cmap=palette,
+        )
         plt.colorbar(sc)
-        plt.title('Energy_' + str(jj), fontsize = 9)
-        plt.ylabel('Machine',fontsize = 9)
-        plt.xlabel('True data',fontsize = 9)
-        a,b=best_fit(np.ravel(clementanswer2), np.ravel(outputtest2),)
+        plt.title("Energy_" + str(jj), fontsize=9)
+        plt.ylabel("Machine", fontsize=9)
+        plt.xlabel("True data", fontsize=9)
+        a, b = best_fit(
+            np.ravel(clementanswer2),
+            np.ravel(outputtest2),
+        )
         yfit = [a + b * xi for xi in np.ravel(clementanswer2)]
-        plt.plot(np.ravel(clementanswer2), yfit,color='r')
-        plt.annotate('R2= %.3f' % CoD2, (0.8, 0.2), xycoords='axes fraction', \
-                     ha='center', va='center', size=9) 
-                 
-        
-    CoDoverall=(np.sum(CoDview,axis=1))/Trued.shape[1]    
-    R2overall=(np.sum(R2view,axis=1))/Trued.shape[1]       
-    os.chdir(training_master)        
-    plt.savefig("%s.jpg"%stringg)
-    os.chdir(oldfolder)	
-    return CoDoverall,R2overall,CoDview,R2view  
+        plt.plot(np.ravel(clementanswer2), yfit, color="r")
+        plt.annotate(
+            "R2= %.3f" % CoD2,
+            (0.8, 0.2),
+            xycoords="axes fraction",
+            ha="center",
+            va="center",
+            size=9,
+        )
 
-
-def run_model(model,inn,ouut,i,training_master,oldfolder):
-    model.fit(inn, ouut )
-    filename='Classifier_%d.bin'%i
+    CoDoverall = (np.sum(CoDview, axis=1)) / Trued.shape[1]
+    R2overall = (np.sum(R2view, axis=1)) / Trued.shape[1]
     os.chdir(training_master)
-    model.save_model(filename) 
+    plt.savefig("%s.jpg" % stringg)
     os.chdir(oldfolder)
-    return model
+    return CoDoverall, R2overall, CoDview, R2view
 
 
-def run_modelcost(model,inn,ouut,i,training_master,oldfolder):
-    model.fit(inn, ouut )
-    filename='Classifiercost_%d.bin'%i
-    os.chdir(training_master)
-    model.save_model(filename) 
-    os.chdir(oldfolder)
-    return model
-
-    
-def startit(i, outpuut2, inpuut2, training_master, oldfolder, degg):
-    print("")
-    print("Starting CCR training machine %d" % (i + 1))
-    useeo = outpuut2[:, i]
-    useeo = np.reshape(useeo, (-1, 1), "F")
-
-    usein = inpuut2
-    usein = np.reshape(usein, (-1, 90), "F")  # 9+4
-
-    clust = CCR_Machine(usein, useeo, i, training_master, oldfolder, degg)
-
-    bigs = clust
-    return bigs
-    print("")
-    print("Finished training machine %d" % (i + 1))
-
-
-def endit(i, testt, training_master, oldfolder, pred_type, degg,big):
+def endit(i, testt, training_master, oldfolder, pred_type, degg,big,experts):
     print("")
     print("Starting prediction from machine %d" % (i + 1))
 
     numcols = len(testt[0])
     clemzz = PREDICTION_CCR__MACHINE(
-        i, big, testt, numcols, training_master, oldfolder, pred_type, degg
+        i, big, testt, numcols, training_master, oldfolder, pred_type, degg,experts
     )
 
     print("")
@@ -5382,132 +5376,53 @@ def endit(i, testt, training_master, oldfolder, pred_type, degg,big):
     return clemzz
 
 
-def fit_machine (a0, b0):
-    model =xgb.XGBRegressor(n_estimators=400,objective ='reg:squarederror',
-                learning_rate = 0.1)
-    model.fit(a0,b0)
-    return model
+
         
 def predict_machine(a0,model):
     ynew = model.predict(xgb.DMatrix(a0))
 
     return ynew  
 
-def fit_machine3(a0,b0,deg):
-    polynomial_features= PolynomialFeatures(degree=deg,include_bias=False)
-    x_poly = polynomial_features.fit_transform(a0)
-    model = LinearRegression()
-    model.fit(x_poly, b0)
-    return model,polynomial_features
+
 
 def predict_machine3(a0,deg,model,poly):
     predicted = model.predict(poly.fit_transform(a0))
     return predicted 
  
-def CCR_Machine(inpuutj,outputtj,ii,training_master,oldfolder,degg):
-    X=inpuutj
-    y=outputtj
-    numruth = len(X[0])    
-    
-    y_traind=y
-    scaler1a = MinMaxScaler(feature_range=(0, 1))
-    (scaler1a.fit(X))
-    X=(scaler1a.transform(X))
-    scaler2a = MinMaxScaler(feature_range=(0, 1))
-    (scaler2a.fit(y))    
-    y=(scaler2a.transform(y))
-    yruth=y
-    os.chdir(training_master)
-    filenamex='clfx_%d.asv'%ii
-    filenamey='clfy_%d.asv'%ii    
-    pickle.dump(scaler1a, open(filenamex, 'wb'))
-    pickle.dump(scaler2a, open(filenamey, 'wb'))
-    os.chdir(oldfolder)    
-    y_traind=numruth*100*y
-    matrix=np.concatenate((X,y_traind), axis=1)
-    #matrix=y
-    k=getoptimumk(matrix,ii,training_master,oldfolder)
-    nclusters=k
-    #nclusters=3
-    print ('Optimal k is: ', nclusters)
-    kmeans =MiniBatchKMeans(n_clusters=nclusters,max_iter=2000).fit(matrix)
-    filename='Clustering_%d.asv'%ii
-    os.chdir(training_master)
-    pickle.dump(kmeans, open(filename, 'wb'))
-    os.chdir(oldfolder)
-    dd=kmeans.labels_
-    dd=dd.T
-    dd=np.reshape(dd,(-1,1))
-    dd1 = dd
-    #-------------------#---------------------------------#
-    inputtrainclass=X
-    outputtrainclass=np.reshape(dd,(-1,1))
-    run_model(inputtrainclass,outputtrainclass,ii,\
-                     training_master,oldfolder,nclusters)        
-    #print('Split for classifier problem')
 
-    print('Starting Prediction')
-    filename1='Classifier_%d.bin'%ii     
-    os.chdir(training_master)
-    loaded_model = xgb.Booster({'nthread': 4})  # init model  
-    loaded_model.load_model(filename1)  # load data    
-    os.chdir(oldfolder)
-
-    labelDA = loaded_model.predict(xgb.DMatrix(X))
-    labelDA = np.reshape((labelDA), (-1, 1), 'F')
-    
-    #y_train = labelDA
-    y_train = dd1
-    
-    X_train=X
-
-    #-------------------Regression----------------#
-    #print('Learn regression of the clusters with different labels from k-means ' )    
-    for i in range(nclusters):
-        print('-- Learning cluster: ' + str(i+1) + ' | ' + str(nclusters)) 
-        label0 = (np.asarray(np.where(y_train == i))).T
-        a0 = X_train[label0[:, 0], :]
-        a0 = np.reshape(a0, (-1, numruth), "F")
-        b0 = yruth[label0[:, 0], :]
-        b0 = np.reshape(b0, (-1, 1), "F")            
-        if (a0.shape[0]!=0) and (b0.shape[0]!=0):
-            if experts == 1:#Polynomial regressor experts
-                theta,con1=fit_machine3(a0, b0,degg)
-                filename="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".pkl"
-                filename2="polfeat_" + str(ii) + "_Cluster_" + str(i) +".pkl"
-                os.chdir(training_master)
-                # dump(theta, filename)
-                # dump(con1, filename2)
-                with open(filename, 'wb') as file:
-                    pickle.dump(theta, file)
-                    
-                with open(filename2, 'wb') as fileb:
-                    pickle.dump(con1, fileb)                    
-                    
-                os.chdir(oldfolder)            
-            else: #XGBoost experts   
-                theta =fit_machine (a0, b0)    
-                filename="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".bin"
-                os.chdir(training_master)
-                #sio.savemat(filename, {'model0':model0})
-                theta.save_model(filename) 
-                os.chdir(oldfolder)
-    return nclusters
-
- 
 def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
                             training_master,oldfolder,pred_type,deg,experts):
-    filename1='Classifier_%d.bin'%ii
+    
     filenamex='clfx_%d.asv'%ii
-    filenamey='clfy_%d.asv'%ii      
+    filenamey='clfy_%d.asv'%ii 
+     
     os.chdir(training_master)
-    loaded_model = xgb.Booster({'nthread': 4})  # init model
+    if experts ==1:
+        filename1='Classifier_%d.bin'%ii
+        loaded_model = xgb.Booster({'nthread': 4})  # init model
+        loaded_model.load_model(filename1)  # load data 
+    else:
+        filename1='Classifier_%d.pkl'%ii
+        with open(filename1, 'rb') as file:
+            loaded_model = pickle.load(file)        
     clfx = pickle.load(open(filenamex, 'rb'))
-    clfy = pickle.load(open(filenamey, 'rb'))  
-    loaded_model.load_model(filename1)  # load data    
+    clfy = pickle.load(open(filenamey, 'rb'))         
     os.chdir(oldfolder)
+    
     inputtest=(clfx.transform(inputtest))
-    labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+    if experts ==2:
+        labelDA = loaded_model.predict(inputtest)
+    else:
+        labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+        if nclusters==2:
+            labelDAX=1-labelDA
+            labelDA=np.reshape(labelDA,(-1,1))
+            labelDAX=np.reshape(labelDAX,(-1,1))
+            labelDA=np.concatenate((labelDAX,labelDA), axis=1)
+            labelDA=np.argmax(labelDA, axis=-1)
+        else:
+            labelDA=np.argmax(labelDA, axis=-1)
+        labelDA=np.reshape(labelDA,(-1,1),'F')
         
     numrowstest=len(inputtest)
     clementanswer=np.zeros((numrowstest,1))
@@ -5591,7 +5506,7 @@ def process_step(kk, steppi, dt, pressure, effectiveuse,
                  Sgas, Sgas_true, nx, ny, nz, N_injw, N_pr, N_injg, 
                  injectors, producers, gass,fol,fol1):
     
-    os.chdir(fol)
+    #os.chdir(fol)
     progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
     ShowBar(progressBar)
     time.sleep(1)     
@@ -5684,7 +5599,7 @@ def process_step(kk, steppi, dt, pressure, effectiveuse,
     plt.clf()
     plt.close()
     return R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g
-    os.chdir(fol1)
+    #os.chdir(fol1)
 
 
 oldfolder = os.getcwd()
@@ -5804,7 +5719,7 @@ print ('|                 RUN FLOW SIMULATOR                              |')
 print ('|-----------------------------------------------------------------|')
 print('')
 start_time_plots1 = time.time()
-Run_simulator(path_out,oldfolder2,string_Jesus,string_Jesus2)
+Run_simulator(path_out,oldfolder2,string_Jesus2)
 elapsed_time_secs = (time.time() - start_time_plots1)/2    
 msg = "Reservoir simulation with FLOW  took: %s secs (Wall clock time)" % timedelta(seconds=round(elapsed_time_secs))
 print(msg)    
@@ -5829,7 +5744,8 @@ actnumm = np.zeros((N,1,nx,ny,nz))
 
 
 folder = path_out
-Pr,sw,sg,tt,_ = Geta_all(folder,nx,ny,nz,effective,oldfolder2,check,string_Jesus,steppi,steppi_indices)
+Pr,sw,sg,tt,_ = Geta_all(folder,nx,ny,nz,effective,oldfolder2,check,
+                         steppi,steppi_indices)
 pressure.append(Pr)
 Sgas.append(sg)
 Swater.append(sw)
@@ -5882,7 +5798,8 @@ torch.cuda.set_device(device)
     
 inn = ensemble_pytorch(perm_use,poro_use,fault_use,\
                      nx,ny,nz,Ne,effectiveuse,oldfolder,target_min,target_max,minK,maxK,
-                     minT,maxT,minP,maxP,minQ,maxQ,minQw,maxQw,minQg,maxQg,steppi,device,steppi_indices)
+                     minT,maxT,minP,maxP,minQ,maxQ,minQw,maxQw,minQg,maxQg,
+                     steppi,device,steppi_indices)
 
 
 print('') 
@@ -5984,7 +5901,7 @@ _,ouut_peacemann,pressure,Swater,Sgas,Soil = Forward_model_ensemble(Ne,inn,stepp
                  target_min,target_max,minK,maxK,minT,maxT,minP,maxP,fno_pressure
                  ,fno_water,fno_gas,device,fno_peacemann,
                  min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                 oldfolder)
+                 oldfolder,degg,experts)
 elapsed_time_secs2 = time.time() - start_time_plots2    
 msg = "Reservoir simulation with NVidia Modulus (CCR - Hard prediction)  took: %s secs (Wall clock time)" % timedelta(seconds=round(elapsed_time_secs2))
 print(msg)    
@@ -6095,12 +6012,14 @@ Accuracy_water = np.zeros((steppi,2))
 Accuracy_gas = np.zeros((steppi,2))
 
 
+os.chdir(folderr)
 results = Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt, pressure, 
                     effectiveuse, pressure_true, Swater, Swater_true, Soil, 
                     Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
                     N_pr, N_injg, 
                     injectors, producers, 
                     gass,folderr,oldfolder) for kk in range(steppi))
+os.chdir(oldfolder)
    
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
@@ -6286,7 +6205,7 @@ _,ouut_peacemann,pressure,Swater,Sgas,Soil = Forward_model_ensemble(Ne,inn,stepp
                  target_min,target_max,minK,maxK,minT,maxT,minP,maxP,fno_pressure
                  ,fno_water,fno_gas,device,fno_peacemann,
                  min_out_fcn,max_out_fcn,Time,effectiveuse,Trainmoe,num_cores,pred_type,
-                 oldfolder)
+                 oldfolder,degg,experts)
 elapsed_time_secs2 = time.time() - start_time_plots2    
 msg = "Reservoir simulation with NVIDIA Modulus (FNO)  took: %s secs (Wall clock time)" % timedelta(seconds=round(elapsed_time_secs2))
 print(msg)    

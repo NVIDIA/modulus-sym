@@ -1,0 +1,162 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+cuda_graphs: false
+jit: False
+
+custom:
+  epochs: 1000
+  pde_weighting: 1
+  data_weighting: 1
+  gradient_method: fdm
+  ntrain: 98
+  nval: 1
+  ntest: 1
+  WELLSPECS:
+    water_injector_wells: 
+    - [10, 34, 1, 1000, 500, 0.0, 100, 1,'C-4H']
+    - [25, 43, 1, 1000, 500, 0.0, 100, 1,'C-1H']
+    - [22, 14, 1, 1000, 500, 0.0, 100, 1,'C-2H']
+    - [8, 12, 1, 1000, 500, 0.0, 100, 1,'C-3H']
+    - [11, 84, 1, 1000, 500, 0.0, 100, 1,'F-1H']
+    - [17, 82, 1, 1000, 500, 0.0, 100, 1,'F-2H']
+    - [5, 56, 1, 1000, 500, 0.0, 100, 1,'F-3H']
+    - [35, 67, 1, 1000, 500, 0.0, 100, 1,'F-4H']
+    - [28, 50, 1, 1000, 500, 0.0, 100, 1,'C-4AH']
+
+    gas_injector_wells: 
+    - [10, 34, 1, 1000, 500, 0.0, 100, 1,'C-4H']
+    - [25, 43, 1, 1000, 500, 0.0, 100, 1,'C-1H']
+    - [8, 12, 1, 1000, 500, 0.0, 100, 1,'C-3H']
+    - [28, 50, 1, 1000, 500, 0.0, 100, 1,'C-4AH']
+    
+    producer_wells:
+    - [14, 30, 1, -1, 100, 0.0, 100, 1,'B-2H']
+    - [9, 31, 1, -1, 100, 0.0, 100, 1,'B-4H']
+    - [13, 33, 1, -1, 100, 0.0, 100, 1,'B-1H']
+    - [8, 36, 1, -1, 100, 0.0, 100, 1,'B-3H']
+    - [8, 45, 1, -1, 100, 0.0, 100, 1,'B-4BH']
+    - [9, 28, 1, -1, 100, 0.0, 100, 1,'B-4DH']
+    - [9, 23, 1, -1, 100, 0.0, 100, 1,'B-1BH']
+    - [21, 21, 1, -1, 100, 0.0, 100, 1,'D-1H']
+    - [13, 27, 1, -1, 100, 0.0, 100, 1,'D-2H']
+    - [18, 37, 1, -1, 100, 0.0, 100, 1,'D-4H']
+    - [18, 53, 1, -1, 100, 0.0, 100, 1,'D-3AH']
+    - [15, 65, 1, -1, 100, 0.0, 100, 1,'D-4AH']
+    - [24, 36, 1, -1, 100, 0.0, 100, 1,'D-1CH']
+    - [18, 53, 1, -1, 100, 0.0, 100, 1,'D-3BH']
+    - [11, 71, 1, -1, 100, 0.0, 100, 1,'E-3H']
+    - [17, 67, 1, -1, 100, 0.0, 100, 1,'E-1H']
+    - [12, 66, 1, -1, 100, 0.0, 100, 1,'E-2H']
+    - [37, 97, 1, -1, 100, 0.0, 100, 1,'E-4AH']
+    - [6, 63, 1, -1, 100, 0.0, 100, 1,'E-3AH']
+    - [14, 75, 1, -1, 100, 0.0, 100, 1,'E-3CH']
+    - [12, 66, 1, -1, 100, 0.0, 100, 1,'E-2AH']
+    - [10, 27, 1, -1, 100, 0.0, 100, 1,'K-3H']
+        
+    SWOW:
+    - [0.00, 1.0, 0.0]
+    - [0.30, 1.0, 0.0]
+    - [0.35, 0.59, 0.01]
+    - [0.40, 0.32, 0.02]
+    - [0.45, 0.18, 0.034]
+    - [0.50, 0.08, 0.046]
+    - [0.55, 0.03, 0.068]
+    - [0.60, 0.01, 0.09]
+    - [0.65, 0.001, 0.128]
+    - [0.70, 0.0001, 0.166]
+    - [0.75, 0.0, 0.2]
+    - [0.80, 0.0, 0.24]
+    - [1.00, 0.0, 0.24]
+    
+    SWOG:
+    - [0.00, 1.0, 0.0]
+    - [0.03, 0.75, 0.0]
+    - [0.05, 0.59, 0.02]
+    - [0.10, 0.32, 0.09]
+    - [0.15, 0.18, 0.16]
+    - [0.20, 0.08, 0.24]
+    - [0.25, 0.03, 0.33]
+    - [0.30, 0.01, 0.43]
+    - [0.35, 0.001, 0.55]
+    - [0.40, 0.0, 0.67]
+    - [0.45, 0.0, 0.81]
+    - [0.50, 0.0, 1.0]
+    - [1.00, 0.0, 1.0]
+    
+  PROPS:
+    UW: 1.  
+    UO: 2.5  
+    SWI: 0.1 
+    SWR: 0.1 
+    CFW: 0.00001  
+    CFO: 0.00001 
+    CT: 0.00002  
+    S1: 0.2  
+    SG1: 0  
+    SO1: 0.8  
+    P1: 3000  
+    PB: 3000
+    BW: 1.  
+    BO: 1.2  
+    PATM: 14.6959  
+    isGravity: 1
+    RHOW: 1  
+    RHOO: 1  
+    RHOG: 1
+    nx: 46
+    ny: 112
+    nz: 22  
+
+ 
+network_dir : "ResSim"
+
+  
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+  
+optimizer:
+    weight_decay: 1e-4
+    lr: 1e-3
+
+training:
+  rec_results_freq : 10000
+  max_steps : 100000
+  rec_constraint_freq: 10000 
+
+loss:
+  weights:
+    pressure: 40.0
+    pressured: 1e-4
+    water_sat: 1.0
+    saturationd: 1e-4  
+    gas_sat: 20.0
+    saturationdg: 1e-4
+    Y: 1.0
+    peacemanned: 1e-5
+batch_size:
+  grid: 4
+  labelled: 4
+  validation: 1
+  test: 1

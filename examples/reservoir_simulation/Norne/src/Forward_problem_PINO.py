@@ -74,17 +74,14 @@ import torch.nn.functional as F
 from scipy.fftpack import dct
 from torch.utils.dlpack import to_dlpack
 from torch.utils.dlpack import from_dlpack
-import numpy.matlib
-from matplotlib import pyplot;   
+import numpy.matlib 
 #os.environ['KERAS_BACKEND'] = 'tensorflow'
 import os.path
 import math 
-import time
 import random
 import os.path
 import pandas as pd
 from skimage.transform import resize as rzz
-import imp
 import h5py
 from modulus.sym.hydra import to_absolute_path
 import scipy.io as sio
@@ -95,8 +92,6 @@ import matplotlib.lines as mlines
 from typing import Dict
 from struct import unpack
 import fnmatch
-import os
-from skimage.transform import resize
 import os
 import gzip
 try:
@@ -4723,8 +4718,25 @@ def linear_interp(x, xp, fp):
 
 
 def replace_nan_with_zero(tensor):
+    # Create masks for NaN and Inf values
     nan_mask = torch.isnan(tensor)
-    return tensor * (~nan_mask).float() + nan_mask.float() * 0.0
+    inf_mask = torch.isinf(tensor)
+    
+    # Combine masks to identify all invalid (NaN or Inf) positions
+    invalid_mask = nan_mask | inf_mask
+    
+    # Calculate the mean of valid (finite) elements in the tensor
+    valid_elements = tensor[~invalid_mask]  # Elements that are not NaN or Inf
+    if valid_elements.numel() > 0:  # Ensure there are valid elements to calculate mean
+        mean_value = valid_elements.mean()
+    else:
+        mean_value = torch.tensor(1e-6, device=tensor.device)  # Fallback value if no valid elements
+    
+    # Replace NaN and Inf values with the calculated mean
+    # Note: This line combines the original tensor where values are valid, with the mean value where they are not
+    return torch.where(invalid_mask, mean_value, tensor)
+
+
 def interp_torch(cuda, reference_matrix1, reference_matrix2, tensor1):
     chunk_size = 1
 
@@ -5558,10 +5570,10 @@ class Black_oil(torch.nn.Module):
         perm = input_var["perm"]
         fin = self.neededM["Q"]
         fin = fin.repeat(u.shape[0], 1, 1, 1, 1)
-        fin = fin.clamp(min=0)
+        fin = fin.clamp(min=1e-6)
         finwater = self.neededM["Qw"]
         finwater = finwater.repeat(u.shape[0], 1, 1, 1, 1)
-        finwater = finwater.clamp(min=0)
+        finwater = finwater.clamp(min=1e-6)
         dt = self.neededM["Time"]
         pini = input_var["Pini"]
         poro = input_var["Phi"]
@@ -5571,9 +5583,10 @@ class Black_oil(torch.nn.Module):
         fault = input_var["fault"]
         fingas = self.neededM["Qg"]
         fingas = fingas.repeat(u.shape[0], 1, 1, 1, 1)
-        fingas = fingas.clamp(min=0)
+        fingas = fingas.clamp(min=1e-6)
         actnum = self.neededM["actnum"]
         actnum = actnum.repeat(u.shape[0], 1, 1, 1, 1)
+        actnum = actnum.clamp(min=1e-6)
         sato = 1-(sat + satg)
         siniuse = sini[0,0,0,0,0]    
         dxf = 1e-2
@@ -5615,20 +5628,12 @@ class Black_oil(torch.nn.Module):
         BO = calc_bo(self.p_bub, self.p_atm, self.CFO, avg_p)
         
      
-        avg_p = torch.where(torch.isnan(avg_p), torch.tensor(0.0, device=avg_p.device), avg_p)
-        avg_p = torch.where(torch.isinf(avg_p), torch.tensor(0.0, device=avg_p.device), avg_p) 
-        
-        UG = torch.where(torch.isnan(UG), torch.tensor(0.0, device=UG.device), UG)
-        UG = torch.where(torch.isinf(UG), torch.tensor(0.0, device=UG.device), UG)
-    
-        BG = torch.where(torch.isnan(BG), torch.tensor(0.0, device=BG.device), BG)
-        BG = torch.where(torch.isinf(BG), torch.tensor(0.0, device=BG.device), BG)
-    
-        RS = torch.where(torch.isnan(RS), torch.tensor(0.0, device=RS.device), RS)
-        RS = torch.where(torch.isinf(RS), torch.tensor(0.0, device=RS.device), RS)        
-    
-        BO = torch.where(torch.isnan(BO), torch.tensor(0.0, device=BO.device), BO)
-        BO = torch.where(torch.isinf(BO), torch.tensor(0.0, device=BO.device), BO)
+
+        avg_p = replace_with_mean(avg_p)
+        UG = replace_with_mean(UG)
+        BG = replace_with_mean(BG)
+        RS = replace_with_mean(RS)
+        BO = replace_with_mean(BO)
     
     
         #dsp = u - prior_pressure  #dp
@@ -5659,9 +5664,7 @@ class Black_oil(torch.nn.Module):
         #dsg = torch.clip(dsg,0.001,None)        
     
         dtime = dt - prior_time #ds 
-        dtime[torch.isnan(dtime)] = 0
-        dtime[torch.isinf(dtime)] = 0 
-        
+        dtime = replace_with_mean(dtime)
         
         #Pressure equation Loss                    
         
@@ -5689,21 +5692,14 @@ class Black_oil(torch.nn.Module):
         Mo = torch.divide(KRO,(self.UO * BO))
         Mg = torch.divide(KRG,(UG * BG))
         
-    
-    
-        Mg[torch.isnan(Mg)] = 0
-        Mg[torch.isinf(Mg)] = 0 
-    
-    
-        Mw = torch.where(torch.isnan(Mw), torch.tensor(0.0, device=Mw.device), Mw)
-        Mw = torch.where(torch.isinf(Mw), torch.tensor(0.0, device=Mw.device), Mw)
-    
-        Mo = torch.where(torch.isnan(Mo), torch.tensor(0.0, device=Mo.device), Mo)
-        Mo = torch.where(torch.isinf(Mo), torch.tensor(0.0, device=Mo.device), Mo)
-    
-        Mg = torch.where(torch.isnan(Mg), torch.tensor(0.0, device=Mg.device), Mg)
-        Mg = torch.where(torch.isinf(Mg), torch.tensor(0.0, device=Mg.device), Mg)        
+
         
+        Mg = replace_with_mean(Mg)
+        Mw = replace_with_mean(Mw)
+        Mg = replace_with_mean(Mg)
+        
+    
+    
     
     
         Mt = torch.add(torch.add(torch.add(Mw,Mo),Mg),Mo*RS)
@@ -5758,7 +5754,7 @@ class Black_oil(torch.nn.Module):
            
             # Zero outer boundary
             #darcy_pressure = F.pad(darcy_pressure[:, :, 2:-2, 2:-2], [2, 2, 2, 2], "constant", 0) 
-            darcy_pressure = dxf * darcy_pressure * 1e-10
+            darcy_pressure = dxf * darcy_pressure #* 1e-10
             
             p_loss = darcy_pressure
         
@@ -5804,7 +5800,7 @@ class Black_oil(torch.nn.Module):
         
             # Zero outer boundary
             #darcy_saturation = F.pad(darcy_saturation[:, :, 2:-2, 2:-2], [2, 2, 2, 2], "constant", 0) 
-            darcy_saturation = dxf * darcy_saturation * 1e-10
+            darcy_saturation = dxf * darcy_saturation #* 1e-6
         
             
             s_loss = darcy_saturation
@@ -5869,7 +5865,7 @@ class Black_oil(torch.nn.Module):
             darcy_saturationg = torch.mul(actnum, (inner_sum + div_term))
                 
                    
-            sg_loss = dxf * darcy_saturationg * 1e-10
+            sg_loss = dxf * darcy_saturationg #* 1e-6
         
 
         else:
@@ -5897,10 +5893,10 @@ class Black_oil(torch.nn.Module):
                 gulpa.append(check)
                 gulp2a.append(check2)
             dudx_fdm = torch.stack(gulpa, 0)
-            dudx_fdm = dudx_fdm.clamp(min=1e-10)  # ensures that all values are at least 1e-10
+            dudx_fdm = dudx_fdm.clamp(min=1e-6)  # ensures that all values are at least 1e-10
 
             dudy_fdm = torch.stack(gulp2a, 0)
-            dudy_fdm = dudy_fdm.clamp(min=1e-10)
+            dudy_fdm = dudy_fdm.clamp(min=1e-6)
     
             # Compute second diffrential
             gulpa = []
@@ -5924,9 +5920,9 @@ class Black_oil(torch.nn.Module):
                 gulpa.append(check)
                 gulp2a.append(check2)
             dduddx_fdm = torch.stack(gulpa, 0)
-            dduddx_fdm = dduddx_fdm.clamp(min=1e-10)
+            dduddx_fdm = dduddx_fdm.clamp(min=1e-6)
             dduddy_fdm = torch.stack(gulp2a, 0)
-            dduddy_fdm = dduddy_fdm.clamp(min=1e-10)
+            dduddy_fdm = dduddy_fdm.clamp(min=1e-6)
     
             gulp = []
             gulp2 = []
@@ -5941,9 +5937,9 @@ class Black_oil(torch.nn.Module):
                 gulp.append(dudx_fdma)
                 gulp2.append(dudy_fdma)
             dcdx = torch.stack(gulp, 2)
-            dcdx = dcdx.clamp(min=1e-10)
+            dcdx = dcdx.clamp(min=1e-6)
             dcdy = torch.stack(gulp2, 2)
-            dcdy = dcdy.clamp(min=1e-10)
+            dcdy = dcdy.clamp(min=1e-6)
             
             actnum = replace_nan_with_zero(actnum)
             fin = replace_nan_with_zero(fin)
@@ -6006,7 +6002,7 @@ class Black_oil(torch.nn.Module):
             p_loss = torch.mul(actnum,darcy_pressure)
             p_loss = (torch.abs(p_loss))/sat.shape[0]
            # p_loss = p_loss.reshape(1, 1)
-            p_loss = dxf * p_loss * 1e-30 
+            p_loss = dxf * p_loss  
 
             # Saruration equation loss
             dudx = dudx_fdm
@@ -6029,8 +6025,8 @@ class Black_oil(torch.nn.Module):
                 gulp2.append(dudy_fdma)
             dadx = torch.stack(gulp, 2)
             dady = torch.stack(gulp2, 2)
-            dadx = dadx.clamp(min=1e-10)
-            dady = dady.clamp(min=1e-10)
+            dadx = dadx.clamp(min=1e-6)
+            dady = dady.clamp(min=1e-6)
     
             dsout = torch.zeros((sat.shape[0], sat.shape[1], self.nz, self.nx, self.ny)).to(
                 device, torch.float32
@@ -6083,7 +6079,7 @@ class Black_oil(torch.nn.Module):
             s_loss = torch.mul(actnum,darcy_saturation)
             s_loss = (torch.abs(s_loss))/sat.shape[0]
             #s_loss = s_loss.reshape(1, 1)
-            s_loss = dxf * s_loss * 1e-30            
+            s_loss = dxf * s_loss           
                 
             
             #Gas Saturation
@@ -6099,8 +6095,8 @@ class Black_oil(torch.nn.Module):
             Ubigx = Ugx + Uox
             Ubigy = Ugy + Uoy
             
-            Ubigx = Ubigx.clamp(min=1e-10)
-            Ubigy = Ubigy.clamp(min=1e-10)
+            Ubigx = Ubigx.clamp(min=1e-6)
+            Ubigy = Ubigy.clamp(min=1e-6)
             
 
             # compute first dffrential
@@ -6125,9 +6121,9 @@ class Black_oil(torch.nn.Module):
                 gulpa.append(check)
                 gulp2a.append(check2)
             dubigxdx = torch.stack(gulpa, 0)
-            dubigxdx = dubigxdx.clamp(min=1e-10)
+            dubigxdx = dubigxdx.clamp(min=1e-6)
             dubigxdy = torch.stack(gulp2a, 0) 
-            dubigxdy = dubigxdy.clamp(min=1e-10)
+            dubigxdy = dubigxdy.clamp(min=1e-6)
         
         
             #compute first dffrential
@@ -6152,9 +6148,9 @@ class Black_oil(torch.nn.Module):
                 gulpa.append(check)
                 gulp2a.append(check2)
             dubigydx = torch.stack(gulpa, 0)
-            dubigydx = dubigydx.clamp(min=1e-10)
+            dubigydx = dubigydx.clamp(min=1e-6)
             dubigydy = torch.stack(gulp2a, 0)
-            dubigydy = dubigydy.clamp(min=1e-10)
+            dubigydy = dubigydy.clamp(min=1e-6)
 
             actnum = replace_nan_with_zero(actnum)
             dubigxdx = replace_nan_with_zero(dubigxdx)
@@ -6179,7 +6175,7 @@ class Black_oil(torch.nn.Module):
                 
             sg_loss = (torch.abs(sg_loss))/sat.shape[0]
             #sg_loss = sg_loss.reshape(1, 1)
-            sg_loss = dxf * sg_loss * 1e-30
+            sg_loss = dxf * sg_loss 
             
         #p_loss = torch.mul(actnum,p_loss)    
         p_loss = torch.where(torch.isnan(p_loss), torch.tensor(0, device=p_loss.device), p_loss)
@@ -6195,73 +6191,64 @@ class Black_oil(torch.nn.Module):
         sg_loss = torch.where(torch.isinf(sg_loss), torch.tensor(0, device=sg_loss.device), sg_loss)        
         output_var = {"pressured": p_loss,"saturationd": s_loss,"saturationdg": sg_loss}
         
-        # for key, tensor in output_var.items():
-        #     tensor_clone = tensor.clone()
-        #     replacement_tensor = torch.tensor(0, dtype=tensor.dtype, device=tensor.device)
-        #     output_var[key] = torch.where(torch.isnan(tensor_clone), replacement_tensor, tensor_clone)
-        #     output_var[key] = torch.where(torch.isinf(tensor_clone), replacement_tensor, tensor_clone)
 
 
+        return normalize_tensors_adjusted(output_var)
+    
 
-        # Calculate the square root of torch.float32 max value
-        max_float32 = torch.tensor(torch.finfo(torch.float32).max)
-        sqrt_max_float32 = torch.sqrt(max_float32)
-        
-        # Define the range for clipping
-        clip_range = sqrt_max_float32.item()  # Convert to a Python float
-        #clip_range = clip_range * 1e-4
-        
-        # Adjust this value as needed
-        small_value = 1e-6
-        
-        for key, tensor in output_var.items():
-            tensor_clone = tensor.clone()
-            replacement_tensor = torch.full_like(tensor_clone, small_value)
-            clipped_tensor = torch.where(
-                torch.isnan(tensor_clone) | torch.isinf(tensor_clone) | (tensor_clone == 0),
-                replacement_tensor,
-                tensor_clone
-            )
-            clipped_tensor = torch.clamp(clipped_tensor, -clip_range, clip_range)
-            clipped_tensor = torch.sqrt(torch.abs(clipped_tensor))
-            output_var[key] = clipped_tensor
-            
+# Function to replace NaN and Inf values with the mean of valid values in a tensor
+def replace_with_mean(tensor):
+    # Ensure the input tensor is of type torch.float32
+    tensor = tensor.to(torch.float32)
+    
+    valid_elements = tensor[torch.isfinite(tensor)]  # Filter out NaN and Inf values
+    if valid_elements.numel() > 0:  # Check if there are any valid elements
+        mean_value = valid_elements.mean()  # Calculate mean of valid elements
+        # Add a slight perturbation to the mean value and ensure it's float32
+        perturbed_mean_value = (mean_value + torch.normal(mean=0.0, std=0.01, size=(1,), device=tensor.device)).to(torch.float32)
+    else:
+        # Fallback value if no valid elements, ensuring it's float32
+        perturbed_mean_value = torch.tensor(1e-4, device=tensor.device, dtype=torch.float32)
+    
+    # Replace NaN and Inf values with the slightly perturbed mean value
+    ouut = torch.where(torch.isnan(tensor) | torch.isinf(tensor), perturbed_mean_value, tensor)
+    
+    #ouut = (ouut * 10**6).round() / 10**6
+    ouut = torch.abs(ouut)
+    return ouut
 
-
-        for key, tensor in output_var.items():
-            max_value = torch.max(tensor).item()
-            min_value = torch.min(tensor).item()
-        
-            print(f"Key: {key}")
-            print(f"Maximum value (before): {max_value}")
-            print(f"Minimum value (before): {min_value}")
-            print()
-        
-        threshold = 1e-6  # Define the minimum threshold value
-        max_threshold = 1e6  # Define the maximum threshold value
-        
-        for key, tensor in output_var.items():
-            # Check if the minimum value is less than the threshold
-            if torch.min(tensor) < threshold:
-                # Replace values below the threshold with the threshold
-                tensor = torch.clamp(tensor, min=threshold)
-        
-            # Check if the maximum value is greater than the max_threshold
-            if torch.max(tensor) > max_threshold:
-                # Replace values above max_threshold with max_threshold
-                tensor = torch.clamp(tensor, max=max_threshold)
-        
-            # Update the value in the output_var dictionary
-            output_var[key] = tensor
-        
-            print(f"Key: {key}")
-            print(f"Maximum value (after): {torch.max(tensor).item()}")
-            print(f"Minimum value (after): {torch.min(tensor).item()}")
-            print()
-
-
-
-        return output_var
+def normalize_tensors_adjusted(tensor_dict):
+    """
+    Normalize each tensor in the dictionary to have values between a non-negative perturbed value around 0.1 and 1
+    based on their own min and max values, ensuring tensors are of type torch.float32.
+    
+    Parameters:
+    - tensor_dict: A dictionary with tensor values.
+    
+    Returns:
+    A dictionary with the same keys as tensor_dict but with all tensors normalized between a non-negative perturbed 0.1 and 1, and ensuring torch.float32 precision.
+    """
+    normalized_dict = {}
+    for key, tensor in tensor_dict.items():
+        tensor = tensor.to(torch.float32)  # Ensure tensor is float32
+        min_val = torch.min(tensor)
+        max_val = torch.max(tensor)
+        if max_val - min_val > 0:
+            # Normalize between 0 and 1
+            normalized_tensor = (tensor - min_val) / (max_val - min_val)
+            # Generate perturbation
+            perturbation = torch.normal(mean=0.1, std=0.01, size=normalized_tensor.size(), device=tensor.device)
+            # Ensure perturbation does not go below 0.1 to avoid negative values
+            perturbation_clipped = torch.clamp(perturbation, min=0.1)
+            # Adjust to be between a non-negative perturbed value around 0.1 and 1
+            adjusted_tensor = normalized_tensor * 0.9 + perturbation_clipped
+        else:
+            # Set to a perturbed value around 0.1 if the tensor has the same value for all elements, ensuring no negative values
+            perturbed_value = torch.normal(mean=0.1, std=0.01, size=tensor.size(), device=tensor.device)
+            perturbed_value_clipped = torch.clamp(perturbed_value, min=0.1)
+            adjusted_tensor = torch.full_like(tensor, 0).float() + perturbed_value_clipped
+        normalized_dict[key] = adjusted_tensor
+    return normalized_dict
 
 @modulus.sym.main(config_path="conf", config_name="config_PINO")
 def run(cfg: ModulusConfig) -> None:
@@ -6325,6 +6312,26 @@ def run(cfg: ModulusConfig) -> None:
             else:
                 
                 break
+            
+
+    if DEFAULT ==1:
+        fno_type = 'FNO'
+    else:
+        fno_typee = None
+        while True:
+            fno_typee = int(input('Select 1 = augment darcy loss | 2 = Use peacemann and darcy loss \n'))
+            if (fno_typee>2) or (fno_typee<1):
+                #raise SyntaxError('please select value between 1-2')
+                print('')
+                print('please try again and select value between 1-2')
+            else:
+                
+                break            
+        if fno_typee == 1:
+            fno_type = 'PINO'
+        else:
+            fno_type = 'FNO'
+             
 
     print('')
     if DEFAULT ==1:
@@ -6467,13 +6474,7 @@ def run(cfg: ModulusConfig) -> None:
     
     SWOG = torch.tensor(np.array(np.vstack(cfg.custom.WELLSPECS.SWOG),dtype=float)).to(device)
     
-    injectors = cfg.custom.WELLSPECS.water_injector_wells
-    producers = cfg.custom.WELLSPECS.producer_wells
-    gass = cfg.custom.WELLSPECS.gas_injector_wells
-    
-    N_injw = len(cfg.custom.WELLSPECS.water_injector_wells)  # Number of water injectors
-    N_pr = len(cfg.custom.WELLSPECS.producer_wells)  #Number of producers
-    N_injg = len(cfg.custom.WELLSPECS.gas_injector_wells)  # Number of gas injectors
+
     
     
     BO = float(cfg.custom.PROPS.BO)
@@ -6486,16 +6487,9 @@ def run(cfg: ModulusConfig) -> None:
     p_atm = cp.float32(float(cfg.custom.PROPS.PATM))
     p_bub = cp.float32(float(cfg.custom.PROPS.PB))
 
-    params1 = {
-        'BO': torch.tensor(BO),
-        'UO': torch.tensor(UO),
-        'BW': torch.tensor(BW),
-        'UW': torch.tensor(UW),
-    }    
 
-    skin = torch.tensor(0).to(device)
-    rwell = torch.tensor(200).to(device)
-    pwf_producer = torch.tensor(100).to(device)
+
+
     DZ = torch.tensor(100).to(device)
     RE = torch.tensor(0.2 * 100).to(device)    
     
@@ -6513,7 +6507,7 @@ def run(cfg: ModulusConfig) -> None:
     #N_ens = 2
     njobs = 3
     #njobs = int((multiprocessing.cpu_count() // 4) - 1)
-    num_cores = njobs
+
     #os.chdir('NORNE')
 
     
@@ -7373,7 +7367,18 @@ def run(cfg: ModulusConfig) -> None:
     os.remove(to_absolute_path("../PACKETS/peacemann_test.mat")) 
 
     outvar_trainp["peacemanned"] = np.zeros_like(outvar_trainp["Y"])       
+    if fno_type == 'PINO':
+        outvar_train1["pressured"] = np.zeros_like(
+            outvar_train1["pressure"]
+        )
 
+        outvar_train2["saturationd"] = np.zeros_like(
+            outvar_train2["water_sat"]
+        )
+
+        outvar_train3["saturationdg"] = np.zeros_like(
+            outvar_train3["gas_sat"]
+        )
 
     train_dataset_pressure = DictGridDataset(invar_train, outvar_train1)
     train_dataset_water = DictGridDataset(invar_train, outvar_train2)
@@ -7418,38 +7423,39 @@ def run(cfg: ModulusConfig) -> None:
     fno_peacemann = FNOArch([Key("X", size=90) ],\
     fno_modes = 13, dimension=1,padding=20,nr_fno_layers=5, decoder_net=decoder4)
     
-    inputs = [
-        "perm",
-        "Phi",        
-        "Pini",
-        "Swini",
-        "pressure", 
-        "water_sat",
-        "gas_sat",
-        "fault",         
-    ]
-    
-    # darcyy = Node(
-    #     inputs = inputs,        
-    #     outputs = [
-    #         "pressured",
-    #         "saturationd",
-    #         "saturationdg",
-    #     ],
+    if fno_type =='PINO':
+        inputs = [
+            "perm",
+            "Phi",        
+            "Pini",
+            "Swini",
+            "pressure", 
+            "water_sat",
+            "gas_sat",
+            "fault",         
+        ]
         
-    #     evaluate = Black_oil(neededM,SWI,SWR,UW,BW,UO,BO,
-    #                   nx,ny,nz,SWOW,SWOG,target_min,target_max,minKx,maxKx,
-    #                   minPx,maxPx,p_bub,p_atm,CFO,Relperm,params,pde_method,RE,max_inn_fcnx,max_out_fcnx,DZ,device),
-    #     name="Darcy node",
-    # )
+        darcyy = Node(
+            inputs = inputs,        
+            outputs = [
+                "pressured",
+                "saturationd",
+                "saturationdg",
+            ],
+            
+            evaluate = Black_oil(neededM,SWI,SWR,UW,BW,UO,BO,
+                          nx,ny,nz,SWOW,SWOG,target_min,target_max,minKx,maxKx,
+                          minPx,maxPx,p_bub,p_atm,CFO,Relperm,params,pde_method,RE,max_inn_fcnx,max_out_fcnx,DZ,device),
+            name="Darcy node",
+        )
     
-    inputs = [
+    inputs1 = [
         "X",
         "Y",                
     ]
     
     peacemannp = Node(
-        inputs = inputs,        
+        inputs = inputs1,        
         outputs = [
             "peacemanned",
         ],
@@ -7460,12 +7466,16 @@ def run(cfg: ModulusConfig) -> None:
     )
 
 
-
-    nodes =[fno_pressure.make_node('fno_forward_model_pressure')] +\
-    [fno_peacemann.make_node('fno_forward_model_peacemann')] +\
-    [fno_water.make_node('fno_forward_model_water')]+\
-    [fno_gas.make_node('fno_forward_model_gas')] + [peacemannp]#+ [darcyy]
-    
+    if fno_type =='PINO':
+        nodes =[fno_pressure.make_node('fno_forward_model_pressure')] +\
+        [fno_peacemann.make_node('fno_forward_model_peacemann')] +\
+        [fno_water.make_node('fno_forward_model_water')]+\
+        [fno_gas.make_node('fno_forward_model_gas')] + [peacemannp]+ [darcyy]
+    else:
+        nodes =[fno_pressure.make_node('fno_forward_model_pressure')] +\
+        [fno_peacemann.make_node('fno_forward_model_peacemann')] +\
+        [fno_water.make_node('fno_forward_model_water')]+\
+        [fno_gas.make_node('fno_forward_model_gas')] + [peacemannp]        
     #nodes = [fno_pressure.make_node('fno_forward_model_presssure')] 
     # [constraint]
     # make domain

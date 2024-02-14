@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # C02 - Brine surrogate computed with a Physics Informed Neural Operator (PINO) 
 
 ![Visualization](Visuals/All1.png)

@@ -1,28 +1,70 @@
-# C02 -Brine surrogate computed with a Physics Informed Neural Operator (PINO) 
-![alt text](Visuals/All1.png)
+# C02 - Brine surrogate computed with a Physics Informed Neural Operator (PINO) 
+
+![Visualization](Visuals/All1.png)
+
+## 1. Forward Problem
+
+### 1.1 Governing Equations 
+
+The governing equations for a CO<sub>2</sub>-Brine system are given by:
+
+\begin{equation}
+\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \nabla \cdot k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}u_{\ell }\right)-\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0 \tag{1}
+\end{equation}
+
+\begin{equation}
+u_{\ell }\ =\ -k{\lambda }_{\ell }\nabla {\Theta }_{\ell }= -k{\lambda }_{\ell }\left(\nabla \left(p-P_{c\ell }\right)- {\rho }_{\ell }g\nabla z\right) \tag{2}
+\end{equation}
+
+\begin{equation}
+{\lambda }_{\ell }= \frac{K_{r\ell }}{{\mu }_{\ell }} \tag{3}
+\end{equation}
+
+\begin{equation}
+\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \nabla \cdot k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}\nabla {\Theta }_{\ell }\right)-\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0 \tag{4(a)}
+\end{equation}
 
 
-\noindent 
-\section{1. Forward Problem.}
+Where:
+- $\varphi$: Porosity
+- $t$: Time
+- ${\rho }_{\ell }$: Density of phase $\ell$
+- $y_{c\ell }$: Mass fraction of component $c$ in phase $\ell$
+- $S_{\ell }$: Saturation of phase $\ell$
+- $k$: Permeability
+- ${\lambda }_{\ell }$: Fluid mobility of phase $\ell$
+- $u_{\ell }$: Darcy velocity of phase $\ell$
+- $q_{\ell }$: Source/sink term for phase $\ell$
+- ${\Theta }_{\ell }$: Temperature of phase $\ell$
+- $K_{r\ell }$: Relative permeability of phase $\ell$
+- ${\mu }_{\ell }$: Dynamic viscosity of phase $\ell$
+- $p$: Pressure
+- $P_{c\ell }$: Capillary pressure of phase $\ell$
+- $g$: Gravitational acceleration
+- $z$: Depth
 
-\noindent 
-\subsection{1.1 Governing Equations }
 
-\noindent The governing equations for a CO${}_{2}$-Brine system is given by. 
 
-\noindent 
 
-\noindent $\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \mathrm{\nabla }.k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}u_{\ell }\right)-\ \sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0$Eqn.1
 
-\noindent 
 
-\noindent $u_{\ell }\ =\ -k{\lambda }_{\ell }\mathrm{\nabla }{\mathrm{\Theta }}_{\ell }=\ -k{\lambda }_{\ell }\left(\mathrm{\nabla }\left(p-\ P_{c\ell }\right)-\ {\rho }_{\ell }g\mathrm{\nabla }\mathrm{z}\ \right)$Eqn.2
 
-\noindent ${\lambda }_{\ell }=\ \frac{K_{r\ell }}{{\mu }_{\ell }}$Eqn.3
 
-\noindent $\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \mathrm{\nabla }.k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}\mathrm{\nabla }{\mathrm{\Theta }}_{\ell }\right)-\ \sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0$Eqn.4(a)
 
-\noindent Were.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \noindent $\ell $  is the phase (brine/gas), $k\ $ is the rock absolute permeability, ${\lambda }_{\ell }$ is the phase mobility ratio, ${\mu }_{\ell }$ is the phase viscosity, $K_{r\ell }$ is the phase relative permeability, $S_{\ell }$ is the phase saturation,$u_{\ell }$ is the phase darcy velocity,\textit{ }$g$\textit{ }is the acceleration due to gravity, $\mathrm{z}$ is the depth,\textit{ }$y_{c,\ell }$ is the mass fraction of component $c$ in phase $\ell $, $t$ is time and $p$ is the pressure.
 

@@ -24,8 +24,8 @@ u_{\ell }\ =\ -k{\lambda }_{\ell }\nabla {\Theta }_{\ell }= -k{\lambda }_{\ell }
 \varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \nabla \cdot k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}\nabla {\Theta }_{\ell }\right)-\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0 \tag{4(a)}
 \end{equation}
 
-
 Where:
+
 - $\varphi$: Porosity
 - $t$: Time
 - ${\rho }_{\ell }$: Density of phase $\ell$

@@ -3,12 +3,9 @@
 
 
 
-## 1. Forward Problem
-
-### 1.1 Governing Equations 
 
 ### Forward problem
-**Black oil model**;
+**Black oil model**
 
  - Our simplified model for three-phase flow in porous media for reservoir simulation is given as [7].
 ```math

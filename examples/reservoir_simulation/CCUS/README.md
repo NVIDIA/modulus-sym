@@ -2,261 +2,313 @@
 ![alt text](Visuals/All1.png)
 
 
-## An AI enabled Automatic History Matching Workflow with a PINO based forward solver:
-Calibration of subsurface structures is an important step to forecast fluid dynamics and behaviours in a plethora of geoenvironments such as petroleum and geothermal reservoirs. History matching is an ill-posed inverse process to find reservoir model parameters honouring observations by integration of static (e.g., core, logging, and seismic) and dynamic data (e.g., oil and gas rate, water cut, bottomhole pressure, and subsidence/uplift) .In recent developments, the ensemble Kalman filter (EnKF) (Evensen 1994, Law et al 2012, Stuart 2010), ensemble smoother (ES) (van Leeuwen & Evensen 1996) ES with multiple data assimilation (ES-MDA) (Emerick & Reynolds 2013) and Iterative variants of ES (Chen & Oliver 2011, Iglesias 2013) have all been utilised for history matching/data assimilation problems. However, the ensemble-based data assimilation approaches have limited capability in preserving non-Gaussian distributions of model parameters such as facies (Aanonsen et al.,2009, Villegas et al, 2018, Lorentzen et al, 2013). In the ensemble-based data assimilation techniques, model parameters lose the non- Gaussianity of their original distributions (generated from a geostatistical software) that are initially constrained and constructed to available hard data and the distributions of the model parameters tend towards Gaussian ones (Evensen & Eikrem 2018, Kim et al 2018). Some methods utilised for this parametrisation technique in reservoir characterization literature is, the discrete cosine transform (DCT) (Jafarpour & McLaughlin, 2007)  (Liu & Jafarpour, 2013), level set (Moreno & Aanonsen 2007, Dorn & Villegas 2008, Villegas et al 2018, Chang et al 2010, Lorentzen et al., 2013) and sparse geologic dictionaries (Etienam et al, 2019, Kim et al, 2018, Khaninezhad et al, 2012). In particular, Fourier transform-based methods such as DCT are capable of capturing essential traits such as main shapes and patterns of a facies channel reservoir (Khaninezhad, et al., 2012) but reveal a deficiency in describing a crisp contrast among different facies because of data loss from inverse transformation (Kim et al 2018, Khaninezhad et al, 2012, Tarrahi & Afra,2016).
+\noindent 
+\section{1. Forward Problem.}
 
-Reservoir model calibration is applicable and relevant for locating new hydrocarbon deposits and for CCUS stratigraphic trapping initiatives in many energy companies. Energy companies are aiming to accelerate their forward simulation codes for precise and detailed subsurface/dynamic/Petro-physical mappings of their assets/plays. A fascinating and easy to implement meshless approximation to solve reservoir simulation forward problems using physics constrained/informed deep neural networks show promising results.In this project, a physics informed neural operators (PINOs) is developed for surrogating a Two phase flow black oil model and a recently developed weighted adaptive regularised ensemble kalman inversion method is used for solving the inverse problem.
+\noindent 
+\subsection{1.1 Governing Equations }
 
+\noindent The governing equations for a CO${}_{2}$-Brine system is given by. 
 
-The aim of this project is to develop an integrated workflow, where the finite volume fully/adaptive implicit black oil reservoir simulator is replaced by a phyiscs informed neural operator. This developed PINO surrogate is now used in an inverse problem methodology. Two methods are developed for the inverse problem, a newly developed adaptive regularised ensemble alman inversion method (with various forms of exotic priors). This approach is well suited for forward and inverse uncertainty quantifiication and a gradient based conjugate gradient method with line-search methodlogy and armijio conditions being adhered to.
+\noindent 
 
+\noindent $\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \mathrm{\nabla }.k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}u_{\ell }\right)-\ \sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0$Eqn.1
 
-## Methods for the forward problem (In the weeds):
+\noindent 
 
+\noindent $u_{\ell }\ =\ -k{\lambda }_{\ell }\mathrm{\nabla }{\mathrm{\Theta }}_{\ell }=\ -k{\lambda }_{\ell }\left(\mathrm{\nabla }\left(p-\ P_{c\ell }\right)-\ {\rho }_{\ell }g\mathrm{\nabla }\mathrm{z}\ \right)$Eqn.2
 
+\noindent ${\lambda }_{\ell }=\ \frac{K_{r\ell }}{{\mu }_{\ell }}$Eqn.3
 
+\noindent $\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \mathrm{\nabla }.k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}\mathrm{\nabla }{\mathrm{\Theta }}_{\ell }\right)-\ \sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0$Eqn.4(a)
 
-### Forward problem
-**CO2-Brine model**;
+\noindent Were.
 
+\noindent $\ell $  is the phase (brine/gas), $k\ $ is the rock absolute permeability, ${\lambda }_{\ell }$ is the phase mobility ratio, ${\mu }_{\ell }$ is the phase viscosity, $K_{r\ell }$ is the phase relative permeability, $S_{\ell }$ is the phase saturation,$u_{\ell }$ is the phase darcy velocity,\textit{ }$g$\textit{ }is the acceleration due to gravity, $\mathrm{z}$ is the depth,\textit{ }$y_{c,\ell }$ is the mass fraction of component $c$ in phase $\ell $, $t$ is time and $p$ is the pressure.
 
-.. _CO2-EOS:
+\noindent The system is closed by assuming,
 
-##################################################################################
-CO2-brine model 
-##################################################################################
+\noindent $\sum_{\ell }{S_{\ell }}=1,\ \ Z_c=\ \frac{{\rho }_c}{{\rho }_T}\ \ ,{\rho }_T=\ \sum_c{{\rho }_c}$Eqn. 4(b)
+\[\ \] 
+$S_l=\ v_l\frac{{\rho }_T}{{\rho }_l}\ ,\ S_g=\ v_g\frac{{\rho }_T}{{\rho }_g}$Eqn. 4(c)
 
+\noindent 
 
-Summary
-=======
+\noindent 
+\subsection{1.2 Thermodynamic Equations }
 
-The CO2-brine model implemented in GEOS includes two components (CO2 and H2O) that are transported by one or two fluid phases (the brine phase and the CO2 phase).
-We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in supercritical, liquid, or gas state).
-The water component is only present in the brine phase, while the CO2 component can be present in the CO2 phase as well as in the brine phase.
-Thus, considering the molar phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the molar mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
+\noindent The CO${}_{2}$-brine model includes two components (CO${}_{2}$ and H${}_{2}$O) that are transported by one or two fluid phases (the brine phase and the CO${}_{2}$ phase). We refer to the brine phase with the subscript $l\ $and to the CO${}_{2}$ phase with the subscript $g$ (although the CO${}_{2}$ phase can be in supercritical, liquid, or gas state). The water component is only present in the brine phase, while the CO${}_{2}$ component can be present in the CO${}_{2}$ phase as well as in the brine phase. Thus, considering the molar phase component fractions,$y_{c,p}$ (i.e., the fraction of the molar mass of phase $p$ represented by component $c$) 
 
-.. math::
-    \begin{bmatrix}
-    y_{H2O,\ell} & y_{CO2,\ell} \\
-         0 & 1            \\
-    \end{bmatrix}
+\noindent The update of the fluid properties is done in two steps:
 
-The update of the fluid properties is done in two steps:
+\begin{enumerate}
+\item  The phase fractions ($v_p$) and phase component fractions ($y_{c,p}$) are computed as a function of pressure ($p$), temperature ($T$), component fractions ($z_c$), and a constant salinity.
 
-1) The phase fractions (:math:`\nu_p`) and phase component fractions (:math:`y_{c,p}`) are computed as a function of pressure (:math:`p`), temperature (:math:`T`), component fractions (:math:`z_c`), and a constant salinity.
+\item  The phase densities (${\rho }_p$) and phase viscosities (${\mu }_p$) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
+\end{enumerate}
 
-2) The phase densities (:math:`\rho_p`) and phase viscosities (:math:`\mu_p`) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
+\noindent Once the phase fractions, phase component fractions, phase densities, phase viscosities--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the
 
-Once the phase fractions, phase component fractions, phase densities, phase viscosities--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the :ref:`CompositionalMultiphaseFlow` proceeds to the assembly of the accumulation and flux terms.
-Note that the current implementation of the flow solver is isothermal and that the derivatives with respect to temperature are therefore discarded.
+\noindent Note that the current implementation of the flow solver is isothermal and that the derivatives with respect to temperature are therefore discarded.
 
-The models that are used in steps 1) and 2) are reviewed in more details below.
+\noindent The models that are used in steps 1) and 2) are reviewed in more details below.
 
-Step 1: Computation of the phase fractions and phase component fractions (flash)
-================================================================================
+\noindent 
 
-At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine as a function of pressure, temperature, and a constant salinity.
-The user can parameterize the construction of the table by specifying the salinity and by defining the pressure (:math:`p`) and temperature (:math:`T`) axis of the table in the form:
+\noindent 
+\paragraph{1.2.1 Computation of the phase fractions and phase component fractions (flash)}
 
-+------------+---------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
-| FlashModel | CO2Solubility | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
-+------------+---------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
+\noindent We compute the values of CO${}_{2}$ solubility in brine as a function of pressure, temperature, and a constant salinity. we define the pressure ($p$) and temperature ($T$):
 
-Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). 
-The temperature must be between 283.15 and 623.15 Kelvin.
-The table is populated using the model of Duan and Sun (2003).
-Specifically, we solve the following nonlinear CO2 equation of state (equation (A1) in Duan and Sun, 2003) for each pair :math:`(p,T)` to obtain the reduced volume, :math:`V_r`.
+\noindent \textbf{Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality} (moles of NaCl per kg of brine). The temperature must be between 283.15 and 623.15 Kelvin. The table is populated using the model of Duan and Sun (2003). Specifically, we solve the following nonlinear CO${}_{2\ }$equation of state (Duan and Sun, 2003) for each pair to obtain the reduced volume,
 
-.. math::
-   \frac{p_r V_r}{T_r} &= 1 + \frac{a_1 + a_2/T^2_r + a_3/T^3_r}{V_r} 
-   + \frac{a_4 + a_5/T^2_r + a_6/T^3_r}{V^2_r} + \frac{a_7 + a_8/T^2_r + a_9/T^3_r}{V^4_r} \\
-   &+ \frac{a_{10} + a_{11}/T^2_r + a_{12}/T^3_r}{V^5_r} 
-   + \frac{a_{13}}{T^3_r V^2_r} \big( a_{14} + \frac{a_{15}}{V^2_r} \big) \exp( - \frac{a_{15}}{V^2_r} )
+\noindent $Z=\frac{p_rV_r}{T_r}=\ \ 1+\ \frac{a_1+{a_2}/{T^2_r}+\ {a_3}/{T^3_r}}{V_r}+\ \frac{a_4+{a_5}/{T^2_r}+\ {a_6}/{T^3_r}}{V^2_r}+\ \frac{a_7+{a_8}/{T^2_r}+\ {a_9}/{T^3_r}}{V^4_r}+\ \frac{a_{10}+{a_{11}}/{T^2_r}+\ {a_{12}}/{T^3_r}}{V^5_r}+\ \frac{a_{13}}{T^3_rV^2_r}\left(a_{14}+\ \frac{a_{15}}{V^2_r}\right)\mathrm{exp}\left(-\frac{a_{15}}{V^2_r}\right)$Eqn. 5
 
-where :math:`p_r = p / p_{crit}` and :math:`T_r = T / T_{crit}` are respectively the reduced pressure and the reduced temperature.
-We refer the reader to Table (A1) in Duan and Sun (2003) for the definition of the coefficients :math:`a_i` involved in the previous equation. 
-Using the reduced volume, :math:`V_r`, we compute the fugacity coefficient of CO2, :math:`\ln_{\phi}(p,T)`, using equation (A6) of Duan and Sun (2003).
-To conclude this preprocessing step, we use the fugacity coefficient of CO2 to compute and store the solubility of CO2 in brine, :math:`s_{CO2}`, using equation (6) of Duan and Sun (2003):
+\noindent .
 
-.. math::
-   \ln \frac{ y_{CO2} P }{ s_{CO2} } = \frac{\Phi_{CO2}}{RT} - \ln_{\phi}(p,T) + \sum_c 2 \lambda_c m + \sum_a 2 \lambda_a m + \sum_{a,c} \zeta_{a,c} m^2
+\noindent 
 
-where :math:`\Phi_{CO2}` is the chemical potential of the CO2 component, :math:`R` is the gas constant, and :math:`m` is the salinity.
-The mole fraction of CO2 in the vapor phase, :math:`y_{CO2}`, is computed with equation (4) of Duan and Sun (2003).
-Note that the first, third, fourth, and fifth terms in the equation written above are approximated using equation (7) of Duan and Sun (2003) as recommended by the authors.
+\noindent Where $p_r=\ {p}/{p_{crit}}$   is the reduced pressure and the reduced temperature $T_r=\ {T}/{T_{crit}}$
 
-During the simulation, Step 1 starts with a look-up in the precomputed table to get the CO2 solubility, :math:`s_{CO2}`, as a function of pressure and temperature.
-Then, we compute the phase fractions as:
+\noindent 
 
-.. math::
-   \nu_{\ell} &= \frac{1 + s_{CO2}}{1 + z_{CO2} / ( 1 - z_{CO2} ) } \\
-   \nu_{g} &= 1 - \nu_{\ell}
+\begin{tabular}{|p{4.2in}|} \hline 
+\textit{a1 = 8.99288497e-2, a2 = -4.94783127e-1, a3 = 4.77922245e-2, a4 = 1.03808883e-2, a5 = -2.82516861e-2, a6 = 9.49887563e-2, a7 = 5.20600880e-4, a8 = -2.93540971e-4, a9 = -1.77265112e-3, a10 = -2.51101973e-5, a11 = 8.93353441e-5, a12 = 7.88998563e-5, a13 = -1.66727022e-2, a14 = 1.39800000e0, a15 = 2.96000000e-2} \\ \hline 
+\end{tabular}
 
-We conclude Step 1 by computing the phase component fractions as:
 
-.. math::
-   y_{CO2,\ell} &= \frac{ s_{CO2} }{ 1 + s_{CO2} } \\
-   y_{H2O,\ell} &= 1 - y_{CO2,\ell} \\
-   y_{CO2,g} &= 1 \\
-   y_{H2O,g} &= 0 
-    
-   
-Step 2: Computation of the phase densities and phase viscosities
-================================================================
 
-CO2 phase density and viscosity
--------------------------------
+\noindent Using the reduced volume, $V_r$, we compute the fugacity coefficient of CO${}_{2}$,
 
-In GEOS, the computation of the CO2 phase density and viscosity  is entirely based on look-up in precomputed tables.
-The user defines the pressure (in Pascal) and temperature (in Kelvin) axis of the density table in the form:
+\noindent ${In}_{\phi }\left(T,P\right)=Z-1-InZ+\ \frac{a_1+{a_2}/{T^2_r}+\ {a_3}/{T^3_r}}{V_r}+\ \frac{a_4+{a_5}/{T^2_r}+\ {a_6}/{T^3_r}}{2V^2_r}+\ \frac{a_7+{a_8}/{T^2_r}+\ {a_9}/{T^3_r}}{{4V}^4_r}+\ \frac{a_{10}+{a_{11}}/{T^2_r}+\ {a_{12}}/{T^3_r}}{{5V}^5_r}\frac{a_{13}}{{2T}^3_rV^2_r}\left[a_{14}+1-\left(\ a_{14}+1+\frac{a_{15}}{V^2_r}\right)\right]\mathrm{exp}\left(-\frac{a_{15}}{V^2_r}\right)\mathrm{}$Eqn. 6
 
-+------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
-| DensityFun | SpanWagnerCO2Density | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
-+------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
+\noindent 
 
-This correlation is valid for pressures less than :math:`8 \times 10^8` Pascal and temperatures less than 1073.15 Kelvin.  
-Using these parameters, GEOS internally constructs a two-dimensional table storing the values of density as a function of pressure and temperature.
-This table is populated as explained in the work of Span and Wagner (1996) by solving the following nonlinear Helmholtz energy equation for each pair :math:`(p,T)` to obtain the value of density, :math:`\rho_{g}`:
+\noindent To conclude, we use the fugacity coefficient of CO${}_{2}$ to compute and store the solubility of CO${}_{2}$ in brine,$s_{{CO}_2}$
 
-.. math::
-   \frac{p}{RT\rho_{g}} = 1 + \delta \phi^r_{\delta}( \delta, \tau )
+\noindent $In\frac{y_{{CO}_2}}{s_{{CO}_2}}P=\ \frac{{\mathrm{\Phi }}_{{CO}_2}}{RT}-\ {In}_{\phi }\left(T,P\right)+\ \sum_c{2{\lambda }_cm}+\ \sum_a{2{\lambda }_am}+\ \sum_{a,c}{{\varsigma }_{a,c}m^2}$Eqn.7
 
-where :math:`R` is the gas constant, :math:`\delta := \rho_{g} / \rho_{crit}` is the reduced CO2 phase density, and :math:`\tau := T_{crit} / T` is the inverse of the reduced temperature.
-The definition of the residual part of the energy equation, denoted by :math:`\phi^r_{\delta}`, can be found in equation (6.5), page 1544 of Span and Wagner (1996).
-The coefficients involved in the computation of :math:`\phi^r_{\delta}` are listed in Table (31), page 1544 of Span and Wagner (1996).   
-These calculations are done in a preprocessing step.
+\noindent Where ${\mathrm{\Phi }}_{{CO}_2}$ is the chemical potential of the CO${}_{2}$ component, $R$ is the gas constant, and $m$ is the salinity. The mole fraction of CO${}_{2}$ in the vapor phase, $y_{{CO}_2}=\ {\left(p-\ p_{H_2O}\right)}/{p}$
 
-The pressure and temperature axis of the viscosity table can be parameterized in a similar fashion using the format:
+\noindent Then, we compute the phase fractions as:
 
-+--------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
-| ViscosityFun | FenghourCO2Viscosity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
-+--------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
+\noindent $v_l=\ \frac{1+\ s_{{CO}_2}}{1+\ {z_{{CO}_2}}/{\left(1-z_{{CO}_2}\right)}}$Eqn.8(a)
 
-This correlation is valid for pressures less than :math:`3 \times 10^8` Pascal and temperatures less than 1493.15 Kelvin.  
-This table is populated as explained in the work of Fenghour and Wakeham (1998) by computing the CO2 phase viscosity, :math:`\mu_g`, as follows:
+\noindent $v_g=1-\ v_l$Eqn. 8(b)
 
-.. math::
-   \mu_{g} = \mu_{0}(T) + \mu_{excess}( \rho_{g}, T ) + \mu_{crit}( \rho_{g}, T )  
-   
-The "zero-density limit" viscosity, :math:`\mu_{0}(T)`, is computed as a function of temperature using equations (3), (4), and (5), as well as Table (1) of Fenghour and Wakeham (1998).
-The excess viscosity, :math:`\mu_{excess}( \rho_{g}, T )`, is computed as a function of temperature and CO2 phase density (computed as explained above) using equation (8) and Table (3) of Fenghour and Wakeham (1998).
-We currently neglect the critical viscosity, :math:`\mu_{crit}`.
-These calculations are done in a preprocessing step.
+\noindent We conclude by computing the phase component fractions as:
 
-During the simulation, the update of CO2 phase density and viscosity is simply done with a look-up in the precomputed tables. 
+\noindent $y_{{CO}_2,l}=\frac{s_{{CO}_2}}{1+\ s_{{CO}_2}}\ ,\ y_{H_2O,l}=1-\ y_{{CO}_2,l}$Eqn. 9(a)
 
-Brine density and viscosity using Phillips correlation
--------------------------------------------------------
+\noindent 
 
-The computation of the brine density involves a tabulated correlation presented in Phillips et al. (1981). 
-The user specifies the (constant) salinity and defines the pressure and temperature axis of the brine density table in the form:
+\noindent $y_{{CO}_2,g}=1,\ y_{H_2O,g}=0$Eqn. 9(b)
 
-+------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
-| DensityFun | PhillipsBrineDensity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
-+------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
+\noindent 
 
-The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
-The temperature must be in Kelvin and must be between 283.15 and 623.15 Kelvin.
-The salinity is a molality (moles of NaCl per kg of brine).
-Using these parameters, GEOS performs a preprocessing step to construct a two-dimensional table storing the brine density, :math:`\rho_{\ell,table}` for the specified salinity as a function of pressure and temperature using the expression:
+\noindent 
+\paragraph{1.2.2 Computation of the phase densities and phase viscosities}
 
-.. math::
- 
-   \rho_{\ell,table} &= A + B x + C x^2 + D x^3 \\
-   x &= c_1 \exp( a_1 m ) + c_2 \exp( a_2 T ) + c_3 \exp( a_3 P )
+\noindent 
 
-We refer the reader to Phillips et al. (1981), equations (4) and (5), pages 14 and 15 for the definition of the coefficients involved in the previous equation.
-This concludes the preprocessing step.
+\noindent \textbf{\underbar{CO${}_{2}$ phase density and viscosity}}
 
-Then, during the simulation, the brine density update proceeds in two steps.
-First, a table look-up is performed to retrieve the value of density, :math:`\rho_{\ell,table}`.
-Then, in a second step, the density is modified using the method of Garcia (2001) to account for the presence of CO2 dissolved in brine as follows:
+\noindent The nonlinear Helmholtz energy equation yields, 
 
-.. math::
+\noindent $\frac{P}{RT{\rho }_g}=1+\ \psi {\phi }^r_{\psi }\left(\psi ,\tau \right)$Eqn. 10(a)
 
-   \rho_{\ell} = \rho_{\ell,table} + M_{CO2} c_{CO2} - c_{CO2} \rho_{\ell,table} V_{\phi}
+\noindent Were, 
 
-where :math:`M_{CO2}` is the molecular weight of CO2, :math:`c_{CO2}` is the concentration of CO2 in brine, and :math:`V_{\phi}` is the apparent molar volume of dissolved CO2.
-The CO2 concentration in brine is obtained as:
+\noindent $\psi =\ \frac{{\rho }_g}{{\rho }_{crit}}\ ,\ \tau =\ \frac{T_{crit}}{T}$Eqn. 10(b)
 
-.. math::
+\noindent ${\mu }_g=\ {\mu }_o\left(T\right)+\ {\mu }_{excess}\left({\rho }_g,T\right)$Eqn. 10(c)
 
-   c_{CO2} = \frac{y_{CO2,\ell} \rho_{\ell,table}}{M_{H2O}(1-y_{CO2,\ell})} 
+\noindent 
 
-where :math:`M_{H2O}` is the molecular weight of water. 
-The apparent molar volume of dissolved CO2 is computed as a function of temperature using the expression:
+\noindent ${\mu }_{excess}\left({\rho }_g,T\right)=\ d_1{\rho }_g+d_2{{\rho }_g}^2+\ \frac{d_3{{\rho }_g}^6}{T^3}+\ d_4{{\rho }_g}^8+\frac{d_5{{\rho }_g}^8}{T}\ $Eqn. 10(d)
 
-.. math::
+\begin{tabular}{|p{4.2in}|} \hline 
+$d_1=0.4071119e-2,\ d_2=0.7198037e-4,d_3=0.2411697e-16,d_4=0.2971072e-22,d_5=-0.1627888e-22$\textit{} \\ \hline 
+\end{tabular}
 
-   V_{\phi} = 37.51 - 9.585 \times 10^{-2} T + 8.740 \times 10^{-4} T^2 - 5.044 \times 10^{-7} T^3
 
-The brine viscosity is controlled by a salinity parameter provided by the user in the form:
 
-+--------------+------------------------+----------+
-| ViscosityFun | PhillipsBrineViscosity | Salinity |
-+--------------+------------------------+----------+
+\noindent ${\mu }_o\left(T\right)=\ \frac{1.00697T^{0.5}}{B^*\left(T^*\right)},\ \ InB^*\left(T^*\right)=\sum^4_{i=0}{x_i{\left(InT^*\right)}^i}\ ,\ T^*=\omega T,\ \omega =\frac{1}{251.196}K$Eqn. 11
 
-During the simulation, the brine viscosity is updated as a function of temperature using the analytical relationship of Phillips et al. (1981):
+\noindent 
 
-.. math::
-   \mu_{\ell} = a T + b
+\begin{tabular}{|p{4.2in}|} \hline 
+$x_0=0.235156,\ \ {\ x}_1=-0.491266,\ \ x_2=5.211155e-2,\ \ x_3=5.347906e-2,\ \ x_4=-1.537102e-2$\textit{} \\ \hline 
+\end{tabular}
 
-where the coefficients :math:`a` and :math:`b` are defined as:
 
-.. math::
-   a &= \mu_{w}(T) \times 0.000629 (1.0 - \exp( -0.7 m ) ) \\
-   b &= \mu_{w}(T) (1.0 + 0.0816 m + 0.0122 m^2 + 0.000128 m^3) 
-   
-where :math:`\mu_{w}` is the pure water viscosity computed as a function of temperature,
-and :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
 
+\noindent 
 
-Brine density and viscosity using Ezrokhi correlation
--------------------------------------------------------
+\noindent 
 
-Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at specified pressure and temperature corrected by Ezrokhi correlation presented in Zaytsev and Aseyev (1993):
+\noindent 
 
-.. math::
-   log_{10}(\rho_l) &= log_{10}(\rho_w(P, T)) + A(T) x_{CO2,\ell} \\
-   A(T) &= a_0 + a_1T +  a_2T^2,
+\noindent \textbf{\underbar{Brine phase density and viscosity}}
 
-where :math:`a_0, a_1, a_2` are correlation coefficients defined by user:
+\noindent ${\rho }_{l,table}=\ A_1+\ A_2x+\ A_3x^2+\ A_4x^3$Eqn. 12(a)
 
-+------------+----------------------+-------------+-------------+-------------+
-| DensityFun | EzrokhiBrineDensity  | :math:`a_0` | :math:`a_1` | :math:`a_2` |
-+------------+----------------------+-------------+-------------+-------------+
+\noindent $x=\ c_1{\mathrm{exp} \left(a_1m\right)\ }+c_2{\mathrm{exp} \left(a_2T\right)\ }+c_3\mathrm{exp}\mathrm{}\left(a_3P\right)$Eqn. 12(b)
 
-While :math:`x_{CO2,\ell}` is mass fraction of CO2 component in brine, computed from molar fractions as
+\noindent ${\rho }_l=\ {\rho }_{l,table}+\ M_{{CO}_2}C_{{CO}_2}-C_{{CO}_2}{\rho }_{l,table}V_{\phi }$Eqn. 13(a)
 
-.. math::
-   x_{CO2,\ell} = \frac{M_{CO2}y_{CO2,\ell}}{M_{CO2}y_{CO2,\ell} + M_{H2O}y_{H2O,\ell}},
+\noindent $C_{{CO}_2}=\ \frac{y_{{CO}_2,l}{\rho }_{l,table}}{M_{H_2O}\left(1-y_{{CO}_2,l}\right)}$Eqn. 13(b)
 
-Pure water density is computed according to:
+\noindent $V_{\phi }=37.51-\left(T\times 9.585e-2\right)+\left(T^2\times 8.740e-4\right)-(T^3\times 5.044e-7)$Eqn. 13(c)
 
-.. math::
-   \rho_w = \rho_{w,sat}(T) e^{c_w * (P-P_{w,sat}(T))},
+\noindent ${\mu }_l=a_zT+b_z$Eqn. 14(a)
 
-where :math:`c_w` is water compressibility defined as a constant :math:`4.5 \times 10^{-10} Pa^{-1}`, while :math:`\rho_{w,sat}(T)` and :math:`P_{w,sat}(T)` are density and pressure of saturated water at a given temperature.
-Both are obtained through internally constructed tables tabulated as functions of temperature and filled with the steam table data from Engineering ToolBox (2003, 2004).
+\noindent $a_z=\ {\mu }_w(T)\times 0.000629\left(1-\mathrm{exp}\mathrm{}(-0.7m\right))\ $Eqn. 14(b)
 
-Brine viscosity :math:`\mu_{\ell}` is computed from pure water viscosity :math:`\mu_w` similarly:
+\noindent $b_z=\ {\mu }_w(T)\left(1+0.0816m+0.0122m^2+0.000128m^3\right)$Eqn. 14(c)
 
-.. math::
-   log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) x_{CO2,\ell} \\
-   B(T) &= b_0 + b_1T +  b_2T^2,
+\noindent 
+\section{2. Physics Constrained Neural operator for the CO${}_{2}$-Brine case}
 
-where :math:`b_0, b_1, b_2` are correlation coefficients defined by user:
+\noindent 
 
-+--------------+------------------------+-------------+-------------+-------------+
-| ViscosityFun | EzrokhiBrineViscosity  | :math:`b_0` | :math:`b_1` | :math:`b_2` |
-+--------------+------------------------+-------------+-------------+-------------+
+\noindent 
+\subsection{2.1 Overall discretized equations loss}
 
-Mass fraction of CO2 component in brine :math:`x_{CO2,\ell}` is exactly as in density calculation. The dependency of pure water viscosity from pressure is ignored, and it is approximated as saturated pure water viscosity:
+\noindent 
 
-.. math::
-   \mu_w(P, T) = \mu_{w, sat} (T),
+\noindent The physics loss \textit{ansatz} is then,
+\[{V\left(q_g,p\mathrm{;}{\lambda }_g\right)}_{pressure~equation,{CO}_2,g}\mathrm{=}\frac{\mathrm{1}}{n_s}\left(~{\left\|\mathrm{\nabla }.k\left({\rho }_gy_{{CO}_2,g}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{{CO}_2,g}\right)\right)-{\rho }_gy_{{CO}_2,g}q_g\right\|}^{\mathrm{2}}_{\mathrm{2}}\right)\] 
+Eqn. (15a)
+\[{V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,{CO}_2,l}\mathrm{=}\frac{\mathrm{1}}{n_s}\left(~{\left\|\mathrm{\nabla }.k\left({\rho }_ly_{{CO}_2,l}{\lambda }_l\mathrm{\nabla }\left(p-\ P_{{CO}_2,l}\right)\right)-{\rho }_ly_{{CO}_2,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}\right)\] 
+Eqn. (15b)
+\[{V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,H_2O,l}\mathrm{=}\frac{\mathrm{1}}{n_s}\left(~{\left\|\mathrm{\nabla }.k\left({\rho }_ly_{H_2O,l}{\lambda }_l\mathrm{\nabla }\left(p-\ P_{H_2O,l}\right)\right)-{\rho }_ly_{H_2O,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}\right)\] 
+Eqn. (15c)
+\[{V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,g}\mathrm{=}\frac{\mathrm{1}}{n_s}{\left\|\varphi \frac{\partial }{\partial t}\left({\rho }_gy_{{CO}_2,g}S_g\right)-\ \mathrm{\nabla }.k\left({\rho }_gy_{{CO}_2,g}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{{CO}_2,g}\right)\right)-{\rho }_gy_{{CO}_2,g}q_g\right\|}^{\mathrm{2}}_{\mathrm{2}}\] 
+Eqn. (16a)
+\[{V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,l}\mathrm{=}\frac{\mathrm{1}}{n_s}{\left\|\varphi \frac{\partial }{\partial t}\left({\rho }_ly_{{CO}_2,l}S_l\right)-\ \mathrm{\nabla }.k\left({\rho }_ly_{{CO}_2,l}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{{CO}_2,l}\right)\right)-{\rho }_ly_{{CO}_2,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}\] 
+Eqn. (16b)
 
-which is tabulated using internal table as a function of temperature based on steam table data Engineering ToolBox (2004).
+\noindent 
+
+\noindent 
+
+\noindent ${V\left(p,S_l\mathrm{;}t\right)}_{brine~equation,H_2O,l}\mathrm{=}\frac{\mathrm{1}}{n_s}{\left\|\varphi \frac{\partial }{\partial t}\left({\rho }_ly_{H_2O,l}S_l\right)-\ \mathrm{\nabla }.k\left({\rho }_ly_{H_2O,l}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{H_2O,l}\right)\right)-{\rho }_ly_{H_2O,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}$Eqn. (16c)
+
+\noindent 
+\[{\boldsymbol{\phi }}_{\boldsymbol{cfd}}\mathrm{=}{V\left(q_g,p\mathrm{;}{\lambda }_g\right)}_{pressure~equation,{CO}_2,g}\mathrm{+\ }{V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,{CO}_2,l}\mathrm{+\ }{V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,H_2O,l}\mathrm{+\ }{V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,g}\mathrm{+}{V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,l}\mathrm{+\ }{V\left(p,S_w\mathrm{;}t\right)}_{brine~equation,H_2O,l}\mathrm{\ }~\] 
+Eqn. \eqref{GrindEQ__17_}
+\[\boldsymbol{\phi }\boldsymbol{\mathrm{=}}~{\boldsymbol{\phi }}_{\boldsymbol{cfd}}\boldsymbol{+}{\boldsymbol{\phi }}_{\boldsymbol{data}}\] 
+Eqn. \eqref{GrindEQ__18_}
+\[\theta \mathrm{=}~{\left[{\theta }_p,{\theta }_s,{\theta }_g\right]}^T\] 
+\[{\theta }^{j\mathrm{+1}}\mathrm{=}{\theta }^j-{\epsilon \nabla \phi }^j_{\theta }\] 
+
+\subsection{2.2 Pseudocode}
+
+\begin{tabular}{|p{3.9in}|} \hline 
+\textbf{\textit{Algorithm 1}}: PINO CO${}_{2}$-Brine Reservoir simulator  \\ \hline 
+\textbf{\textit{Input:}}  $\mathrm{\ \ }X_1\mathrm{=}\left\{K\mathrm{,\ }\varphi \right\}\mathrm{\in }{\mathbb{R}}^{B_0\mathrm{\times 1}\mathrm{\times }D\mathrm{\times }W\mathrm{\times }H}\mathrm{,\ }X_{N1}\mathrm{=}\left\{q_l,q_g,dt\ \right\}\mathrm{\in }{\mathbb{R}}^{B_0\mathrm{\times T}\mathrm{\times }D\mathrm{\times }W\mathrm{\times }H}$ \newline $Y_{pt,}$ --labelled pressure\newline $Y_{\mathrm{l}t},$ -- labelled water saturation\newline $Y_{\mathrm{g}t},$ -- labelled gas saturation\newline $f_{\mathrm{1}}\left(\mathrm{:,}{\theta }_p\right),$ \newline $f_{\mathrm{2}}\left(\mathrm{:,}{\theta }_l\right),$ \newline $f_3\left(\mathrm{:,}{\theta }_g\right),$ \newline $T\mathrm{=}$ -- Time \newline $epoch,$ $tol,$ $w_{\mathrm{1}},w_{2,}w_{3,}w_{4,}w_{5,\ }w_6,$ $\epsilon $ \newline \newline $\boldsymbol{j}\mathrm{\ =\ 0}$ \newline $\boldsymbol{while}\mathrm{\ \ }\left(\boldsymbol{j}\mathrm{\le }\boldsymbol{epoch}\right)\mathrm{\ }\boldsymbol{or}\mathrm{\ (}\boldsymbol{\phi }\mathrm{\le }\boldsymbol{tol}\mathrm{)\ }\boldsymbol{do}$ \newline  $Y_{0p}\mathrm{=}f_{\mathrm{1}}\left(X_1\mathrm{;}{\theta }_p\right)\mathrm{,\ }Y_{0s}\mathrm{=}f_{\mathrm{2}}\left(X_1\mathrm{;}{\theta }_l\right)\ \mathrm{,\ }Y_{\mathrm{0g}}\mathrm{=}f_3\left(X_1\mathrm{;}{\theta }_g\right)$  \newline  $\boldsymbol{Compute}\boldsymbol{:}\ v_l,v_g,\ y_{{CO}_2,l},y_{{CO}_2,g},y_{H_2O,l},y_{H_2O,g}\ $\textbf{using Eqn. (5-9)}\newline  $\boldsymbol{Compute}\boldsymbol{:\ }{\rho }_g,{\rho }_l,{\mu }_g,{\mu }_l\boldsymbol{\ }$\textbf{using Eqn. (10-14)}\newline  $\boldsymbol{Compute}\boldsymbol{:\ }Z_c=\ \frac{{\rho }_c}{{\rho }_T}$ \newline  \textbf{\textit{Compute: }}${\boldsymbol{\rho }}_{\boldsymbol{T}}\boldsymbol{=\ }\sum_{\boldsymbol{c}}{{\boldsymbol{\rho }}_{\boldsymbol{c}}}$\textbf{\textit{\newline  }}$\boldsymbol{Compute}\boldsymbol{:\ }{S_l}^*=\ v_l\frac{{\rho }_T}{{\rho }_l}\ ,\ {S_g}^*=\ v_g\frac{{\rho }_T}{{\rho }_g}$ \newline  $\boldsymbol{Compute}\boldsymbol{\ :\ }{{\phi }_l}^*\mathrm{=\ }{\left\|Y_{\mathrm{1}st,}\mathrm{-}{S_l}^*\right\|}^{\mathrm{2}}_{\mathrm{2}}\boldsymbol{\ }$\newline  $\boldsymbol{Compute}\boldsymbol{\ :\ }{{\phi }_g}^*\mathrm{=\ }{\left\|Y_{\mathrm{1g}t,}\mathrm{-}{S_g}^*\right\|}^{\mathrm{2}}_{\mathrm{2}}\boldsymbol{\ }$\newline \newline  $\boldsymbol{Compute}\boldsymbol{:}$\textbf{ }${V\left(q_g,p\mathrm{;}{\lambda }_g\right)}_{pressure~equation,{CO}_2,g}\mathrm{=}\frac{\mathrm{1}}{n_s}\left(~{\left\|\mathrm{\nabla }.k\left({\rho }_gy_{{CO}_2,g}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{{CO}_2,g}\right)\right)-{\rho }_gy_{{CO}_2,g}q_g\right\|}^{\mathrm{2}}_{\mathrm{2}}\right)$\newline  \textbf{\textit{Compute :}} ${V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,{CO}_2,l}\mathrm{=}\frac{\mathrm{1}}{n_s}\left(~{\left\|\mathrm{\nabla }.k\left({\rho }_ly_{{CO}_2,l}{\lambda }_l\mathrm{\nabla }\left(p-\ P_{{CO}_2,l}\right)\right)-{\rho }_ly_{{CO}_2,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}\right)$\newline  $\boldsymbol{Compute}\boldsymbol{:}$ ${V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,H_2O,l}\mathrm{=}\frac{\mathrm{1}}{n_s}\left(~{\left\|\mathrm{\nabla }.k\left({\rho }_ly_{H_2O,l}{\lambda }_l\mathrm{\nabla }\left(p-\ P_{H_2O,l}\right)\right)-{\rho }_ly_{H_2O,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}\right)$\newline  $\boldsymbol{Compute}\boldsymbol{:}\ $${V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,g}\mathrm{=}\frac{\mathrm{1}}{n_s}{\left\|\varphi \frac{\partial }{\partial t}\left({\rho }_gy_{{CO}_2,g}S_g\right)-\ \mathrm{\nabla }.k\left({\rho }_gy_{{CO}_2,g}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{{CO}_2,g}\right)\right)-{\rho }_gy_{{CO}_2,g}q_g\right\|}^{\mathrm{2}}_{\mathrm{2}}$\newline  $\boldsymbol{Compute}\boldsymbol{:}$ ${V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,l}\mathrm{=}\frac{\mathrm{1}}{n_s}{\left\|\varphi \frac{\partial }{\partial t}\left({\rho }_ly_{{CO}_2,l}S_l\right)-\ \mathrm{\nabla }.k\left({\rho }_ly_{{CO}_2,l}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{{CO}_2,l}\right)\right)-{\rho }_ly_{{CO}_2,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}$\newline \newline  $\boldsymbol{Compute}\boldsymbol{:}$ ${V\left(p,S_l\mathrm{;}t\right)}_{brine~equation,H_2O,l}\mathrm{=}\frac{\mathrm{1}}{n_s}{\left\|\varphi \frac{\partial }{\partial t}\left({\rho }_ly_{H_2O,l}S_l\right)-\ \mathrm{\nabla }.k\left({\rho }_ly_{H_2O,l}{\lambda }_g\mathrm{\nabla }\left(p-\ P_{H_2O,l}\right)\right)-{\rho }_ly_{H_2O,l}q_l\right\|}^{\mathrm{2}}_{\mathrm{2}}$\newline \newline  ${\phi }_p\mathrm{=\ }{\left\|Y_{pt,}\mathrm{-}f_{\mathrm{1}}\left(X_{\mathrm{1}}\mathrm{;}{\theta }_p\right)\right\|}^{\mathrm{2}}_{\mathrm{2}}$  \newline  ${\phi }_s\mathrm{=\ }{\left\|Y_{lt,}\mathrm{-}f_{\mathrm{2}}\left(X_{\mathrm{1}}\mathrm{;}{\theta }_l\right)\right\|}^{\mathrm{2}}_{\mathrm{2}}$  \newline  ${\phi }_g\mathrm{=\ }{\left\|Y_{\mathrm{g}t,}\mathrm{-}f_3\left(X_{\mathrm{1}}\mathrm{;}{\theta }_g\right)\right\|}^{\mathrm{2}}_{\mathrm{2}}$          \newline  $\phi \mathrm{=\ }{w_{\mathrm{1}}\phi }_p\mathrm{+\ }{w_{\mathrm{2}}\phi }_s\mathrm{\ +\ }{w_3\phi }_g\mathrm{+\ }{w_4{\phi }_l}^*\mathrm{+\ }{w_5{\phi }_g}^*\mathrm{+\ }{w_6V\left(q_g,p\mathrm{;}{\lambda }_g\right)}_{pressure~equation,{CO}_2,g}\mathrm{+}w_7{V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,{CO}_2,l}\mathrm{+\ }{w_8V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,g}\mathrm{+}w_9{V\left(q_l,p\mathrm{;}{\lambda }_l\right)}_{pressure~equation,H_2O,l}+\ w_{\mathrm{10}}{V\left(p,S_g\mathrm{;}t\right)}_{gas~equation,{CO}_2,l}+\ {V\left(p,S_l\mathrm{;}t\right)}_{brine~equation,H_2O,l}$\newline  $\boldsymbol{\mathrm{Update}}\mathrm{\ }\boldsymbol{\mathrm{models}}$:\newline $\theta \mathrm{=\ }{\left[{\theta }_p,{\theta }_l,{\theta }_g\right]}^T$\newline ${\theta }^{j\mathrm{+1}}\mathrm{=}{\theta }^j\mathrm{-}{\epsilon \nabla \phi }^j_{\theta }$\newline                $\boldsymbol{j}\boldsymbol{\ }\boldsymbol{\leftarrow }\mathrm{\ }\boldsymbol{j}\mathrm{+\ }\boldsymbol{\mathrm{1}}$ \newline \textbf{\textit{Output}}:$f_{\mathrm{1}}\left(\mathrm{:,}{\theta }_p\right),f_{\mathrm{2}}\left(\mathrm{:,}{\theta }_l\right)\mathrm{,\ }f_3\left(\mathrm{:,}{\theta }_g\right)$ \\ \hline 
+\end{tabular}
+
+
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent $w_{\mathrm{1}}\mathrm{,\dots }w_{\mathrm{10}}$ are the weights associated to the loss functions associated to the 10 terms. $X_0\mathrm{=}\left\{k,\varphi \right\}\mathrm{\in }{\mathbb{R}}^{B_0\mathrm{\times 1}\mathrm{\times }W\mathrm{\times }H}$ are the dictionary inputs. $epoch,tol$ are the number or epochs and the tolerance level for the loss function $f_{\mathrm{1}}\left(\mathrm{:,}{\theta }_p\right),f_{\mathrm{2}}\left(\mathrm{:,}{\theta }_l\right)\mathrm{,\ }f_3\left(\mathrm{:,}{\theta }_g\right)$are the \textit{FNO} models for the pressure, brine saturation and gas saturations respectively.
+
+\noindent 
+
+\noindent 
+\section{3. Results for Physics Constrained Black Oil Model (Norne Field).}
+
+\noindent Below we show the application of a physics constrained neural operator to solve the black oil model of a real field.
+
+\noindent \includegraphics*[width=6.67in, height=6.67in]{image1}
+
+\noindent 
+
+\noindent \textbf{\textit{Figure 1(a):}}\textit{ Forwarding of the Norne Field. }$N_x=46\ ,\ ~N_y=112\ ,\ N_z=22$\textit{. At Time = 8 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus's PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate's prediction and the numerical reservoir simulator (Flow)}
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent \includegraphics*[width=6.67in, height=6.67in]{image2}
+
+\noindent \textbf{\textit{Figure 1(b):}}\textit{ Forwarding of the Norne Field. }$N_x=46\ ,\ ~N_y=112\ ,\ N_z=22$\textit{. At Time = 968 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus's PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate's prediction and the numerical reservoir simulator (Flow)}
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent \includegraphics*[width=6.52in, height=5.97in, trim=0.85in 0.09in 0.75in 0.19in]{image3}
+
+\noindent 
+
+\noindent \textbf{\textit{Figure 1(c):}}\textit{ Forwarding of the Norne Field. }$N_x=46\ ,\ ~N_y=112\ ,\ N_z=22$\textit{. At Time = 2104 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus's PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate's prediction and the numerical reservoir simulator (Flow)}
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent \includegraphics*[width=5.86in, height=6.40in, trim=0.74in 0.08in 0.69in 0.19in]{image4}
+
+\noindent \textbf{\textit{Figure 1(d):}}\textit{ Forwarding of the Norne Field. }$N_x=46\ ,\ ~N_y=112\ ,\ N_z=22$\textit{. At Time = 3298 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus's PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate's prediction and the numerical reservoir simulator (Flow)}
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent 
+
+\noindent 
+\section{References}
+
+\begin{enumerate}
+\item \textbf{ }Z. Duan and R. Sun, An improved model calculating CO2 solubility in pure water and aqueous NaCl solutions from 273 to 533 K and from 0 to 2000 bar., Chemical Geology,vol. 193.3-4, pp. 257-271, 2003.
+
+\item  R. Span and W. Wagner, A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K at pressure up to 800 MPa, J. Phys.Chem. Ref. Data, vol. 25, pp. 1509-1596, 1996.
+
+\item  Fenghour and W. A. Wakeham, The viscosity of carbon dioxide, J. Phys. Chem. Ref.Data, vol. 27, pp. 31-44, 1998.
+
+\item  S. L. Phillips et al., A technical data book for geothermal energy utilization, Lawrence Berkeley Laboratory report, 1981.
+
+\item  J. E. Garcia, Density of aqueous solutions of CO2. No. LBNL-49023. Lawrence Berkeley National Laboratory, Berkeley, CA, 2001.
+
+\item  Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, BocaRaton, Florida, USA CRC Press, 1993.
+
+\item  Engineering ToolBox, Water - Density, Specific Weight and Thermal Expansion Coefficients, 2003
+
+\item  Engineering Tool Box, Water - Dynamic (Absolute) and Kinematic Viscosity, 2004
+
+\item  Zongyi Li, Nikola Kovachki, Kamyar Azizzadenesheli, Burigede Liu, Kaushik Bhattacharya, Andrew Stuart, Anima Anandkumar. Fourier Neural Operator for Parametric Partial Differential Equations. https://doi.org/10.48550/arXiv.2010.08895
+
+\item  Zongyi Li, Hongkai Zheng, Nikola Kovachki, David Jin, Haoxuan Chen, Burigede Liu, Kamyar Azizzadenesheli, Anima Anandkumar.Physics-Informed Neural Operator for Learning Partial Differential Equations. https://arxiv.org/pdf/2111.03794.pdf
+\end{enumerate}
+
+\noindent 
+
+\noindent  
 ### Surrogate Forward modelling
 
 **Fourier Neural operator based machine infused with physics constraint from black oil model ansatz**

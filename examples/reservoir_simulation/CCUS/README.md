@@ -1,4 +1,4 @@
-# Automatic History Matching with AI enhanced Weighted adaptive Regularised Ensemble Kalman Inversion ($`\alpha`$REKI) and a Physics Informed Neural Operator (PINO) based surrogate forward model on the Norne Field 
+# C02 -Brine surrogate computed with a Physics Informed Neural Operator (PINO) 
 ![alt text](Visuals/All1.png)
 
 
@@ -11,102 +11,70 @@ Reservoir model calibration is applicable and relevant for locating new hydrocar
 The aim of this project is to develop an integrated workflow, where the finite volume fully/adaptive implicit black oil reservoir simulator is replaced by a phyiscs informed neural operator. This developed PINO surrogate is now used in an inverse problem methodology. Two methods are developed for the inverse problem, a newly developed adaptive regularised ensemble alman inversion method (with various forms of exotic priors). This approach is well suited for forward and inverse uncertainty quantifiication and a gradient based conjugate gradient method with line-search methodlogy and armijio conditions being adhered to.
 
 
-## Methods for the forward and inverse problem (In the weeds):
+## Methods for the forward problem (In the weeds):
 
 
-### Inverse problem 
-
-**Weighted-$`\alpha`$REKI**
-
-The aim and target of history matching can be formulated as;
-
-```math
-\begin{equation}
-\min Φ(m;d^{obs})
-\end{equation}
-```
-where the cost functional for the history matching inverse problem is posed as [24,29,30,31,35,36,19,18,14,15,6,1].
-```math
-\begin{equation}
-Φ(m;d^{obs})≡ \frac{1}{2}\left\VertΓ^{\frac{-1}{2}}(d^{obs}-G(m))\right\Vert^2
-\end{equation}
-```
-Where $`‖.‖`$ represents the $`M`$ dimensional Euclidean Norm.
-                                                       
-in Eqn.2 $`Φ`$ is the objective function of history matching and m is the state vector composed of reservoir variables (e.g., permeability/porosity and facies) in this case. The typical expression of $`Φ(m;d^{obs})`$for ensemble-based history matching problems is presented as (Emerick & Reynolds, 2013, Oliver et al 2008, Tarantola 2005);
-```math
-\begin{equation}
-Φ(m;d^{obs}) = (m-m^b)^T B^{-1} (m-m^b ) + (d^{obs}-d)^T Γ^{-1} (d^{obs}-d)
-\end{equation}
-```
-In Eqn.3, $`\,`$ $`m^b`$ denotes state vector before update and the superscript b denotes the background; $`B`$ denotes the covariance matrix of $`m^b`$; $`d^{obs}`$ denotes the observed responses; $`d = G(m)`$ is the dynamic vector composed of simulated responses constructed by running a reservoir simulator or the surrogate simulator $`G`$ for the state vector $`m`$; and $`Γ`$ denotes the covariance matrix of observation error. The right-hand side of Eqn.3 is the addition of background and observation error terms (Emerick & Reynolds, 2013).  $`m`$  in principle can contain any unknown variables such as facies indexes, permeability/porosity field, coefficients of discrete cosine functions or sparse coefficients depending.
-
-$`\frac{∂J(m)} {∂m} = 0`$ can be used to derive the minimum of the cost function and update equation for $`m`$ as (Emerick and Reynolds, 2013) 
-```math
-\begin{equation}
-m_i = m_i^{b} + C_{md} (C_{dd} +α_p C_d )^{-1} (d_i^{pert}-d_i )\quad  for \quad i = 1…N_{ens}
-\end{equation}
-```
-                               
-
-In Eqn.4 $`\,`$ the subscript $`i`$ denotes the $`i^{th}`$ ensemble member; $`C_{md}`$ denotes the cross-covariance matrix of $`m`$ and $`d`$; $`C_{dd}`$ denotes the autocovariance matrix of $`d`$; $`α_p`$ is the coefficient to inflate $`C_d`$, which denotes the covariance matrix of the observed data measurement error (Emerick and Reynolds, 2013); $`d^{pert}`$ denotes the observation data perturbed by the inflated observed data measurement error; and $`N_{ens}`$ is the ensemble size (i.e., number of reservoir models as columns of the matrix in the ensemble). Conventionally, ensemble-based history matching updates $`N_{ens}`$ reservoir models simultaneously. In Eqn.4, $`\frac {C_{md}}{(C_{dd}+α_pC_d )}`$ denotes the Kalman gain $`K`$, which is normally computed with regularization by SVD using 99.9% of the total energy in singular values (Emerick and Reynolds, 2013, Oliver et al 2008, Law et al 2012) 
-
-The main difference between ES and ES-MDA is the update process of the state vector $`m`$. ES updates the state vector of each ensemble member using observation data measured at all time steps (Emerick and Reynolds, 2013). Compared to the single assimilation of ES, ES-MDA assimilates every state vector $`N_a`$ times using an inflated covariance matrix of measurement error (Emerick and Reynolds, 2013). In this case, $`N_a`$ is the number of assimilations in ES-MDA. 
-We define $`C_{md}`$ and $`C_{dd}`$  as follows:
-```math
-\begin{equation}
-C_{md} = \frac{1}{(N_{ens}-1)}  \sum_{n=1}^{N_{ens}} (m_i- \bar{m})(d_i-\bar{d})^T 
-\end{equation}
-```
-
-```math
-\begin{equation}
-C_{dd} = \frac{1}{(N_{ens}-1)}  \sum_{n=1}^{N_{ens}} (d_i- \bar{d})(d_i-\bar{d})^T 
-\end{equation}
-```
-```math
-\textrm{where}\quad\bar{m}\quad\textrm{denotes the mean of the parameters and }\quad\bar{d}\quad\textrm{denotes the mean of predicted values}
-```
-```math
-\textrm{In ES-MDA}, α_p\quad\textrm{is normally constrained to}\quad\sum_{n=1}^{N_{a}} \frac{1}{a_p} = 1  
-```
-
-```math
-\begin{equation}
-d_{i}^{pert} = d^{obs} + a_p^{0.5} C_d^{0.5} z_{d,i} \quad   for \quad i=1…N_{ens} 
-\end{equation}
-```
 
 
-The second term on the right-hand side of Eqn.7 $`\,`$ is known as the perturbation term. It reflects the uncertainty associated with data measurement and processing. The stochastic characteristics of $`C_d`$ are reflected by $`z_d \sim \mathcal{N}(0,I_{N_d } )`$  $`z_d`$ is the random error matrix to observations, which is constructed with a mean of zero and a standard deviation of $`I_{N_d}`$, where $`N_d`$ is the number of time steps found in the observations (Emerick and Reynolds 2013).
+### Forward problem
+**CO2-Brine model**;
 
-The newly developed $`\alpha`$REKI constructs the dampening parameter $`α_p`$ via the discrepancy principle and jeffrey's divergence
 
 ### Forward problem
 **Black oil model**;
 
- - Our simplified model for two-phase flow in porous media for reservoir simulation is given as [7].
+ - Our simplified model for three-phase flow in porous media for reservoir simulation is given as [7].
 ```math
 \begin{equation}
-φ\frac{∂S_w}{∂t} - \nabla .[T_{w} (\nabla.p_{w} + ρ_{w}gk)]= Q_{w} 
+\nabla \cdot \left( \frac{{\rho_w}}{{B_w}} u_w \right) - Q_w = -\frac{{\partial}}{{\partial t}} \left( \frac{{\varphi \rho_w}}{{B_w}} S_w \right) 
 \end{equation}
 ```
 ```math
 \begin{equation}
-φ\frac{∂S_o}{∂t}- \nabla .[T_{o} (\nabla.p_{o} + ρ_{o} gk)]= Q_{o}     
+\nabla \cdot \left( \frac{{\rho_o}}{{B_o}} u_o \right) - Q_o = -\frac{{\partial}}{{\partial t}} \left( \frac{{\varphi \rho_o}}{{B_o}} S_o \right)    
 \end{equation}
 ```
-$`φ(x)`$ stands for the porosity,subscript $`w`$ stands for water and subscript $`o`$ stands for oil. $`T_{o},T_{w},T`$ stands for the transmissibilities, which are known functions of the permeability $`K`$ and the water saturation $`S_w`$. The system is closed by adding two additional equations
 
 ```math
 \begin{equation}
-P_{cwo} = p_o- p_w  ; S_w+ S_o=1. 
+\nabla \cdot \left( \frac{{\rho_g}}{{B_g}} u_g + \frac{{R_{so} \rho_g}}{{B_o}} u_o \right) - Q_g = -\frac{{\partial}}{{\partial t}} \left[ \varphi \left( \frac{{\rho_g}}{{B_g}} S_g + \frac{{R_{so} \rho_g}}{{B_o}} S_o \right) \right]
 \end{equation}
-``` 
-This gives four unknowns
+```
+
+
+
+$`φ(x)`$ stands for the porosity,subscript $`w`$ stands for water, subscript $`o`$ stands for oil and subscript $`g`$ stands for gas . $`T_{o},T_{w},T_{g},T`$ stands for the transmissibilities, which are known functions of the permeability $`K`$ the water saturation $`S_w`$ and gas saturation  $`S_g`$. $`u_{\gamma}`$ is the Darcy velocity of each phase.
+
 ```math
 \begin{equation}
-p_{o}, p_{w}, S_{w}, S_{o}
+u_\gamma = -\frac{{k_{r\gamma}}}{{\mu_\gamma}} K (\nabla p_\gamma - \rho_\gamma \mathbf{g} \nabla z)
+\end{equation}
+```
+
+Where:
+- $`u_γ`$ is the Darcy velocity of phase γ.
+- $`k_{rγ}`$ is the relative permeability of phase γ.
+- $`μ_(γ)`$ is the viscosity of phase γ.
+- $`B_(γ)`$ is the formation volume factor of phase γ.
+- $`K`$ is the permeability.
+- $`∇p_{γ}`$ is the gradient of pressure for phase γ.
+- $`ρ_(γ)`$ is the density of phase γ.
+- $`ĝ`$ is the gravitational vector.
+- $`∇z`$ is the gradient of elevation.
+- $`R_{so}`$ is the solution gas oil ratio.
+
+
+```math
+\begin{equation}
+S_o + S_w + S_g = 1; P_{cwo} = p_o- p_w  ;P_{cog} = p_g- p_o  
+\end{equation}
+```
+
+
+This gives six unknowns
+```math
+\begin{equation}
+p_{o}, p_{w},p_{g}, S_{w}, S_{o}, S_{g}
 \end{equation}
 ``` 
 Gravity effects are considered by the terms 
@@ -115,22 +83,22 @@ Gravity effects are considered by the terms
 ρ_{w}gk,ρ_{o}gk\quad Ω \subset R^{n}(n = 2, 3) 
 \end{equation}
 ``` 
-The subsequent water, oil and overall transmissibilities is given by,
+The subsequent water, oil ,gas and overall transmissibilities is given by,
 ```math
 \begin{equation} 
-T_w = \frac{K(x) K_{rw}S_w}{μ_w}  ;T_o = \frac{K(x) K_{ro}S_o}{μ_o}   ;T= T_w + T_o          
+T_w = \frac{K(x) K_{rw}S_w}{μ_w}  ;T_o = \frac{K(x) K_{ro}S_o}{μ_o};T_g = \frac{K(x) K_{rg}S_g}{μ_g}   ;T= T_w + T_o + T_g           
 \end{equation}
 ``` 
-The relative permeabilities $`K_{rw} (S_w ),K_{ro} (S_w )`$ are available as tabulated functions, and $`μ_w,μ_o`$ denote the viscosities of each phase. 
+The relative permeabilities $`K_{rw} (S_w ),K_{ro} (S_w ),K_{rg} (S_o )`$ are available as tabulated functions, and $`μ_w,μ_o,μ_g`$ denote the viscosities of each phase. 
 
-We define the oil flow, the water flow, and the total flow, respectively, which are measured at the well position as; 
+We define the oil flow, the water flow,gas flow and the total flow, respectively, which are measured at the well position as; 
 ```math
 \begin{equation} 
-Q = Q_{o}  + Q_{w }
+Q = Q_{o}  + Q_{w } + Q_{g }
 \end{equation}
 ``` 
 
-The final pressure and saturation equations for a two-phase oil-water flow is
+The final pressure , water saturation and gas saturation equations for a three-phase oil-water flow is
 ```math
 \begin{equation} 
 - ∇ .[T∇p]=Q   
@@ -140,7 +108,12 @@ The final pressure and saturation equations for a two-phase oil-water flow is
 \begin{equation}                                               
 φ\frac{∂S_w}{∂t} - \nabla .[T_{w} (\nabla.p_{w}]= Q_{w} 
 \end{equation}
-```  
+``` 
+```math
+\begin{equation}
+\nabla \cdot \left( \frac{{\rho_g}}{{B_g}} u_g + \frac{{R_{so} \rho_g}}{{B_o}} u_o \right) - Q_g = -\frac{{\partial}}{{\partial t}} \left[ \varphi \left( \frac{{\rho_g}}{{B_g}} S_g + \frac{{R_{so} \rho_g}}{{B_o}} S_o \right) \right]
+\end{equation}
+``` 
 ### Surrogate Forward modelling
 
 **Fourier Neural operator based machine infused with physics constraint from black oil model ansatz**
@@ -164,33 +137,36 @@ Using a mixed residual loss formulation, the pressure equation loss ansatz is ex
 V(F,u;T)=\int_{Ω}[(F-T∇u)^2 + (- ∇ ·F-Q)^2 ]
 \end{equation}
 ``` 
-Ω ⊂ R^n  (n = 2, 3). The discretised pressure and saturation equation loss then becomes.
+Ω ⊂ R^n  (n = 2, 3). The discretised pressure, water saturation and gas saturation equation loss then becomes.
 
 ```math
 \begin{equation} 
-V(F,u;T)_{pressure} ≈ \frac{1}{n_{s}}  (‖F-T⨀∇u‖_{2}^{2} + ‖- ∇ ·F-Q‖_{2}^{2} )       
+V(F,u;T)_{p} ≈ \frac{1}{n_{s}}  (‖F-T⨀∇u‖_{2}^{2} + ‖- ∇ ·F-Q‖_{2}^{2} )       
 \end{equation}
 ``` 
 ```math
 \begin{equation} 
-V(u,S_w;t)_{saturation} = \frac{1}{n_s}  ‖(φ \frac{∂S_w}{∂t}- ∇ .[T_{w} (∇u)])-Q_w ‖_{2}^{2}     
+V(u,S_w;t)_{S_{w}} = \frac{1}{n_s}  ‖(φ \frac{∂S_w}{∂t}- ∇ .[T_{w} (∇u)])-Q_w ‖_{2}^{2}     
 \end{equation}
 ``` 
 
 ```math
 \begin{equation} 
-Loss_{cfd} =V(F,u;T)_{pressure} + V(u,S_w;t)_{saturation}      
+V(u,S_g,S_o;t)_{S_{g}} = \frac{1}{n_s}  ‖ \nabla \cdot \left( \frac{{\rho_g}}{{B_g}} u_g + \frac{{R_{so} \rho_g}}{{B_o}} u_o \right) - Q_g + \frac{{\partial}}{{\partial t}} \left[ \varphi \left( \frac{{\rho_g}}{{B_g}} S_g + \frac{{R_{so} \rho_g}}{{B_o}} S_o \right) \right] ‖_{2}^{2}     
+\end{equation}
+``` 
+
+```math
+\begin{equation} 
+Loss_{cfd} =V(F,u;T)_{p} + V(u,S_w;t)_{S_{w}} + V(u,S_g,S_o;t)_{S_{g}}      
 \end{equation}
 ``` 
 
 
 ## Important Dependencies & Prerequisites:
-- Nvidia's in-house GPU based black oil reservoir simulator - **NVRS**
-- Nvidia's Modulus v22.09 :[link](https://docs.nvidia.com/deeplearning/modulus/user_guide/getting_started/installation.html)
+- Nvidia's Modulus symbolic v23.09 :[link](https://github.com/NVIDIA/modulus-sym)
 - CUDA 11.8 : [link](https://developer.nvidia.com/cuda-11-8-0-download-archive)
 - CuPy : [link](https://github.com/cupy/cupy.git)
-- pyAMGX : [link](https://github.com/shwina/pyamgx.git)
-- AMGX : [link](https://github.com/NVIDIA/AMGX.git)
 - Python 3.8 upwards
 
 ## Getting Started:
@@ -208,29 +184,17 @@ Clone this code base repository in a dedicated **work folder**.
 ```bash
 cd **work folder**
 conda activate MDLO
-git clone https://gitlab-master.nvidia.com/GlobalEnergyTeam/simulation/modulus_nvidia_slb_pino_ressim_poc.git
+git lfs clone https://github.com/NVIDIA/modulus-sym.git
 ```
 ### Bare-metal
-- From terminal do these sequence of operations to install Modulus v22.09: [link](https://docs.nvidia.com/deeplearning/modulus/user_guide/getting_started/installation.html)
+- From terminal do these sequence of operations to install Modulus v23.09: [link](https://github.com/NVIDIA/modulus-sym.git)
 ```bash
-pip3 install matplotlib transforms3d future typing numpy quadpy\
-             numpy-stl==2.16.3 h5py sympy==1.5.1 termcolor psutil\
-             symengine==0.6.1 numba Cython chaospy torch_optimizer\
-             vtk chaospy termcolor omegaconf hydra-core==1.1.1 einops\
-             timm tensorboard pandas orthopy ndim functorch pint kneed\
-             scikit-mps kneed pyDOE FyeldGenerator py-cpuinfo gdown\
-             gstools scikit-image ema-pytorch accelerate tensorflow==2.9.1\
-             joblib pyvista
+pip install nvidia-modulus.sym
              
-
-git clone git@gitlab.com:nvidia/modulus/modulus.git
-cd ./Modulus/
-python setup.py install
 ```
 - From terminal, install (missing) dependencies in 'requirements.txt' in the conda enviroment **MDLO**
-- Follow instructions to install AMGX from [link](https://github.com/NVIDIA/AMGX.git)
 - Follow instructions to install CuPy from : [link](https://github.com/cupy/cupy.git)
-- Follow instructions to install pyAMGX from : [link](https://github.com/shwina/pyamgx.git)
+
 
 
 ### Docker (Recommended)
@@ -262,6 +226,7 @@ More Troubleshooting can be found at [link](https://docs.nvidia.com/datacenter/c
 ```bash
 # enable shell script execution.
 sudo chmod +x ./scripts/docker/docker-build.sh
+sudo chmod +x set_env.sh
 # Build docker image
 ./scripts/docker/docker-build.sh
 
@@ -271,30 +236,12 @@ sudo chmod +x ./scripts/docker/docker-run.sh
 ./scripts/docker/docker-run.sh
 ```
 
-Now you will find yourself inside the container. The following steps are to be executed **ONLY ONCE**. This scripts will download and install the AMGX solver and its respective python wrapper.
-
-```bash
-# Install AMGX (only once!)
-cd /workspace
-./install_amgx.sh
-./install_pyamgx.sh
-cd ./project
-```
 
 ### Run
-**NVRS** is a fully GPU based Black oil reservoir simulator.
-Solvers include;
-1) Left-Preconditioned GMRES [link](https://docs.cupy.dev/en/stable/reference/generated/cupyx.scipy.sparse.linalg.gmres.html)
-2) LSQR [link](https://docs.cupy.dev/en/stable/reference/generated/cupyx.scipy.sparse.linalg.lsqr.html)
-3) Left Preconditoned Conjugate gradient [link](https://docs.cupy.dev/en/stable/reference/generated/cupyx.scipy.sparse.linalg.cg.html)
-4) Constrained pressure residual -CPR  (V cycle 2stage AMG for presure solve and left-precondioned GMRES with ILU(0) as preconditoner for saturation sole) [link](https://doi.org/10.2118/96809-MS)
-6) Spsolve [link](https://docs.cupy.dev/en/stable/reference/generated/cupyx.scipy.sparse.linalg.spsolve.html)
-7) AMGx suite of solvers
+**OPM Flow** is a fully CPU based Black oil reservoir simulator.
 
-**CPR is the default solver**.
-1) Pressure solver: V cycle 2 stage AMG with Aggregation and Level scheduling for the coarsening/restriction operations
-2) Saturation solver:  Left preconditoned GMRES with ILU(0) as preconditioner
-3) Smoothers include : Jacobi, Gauss-Seidel, SOR
+[link](https://opm-project.org/?page_id=19 )
+
 #### Forward problem
 
 
@@ -306,38 +253,50 @@ cd **work folder**
 ```
 - where **work folder** is the location you downloaded the code base to.
 
-- Run the Forward Problem surrogation with PINO/FNO/PINO2/PINO3 via the **src** folder.
+- Download the supplemental material.
+
+- Run the Forward Problem surrogation with PINO  via the **src** folder.
 
 ##### Bare Metal
 ```bash
 conda activate MDLO 
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Forward_problem_PINO.py
-or
-python Forward_problem_FNO.py
+python Learn_CCR.py
 cd ..
 conda deactivate
 ```
 
 ##### Docker
 ```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Forward_problem_PINO.py
-or
-python Forward_problem_FNO.py
+python Learn_CCR.py
 cd ..
 ```
 
 
 - Forward problem solution results are found in the root directory folder **outputs**
 
-- Compare the surrogate solution from **FNO** or **PINO** with the finite volume reservoir simulator (**NVRS**) from the **src** folder.
+- Compare the surrogate solution from **PINO** with the finite volume reservoir simulator (**NVRS**) from the **src** folder.
 
-- Take note of the surrogate method (FNO or PINO) used in the prior step to avoid throwing an error.
+
 
 ##### Bare Metal
 ```bash
 conda activate MDLO
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Compare_FVM_Surrogate.py
 cd ..
@@ -346,6 +305,10 @@ conda deactivate
 
 ##### Docker
 ```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Compare_FVM_Surrogate.py
 cd ..
@@ -353,53 +316,16 @@ cd ..
 
 - Results for the comparison are found in the root directory folder **COMPARE_RESULTS**
 
-- Convert the images to movie for dynamic well properties visualisation (pressure and saturation fields) from the **src** folder
-
-##### Bare Metal
-```bash
-conda activate MDLO
-cd src
-python Image_to_movie.py
-cd ..
-conda deactivate
-```
-##### Docker
-```bash
-cd src
-python Image_to_movie.py
-cd ..
-```
-
 #### Inverse problem
 
-**Parametrisation methods (non-Gaussian exotic priors) for the petrophysical properties includes** :
-1) Generative adversarial network (GAN)
-2) Variational Convolution autoencoder (VCAE)
-3) Cluster Classify Regress (CCR) introduced in Etienam et al, 2020 (MoE)
-4) Normal score transformation
-5) Diffusion
-6) K-means
-7) PCA/KPCA
-8) Mixture of Experts method introduced in Etienam et al, 2019 (MoE)
-9) Convolution autoencoder for parametrising the permeability field
-10) Denoising convolution autoencoder for parametrising the permeability field, 
-11) DCT( discrete cosing transform) introduced in Jafarpour et al 2009
-12) KSVD approach and orthogonal matching pursuit introduced in Etienam, 2019
-13) Level set approach introduced in Villegas et al, 2018
-14) Normal score transformation
- 
-- Run the inverse problem workflow from the **src** folder
-
-A cartoon describing such a workflow using  a Variational Convolution autoencder (**VCAE**) is shown. The surrogate PINO reservoir simulator is used for forwarding and the weighted-REKI is used to condition the latent space distribution **z** to the observed production well data.
-
-The aim of parametrisation methods is to reduce the complexity of the Kalman gain matrix in Eqn.4, make the inverse problem less ill-posed and enforce prior non-Gaussian densities during the reconstruction.
-
-
-![alt text](Visuals/LAB2.PNG)*Figure 1: Cartoon showing the overall developed Inverse modelling workflow termed PINO-weighted aREKI workflow*
 
 ##### Bare Metal
 ```bash
 conda activate MDLO
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Inverse_problem.py
 cd ..
@@ -408,77 +334,14 @@ conda deactivate
 
 ##### Docker
 ```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
 python Inverse_problem.py
 cd ..
 ```
-
-- Inverse problem solution results are found in the root directory folder **HM_RESULTS**
-
-## Pretrained models
-
-- Pre-trained models and all necessary files are provided in the script for rapid prototyping & reproduction
-
-- The Inverse_problem.py/Compare_FVM_Surrogate.py scripts can be ran without necessary running the forward problem steps.
-
-## Setting up Tensorboard
-Tensorboard is a great tool for visualization of machine learning experiments. To visualize the various training and validation losses, Tensorboard can be set up as follows:
-
-- In a separate terminal window, navigate to the working directory of the forward problem run)
-
-- Type in the following command on the command line:
-
-##### Bare Metal
-```bash
-conda activate MDLO
-cd src
-tensorboard --logdir=./ --port=7007
-```
-
-##### Docker
-```bash
-cd src
-tensorboard --logdir=./ --port=7007
-```
-
-
--Specify the port you want to use. This example uses 7007. Once running, the command prompt shows the url that you will use to display the results.
-
-- To view results, open a web browser and go to the url shown by the command prompt. An example would be: http://localhost:7007/#scalars. A window as shown in Fig. 7 should open up in the browser window.
-
-## Results
-### Summary of Numerical Model
-The result for the PINO surrogate is shown in Fig.2(a), 500 training samples was used were we compute the data loss and physics loss. The water flows from the injectors (downwards facing arrows) towards the producers (upwards facing arrows). The size of the reservoir computational voxel is nx, ny, nz = 40,40,3. Two phases are considered (oil and water) and the wells (4 injectors and 4 producers) are arranged in an “analogous 5- spot pattern” as shown in bottom-right of Fig. 4. The 4 producers well have measurable quantities of oil rate, water rate, water-cut as and are controlled by bottom-hole-pressure. The 4 water injector wells have measurable quantity of bottom hole pressure (BHP), controlled by injection rates. The reservoir is a sandstone channelised reservoir consisting of 2 lithofacies. 2,340 days of simulation are simulated. The left column of Fig.2(a) are the responses from the PINO surrogate, the middle column are the responses from the finite volume solver with AMG (pressure solve) + GMRES(ILU(0)(saturation solve)) and the right column is the difference between each response. For all panels in Fig. 2(a), the first row is for the pressure, the second row is for the water saturation and the third row is for the gas saturation
-
-- The results from the Forward Problem using the PINO implementation
-![alt text](Forward_problem_results/FNO/TRUE/Evolution_oil.gif)*Figure 2(a): Numerical implementation of Reservoir forward simulation shwoing the oil saturation evolution. PINO based reservoir forwarding (left column), Finite volume method (FVM) based reservoir forwarding (first principle), (middle-column) and the difference in magnitudes from both approaches (last-column)*
-
-![alt text](Forward_problem_results/FNO/TRUE/Evolution_water.gif)*Figure 2(b): Numerical implementation of Reservoir forward simulation showing the water saturation evolution. PINO based reservoir forwarding (left column), Finite volume method (FVM) based reservoir forwarding (first principle), (middle-column) and the difference in magnitudes from both approaches (last-column)*
-
-![alt text](Forward_problem_results/FNO/TRUE/Evolution_water_3D.gif)*Figure 2(c): Numerical implementation of Reservoir forward simulation. PINO based reservoir forwarding showing the 3D water saturation evolution with well locations.*
-![alt text](Forward_problem_results/FNO/TRUE/Evolution_oil_3D.gif)*Figure 2(d): Numerical implementation of Reservoir forward simulation. PINO based reservoir forwarding showing the 3D oil saturation evolution with well locations.*
-![alt text](Forward_problem_results/FNO/TRUE/Evolution_pressure_3D.gif)*Figure 2(e): Numerical implementation of Reservoir forward simulation. PINO based reservoir forwarding shwoing the field pressure evolution with well locations.*
-
-
-
-
-
-![alt text](Forward_problem_results/FNO/TRUE/Compare.png)*Figure 3(a): Production profile comparison. (red) True model, (blue) PINO model. First row is for the bottom-hole-pressure of well injectors (I1-I4), second row is for the oil rate production for the well producers (P1-P4), third row is for the water rate production for the well producers (P1-P4) and the last row is for the water cut ratio of the 4 well producers (P1-P4)*
-
-
-
-- The results from the Inverse Problem using the PINO surrogate for forwarding
-
-![alt text](Visuals/Comparison.png)*Figure 4: Comparison of permeability field reconstruction (1st column) prior,( 2nd column) MLE estimae (posterior) (third-coulmn) MAP estimate (posterior) and (4th-column) True Model. The method used is the – aREKI + Convolution autoencoder*
-
-![alt text](Visuals/Initial.png)*Figure 5: Production profile comparison for prior ensemble. (red) True model, (grey) Ensemble. First row is for the bottom-hole-pressure of well injectors (I1-I4), second row is for the oil rate production for the well producers (P1-P4), third row is for the water rate production for the well producers (P1-P4) and the last row is for the water cut ratio of the 4 well producers (P1-P4). Left of the dash vertical line is used for assimilation while right of this line is used for prediction*
-
-
-![alt text](Visuals/Final.png)*Figure 6(a): Production profile comparison for posterior ensemble. (red) True model, (grey) Ensemble. First row is for the bottom-hole-pressure of well injectors (I1-I4), second row is for the oil rate production for the well producers (P1-P4), third row is for the water rate production for the well producers (P1-P4) and the last row is for the water cut ratio of the 4 well producers (P1-P4). Left of the dash vertical line is used for assimilation while right of this line is used for prediction. Notice the decrease in the spread of the ensemble members signifying a reduction in uncertainty* 
-
-![alt text](Visuals/Cost_Function.png)*Figure 6(b): Cost function evolution. (Top -left) prior ensemble RMSE cost, (Top-right) posterior ensemble RMSE cost, (Bottom-left) RMSE cost evolutio betyween the MAP model (blue) and the MLE model (green)* 
-
-![alt text](Visuals/Toch.png)*Figure 7: The tensorboard output of the Run from the PINO experiment(blue) and FNO experiment (orange)*
 
 
 
@@ -516,10 +379,8 @@ Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agree
 - Clement Etienam- Solution Architect-Energy @Nvidia  Email: cetienam@nvidia.com
 
 ## Contributors:
-- Oleg Ovcharenko- Nvidia
-- Issam Said- Nvidia
-- Yang Juntao - Nvidia
-- Ken Hester- Nvidia
+- Kaustubh - Nvidia
+
 
 
 ## References:

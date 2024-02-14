@@ -7,14 +7,26 @@
 
 ### 1.1 Governing Equations 
 
-The governing equations for a CO2-Brine system are given by:
+### Forward problem
+**Black oil model**;
 
+ - Our simplified model for three-phase flow in porous media for reservoir simulation is given as [7].
 ```math
 \begin{equation}
-\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \nabla \cdot k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}u_{\ell }\right)-\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0
+\nabla \cdot \left( \frac{{\rho_w}}{{B_w}} u_w \right) - Q_w = -\frac{{\partial}}{{\partial t}} \left( \frac{{\varphi \rho_w}}{{B_w}} S_w \right) 
+\end{equation}
+```
+```math
+\begin{equation}
+\nabla \cdot \left( \frac{{\rho_o}}{{B_o}} u_o \right) - Q_o = -\frac{{\partial}}{{\partial t}} \left( \frac{{\varphi \rho_o}}{{B_o}} S_o \right)    
 \end{equation}
 ```
 
+```math
+\begin{equation}
+\nabla \cdot \left( \frac{{\rho_g}}{{B_g}} u_g + \frac{{R_{so} \rho_g}}{{B_o}} u_o \right) - Q_g = -\frac{{\partial}}{{\partial t}} \left[ \varphi \left( \frac{{\rho_g}}{{B_g}} S_g + \frac{{R_{so} \rho_g}}{{B_o}} S_o \right) \right]
+\end{equation}
+```
 
 
 

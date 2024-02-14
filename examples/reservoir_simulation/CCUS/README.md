@@ -1,17 +1,17 @@
 <!-- markdownlint-disable -->
 # C02 - Brine surrogate computed with a Physics Informed Neural Operator (PINO) 
 
-![Visualization](Visuals/All1.png)
+
 
 ## 1. Forward Problem
 
 ### 1.1 Governing Equations 
 
-The governing equations for a CO<sub>2</sub>-Brine system are given by:
+The governing equations for a CO2-Brine system are given by:
 
 ```math
 \begin{equation}
-\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \nabla \cdot k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}u_{\ell }\right)-\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0 \tag{1}
+\varphi \frac{\partial }{\partial t}\left(\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }S_{\ell }\right)-\ \nabla \cdot k\left(\sum_{\ell }{{\rho }_{\ell }y_{c\ell }{\lambda }_{\ell }}u_{\ell }\right)-\sum_{\ell }{{\rho }_{\ell }}y_{c\ell }q_{\ell }=0 \
 \end{equation}
 ```
 

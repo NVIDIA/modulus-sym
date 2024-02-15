@@ -1,4 +1,5 @@
-<b>A Modulus based CO<sub>2</sub>-Brine Physics constrained Neural Operator Forward Model</b>
+<!-- markdownlint-disable -->
+# <b>A Modulus based CO<sub>2</sub>-Brine Physics constrained Neural Operator Forward Model</b>
 
 Clement Etienam\*<sup>[^1]</sup> 
 # <a name="_toc132706283"></a>**1. Forward Problem.**

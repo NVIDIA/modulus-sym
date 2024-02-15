@@ -527,14 +527,14 @@ tensorboard --logdir=./ --port=7007
 ```
 
 
--Specify the port you want to use. This example uses 7007. Once running, the command prompt shows the url that you will use to display the results.
+-Specify the port you want to use. This example uses 7007. Once running, the command prompt shows the URL that you will use to display the results.
 
-- To view results, open a web browser and go to the url shown by the command prompt. An example would be: http://localhost:7007/#scalars. A window as shown in Fig. 10 should open up in the browser window.
+- To view results, open a web browser and go to the URL shown by the command prompt. An example would be http://localhost:7007/#scalars. A window as shown in Fig. 10 should open up in the browser window.
 
 
 ## Results
 ### Summary of Numerical Model
-The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training samples was used were we compute the data loss and physics loss. The water flows from the injectors (downwards facing arrows) towards the producers (upwards facing arrows). The size of the reservoir computational voxel is nx, ny, nz = 50,50,10. Two phases are considered (CO$`_2`$ and brine) having only 1 CO$`_2`$ injector. 500 years of simulation are simulated. The left column of Fig.1(a & b) are the responses from the PINO and FNO surrogate, the middle column are the responses from the Flow finite volume solver  and the right column is the difference between each response. For all panels in Fig. 1(a & b), the first row is for the pressure, the second row is for the brine saturation, the third row is  for the CO$`_2`$ saturation
+The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training samples were used where we computed the data loss and physics loss. The water flows from the injectors (downwards-facing arrows) towards the producers (upwards-facing arrows). The size of the reservoir computational voxel is nx, ny, nz = 50,50,10. Two phases are considered (CO$`_2`$ and brine) having only 1 CO$`_2`$ injector. 500 years of simulation are simulated. The left column of Fig.1(a & b) contains the responses from the PINO and FNO surrogate, the middle column is the responses from the Flow finite volume solver  and the right column is the difference between each response. For all panels in Fig. 1(a & b), the first row is for the pressure, the second row is for the brine saturation, the third row is  for the CO$`_2`$ saturation
 
 - The results from the Forward Problem using the PINO & FNO implementation
 
@@ -544,7 +544,7 @@ The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training
 | ![Image 1][img1] | ![Image 2][img2] |
 | **(a) - Speed-up using the PINO-CCR machine** | **(b) - Speed-up using the PINO-FNO machine** |
 
-***Figure 1**: (a) Numerical implementation of Reservoir forward simulation showing the pressure (first row), brine saturation (second row) and CO$`_2`$ saturation (last row) evolution. PINO-based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle column) and the difference in magnitudes from both approaches (last column) with the well locations ,(b) Numerical implementation of Reservoir forward simulation showing the pressure (first row), brine saturation (second row) and CO$`_2`$ saturation (last row) evolution. FNO-based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle column) and the difference in magnitudes from both approaches (last column) with the well locations *
+***Figure 1**: (a) Numerical implementation of Reservoir forward simulation showing the pressure (first row), brine saturation (second row) and CO$`_2`$ saturation (last row) evolution. PINO-based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle column) and the difference in magnitudes from both approaches (last column) with the well locations,(b) Numerical implementation of Reservoir forward simulation showing the pressure (first row), brine saturation (second row) and CO$`_2`$ saturation (last row) evolution. FNO-based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle column) and the difference in magnitudes from both approaches (last column) with the well locations *
 
 
 [img1]: COMPARE_RESULTSS/PINO/Evolution.gif "Permeability Field ( 33 by 33 by 1)"
@@ -565,7 +565,7 @@ L_{\text{total}} = \sum_{i} \left[(1-R_i^2) + L_{2,i} + \left|1 - \text{SSIM}_i\
 \end{equation}
 ```
 
-The overall loss is shown in the second column of the second row for all figures below.
+The overall loss is shown in the second column of the second row for all the figures below.
 
 
 ![alt text](COMPARE_RESULTSS/R2L2_Brine_saturation.png)***Figure 2**: Numerical *
@@ -575,10 +575,10 @@ The overall loss is shown in the second column of the second row for all figures
 ![alt text](COMPARE_RESULTSS/R2L2_pressure.png)***Figure 4**: Numerical *
 
 
-![alt text](COMPARE_RESULTSS/Frame1.png)***Figure 5**: Numerical *
+![alt text](COMPARE_RESULTSS/Frame1.png)***Figure 5(a)**: Figure 10**: The tensorboard output of the Run from the PINO & FNO Dynamic modelling *
 
 
-![alt text](COMPARE_RESULTSS/Frame2.png)***Figure 6**: Numerical *
+![alt text](COMPARE_RESULTSS/Frame2.png)***Figure 5(b)**: Figure 10**: The tensorboard output of the Run from the PINO & FNO Dynamic modelling *
 
 ## Release Notes
 
@@ -600,18 +600,13 @@ Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agree
 # **References**
 1. Z. Duan and R. Sun, An improved model calculating CO2 solubility in pure water and aqueous NaCl solutions from 273 to 533 K and from 0 to 2000 bar., Chemical Geology,vol. 193.3-4, pp. 257-271, 2003.
 1. R. Span and W. Wagner, A new equation of state for carbon dioxide covering the fluid region from the triple-point temperature to 1100 K at pressure up to 800 MPa, J. Phys.Chem. Ref. Data, vol. 25, pp. 1509-1596, 1996.
-1. Fenghour and W. A. Wakeham, The viscosity of carbon dioxide, J. Phys. Chem. Ref.Data, vol. 27, pp. 31-44, 1998.
+1. Fenghour and W. A. Wakeham, The viscosity of carbon dioxide, J. Phys. Chem. Ref. Data, vol. 27, pp. 31-44, 1998.
 1. S. L. Phillips et al., A technical data book for geothermal energy utilization, Lawrence Berkeley Laboratory report, 1981.
 1. J. E. Garcia, Density of aqueous solutions of CO2. No. LBNL-49023. Lawrence Berkeley National Laboratory, Berkeley, CA, 2001.
-1. Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, BocaRaton, Florida, USA CRC Press, 1993.
+1. Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press, 1993.
 1. Engineering ToolBox, Water - Density, Specific Weight and Thermal Expansion Coefficients, 2003
 1. Engineering Tool Box, Water - Dynamic (Absolute) and Kinematic Viscosity, 2004
 1. Zongyi Li, Nikola Kovachki, Kamyar Azizzadenesheli, Burigede Liu, Kaushik Bhattacharya, Andrew Stuart, Anima Anandkumar. Fourier Neural Operator for Parametric Partial Differential Equations. https://doi.org/10.48550/arXiv.2010.08895
 1. Zongyi Li, Hongkai Zheng, Nikola Kovachki, David Jin, Haoxuan Chen, Burigede Liu, Kamyar Azizzadenesheli, Anima Anandkumar.Physics-Informed Neural Operator for Learning Partial Differential Equations. https://arxiv.org/pdf/2111.03794.pdf
 
 
-
-
-[^1]: `  `Nvidia Corporation
-
-    \* Corresponding author

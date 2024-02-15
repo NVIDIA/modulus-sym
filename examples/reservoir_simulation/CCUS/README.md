@@ -1,10 +1,10 @@
 <!-- markdownlint-disable -->
 # <b>A Modulus based CO<sub>2</sub>-Brine Physics constrained Neural Operator Forward Model</b>
 
-## Forward problem
-### <a name="_toc132706284"></a>**1.1 Governing Equations** 
+## **Forward problem**
 
-The governing equations for a CO<sub>2</sub>-Brine system is given by. 
+
+The forward problem for a CO<sub>2</sub>-Brine system is given by. 
 
 ```math
 \begin{equation}
@@ -47,7 +47,7 @@ S_l = v_l \frac{\rho_T}{\rho_l}, \quad S_g = v_g \frac{\rho_T}{\rho_g}
 \end{equation}
 ```
 
-## **1.2 Thermodynamic Equations** 
+### **Thermodynamic Equations** 
 The CO$`_2`$-brine model includes two components (CO$`_2`$ and H$`_2`$O) that are transported by one or two fluid phases (the brine phase and the CO$`_2`$ phase). We refer to the brine phase with the subscript $`l`$ and to the CO$`_2`$ phase with the subscript $`g`$ (although the CO$`_2`$ phase can be in supercritical, liquid, or gas state). The water component is only present in the brine phase, while the CO$`_2`$ component can be present in the CO$`_2`$ phase as well as in the brine phase. Thus, considering the molar phase component fractions, $`y_{c,p}`$ (i.e., the fraction of the molar mass of phase $`p`$ represented by component $`c`$).
 
 The update of the fluid properties is done in two steps:
@@ -62,7 +62,7 @@ Note that the current implementation of the flow solver is isothermal and that t
 The models that are used in steps 1) and 2) are reviewed in more detail below.
 
 
-### **1.2.1 Computation of the phase fractions and phase component fractions (flash)** 
+#### **Computation of the phase fractions and phase component fractions (flash)** 
 We compute the values of CO$`_2`$ solubility in brine as a function of pressure, temperature, and a constant salinity. We define the pressure ($`p`$) and temperature ($`T`$):
 
 Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). The temperature must be between 283.15 and 623.15 Kelvin. The table is populated using the model of Duan and Sun (2003). Specifically, we solve the following nonlinear CO$`_2$ equation of state (Duan and Sun, 2003) for each pair to obtain the reduced volume,
@@ -117,7 +117,7 @@ y_{\text{CO}_2,l} = \frac{s_{\text{CO}_2}}{(1 + s_{\text{CO}_2})}, \quad y_{\tex
 ```
 
 
-### **1.2.2 Computation of the phase densities and phase viscosities**
+#### **Computation of the phase densities and phase viscosities**
 
 **<u>CO<sub>2</sub></u> phase density and viscosity**
 
@@ -212,7 +212,7 @@ b_z = \mu_w (T)(1 + 0.0816m + 0.0122m^2 + 0.000128m^3)
 
 
 
-# <b>2. Physics Constrained Neural operator for the CO<sub>2</sub>-Brine case</b>
+# **Physics Constrained Neural operator for the CO<sub>2</sub>-Brine case</b>**
 
 ## **2.1 Overall discretized equations loss**
 

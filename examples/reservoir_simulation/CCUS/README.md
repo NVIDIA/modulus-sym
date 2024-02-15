@@ -48,65 +48,48 @@ S_l = v_l \frac{\rho_T}{\rho_l}, \quad S_g = v_g \frac{\rho_T}{\rho_g}
 ```
 ## **1.2 Thermodynamic Equations** 
 
-The CO$`_2`$-brine model includes two components (CO$`_2`$ and H$`_2`$O) that are transported by one or two fluid phases (the brine phase and the CO$`_2`$ phase). We refer to the brine phase with the subscript $`l`$ and to the CO$`_2`$ phase with the subscript $`g`$ (although the CO$`_2`$ phase can be in supercritical, liquid, or gas state). The water component is only present in the brine phase, while the CO$`_2`$ component can be present in the CO$`_2`$ phase as well as in the brine phase. Thus, considering the molar phase component fractions, $`y_{c,p}`$ (i.e., the fraction of the molar mass of phase $`p`$ represented by component $`c`$).
+We compute the values of CO$_2$ solubility in brine as a function of pressure, temperature, and a constant salinity. We define the pressure ($p$) and temperature ($T$):
 
-The update of the fluid properties is done in two steps:
+Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). The temperature must be between 283.15 and 623.15 Kelvin. The table is populated using the model of Duan and Sun (2003). Specifically, we solve the following nonlinear CO$_2$ equation of state (Duan and Sun, 2003) for each pair to obtain the reduced volume,
 
-1) The phase fractions ($`v_p`$) and phase component fractions ($`y_{c,p}`$) are computed as a function of pressure ($`p`$), temperature ($`T`$), component fractions ($`z_c`$), and a constant salinity.
-2) The phase densities ($`\rho_p`$) and phase viscosities ($`\mu_p`$) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
+\[
+Z = \left( \frac{p_r V_r}{T_r} \right) = 1 + \frac{ (a_1 + \frac{a_2}{T_r^2} + \frac{a_3}{T_r^3})}{V_r} + \frac{(a_4 + \frac{a_5}{T_r^2} + \frac{a_6}{T_r^3})}{(V_r^2)} + \frac{(a_7 + \frac{a_8}{T_r^2} + \frac{a_9}{T_r^3})}{(V_r^4)} + \frac{(a_{10} + \frac{a_{11}}{T_r^2} + \frac{a_{12}}{T_r^3})}{(V_r^5)} + \frac{a_{13}}{(T_r^3 V_r^2)} \left( a_{14} + a_{15} \left( \frac{1}{V_r^2} \right) \right) \exp \left( -a_{15} \left( \frac{1}{V_r^2} \right) \right)
+\]
 
+Where $p_r = \frac{p}{p_{crit}}$ is the reduced pressure and the reduced temperature $T_r = \frac{T}{T_{crit}}$. The coefficients $a_1, a_2, \ldots, a_{15}$ are given as:
 
-Once the phase fractions, phase component fractions, phase densities, phase viscosities--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the.
+$a_1 = 8.99288497 \times 10^{-2}$, $a_2 = -4.94783127 \times 10^{-1}$, $a_3 = 4.77922245 \times 10^{-2}$, $a_4 = 1.03808883 \times 10^{-2}$, $a_5 = -2.82516861 \times 10^{-2}$, $a_6 = 9.49887563 \times 10^{-2}$, $a_7 = 5.20600880 \times 10^{-4}$, $a_8 = -2.93540971 \times 10^{-4}$, $a_9 = -1.77265112 \times 10^{-3}$, $a_{10} = -2.51101973 \times 10^{-5}$, $a_{11} = 8.93353441 \times 10^{-5}$, $a_{12} = 7.88998563 \times 10^{-5}$, $a_{13} = -1.66727022 \times 10^{-2}$, $a_{14} = 1.39800000$, $a_{15} = 2.96000000 \times 10^{-2}$.
 
-Note that the current implementation of the flow solver is isothermal and that the derivatives to temperature are therefore discarded.
+Using the reduced volume, $V_r$, we compute the fugacity coefficient of CO$_2$,
 
-The models that are used in steps 1) and 2) are reviewed in more detail below.
+\[
+\ln \phi (T,P) = Z - 1 - \ln Z + \frac{(a_1 + \frac{a_2}{T_r^2} + \frac{a_3}{T_r^3})}{V_r} + \frac{(a_4 + \frac{a_5}{T_r^2} + \frac{a_6}{T_r^3})}{(2V_r^2)} + \frac{(a_7 + \frac{a_8}{T_r^2} + \frac{a_9}{T_r^3})}{(4V_r^4)} + \frac{(a_{10} + \frac{a_{11}}{T_r^2} + \frac{a_{12}}{T_r^3})}{(5V_r^5)} + \frac{a_{13}}{(2T_r^3 V_r^2)} \left[ a_{14} + 1 - \left( a_{14} + 1 + \frac{a_{15}}{(V_r^2)} \right) \right] \exp \left( -\frac{a_{15}}{(V_r^2)} \right)
+\]
 
+To conclude, we use the fugacity coefficient of CO$_2$ to compute and store the solubility of CO$_2$ in brine, $s_{\text{CO}_2}$,
 
+\[
+\ln \frac{y_{\text{CO}_2}}{s_{\text{CO}_2}} P = \frac{\Phi_{\text{CO}_2}}{RT} - \ln \phi (T,P) + \sum_{c} 2\lambda_c m + \sum_{a} 2\lambda_a m + \sum_{(a,c)} \xi_{(a,c)} m^2
+\]
 
-
-### ***1.2.1 Computation of the phase fractions and phase component fractions (flash)***
-We compute the values of CO<sub>2</sub> solubility in brine as a function of pressure, temperature, and a constant salinity. we define the pressure (p) and temperature (T):
-
-**Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality** (moles of NaCl per kg of brine). The temperature must be between 283.15 and 623.15 Kelvin. The table is populated using the model of Duan and Sun (2003). Specifically, we solve the following nonlinear CO<sub>2</sub> equation of state (Duan and Sun, 2003) for each pair to obtain the reduced volume,
-
-Z=prVrTr=  1+ a1+a2Tr2+ a3Tr3Vr+ a4+a5Tr2+ a6Tr3Vr2+ a7+a8Tr2+ a9Tr3Vr4+ a10+a11Tr2+ a12Tr3Vr5+ a13Tr3Vr2a14+ a15Vr2exp-a15Vr2
-Eqn. 5
-
-.
-
-Where pr= ppcrit   is the reduced pressure and the reduced temperature Tr= TTcrit
-
-|*a1 = 8.99288497e-2, a2 = -4.94783127e-1, a3 = 4.77922245e-2, a4 = 1.03808883e-2, a5 = -2.82516861e-2, a6 = 9.49887563e-2, a7 = 5.20600880e-4, a8 = -2.93540971e-4, a9 = -1.77265112e-3, a10 = -2.51101973e-5, a11 = 8.93353441e-5, a12 = 7.88998563e-5, a13 = -1.66727022e-2, a14 = 1.39800000e0, a15 = 2.96000000e-2*|
-| - |
-
-Using the reduced volume, Vr, we compute the fugacity coefficient of CO<sub>2</sub>,
-
-InϕT,P=Z-1-InZ+ a1+a2Tr2+ a3Tr3Vr+ a4+a5Tr2+ a6Tr32Vr2+ a7+a8Tr2+ a9Tr34Vr4+ a10+a11Tr2+ a12Tr35Vr5a132Tr3Vr2a14+1- a14+1+a15Vr2exp-a15Vr2⁡
-Eqn. 6
-
-To conclude, we use the fugacity coefficient of CO<sub>2</sub> to compute and store the solubility of CO<sub>2</sub> in brine,sCO2
-
-InyCO2sCO2P= ΦCO2RT- InϕT,P+ c2λcm+ a2λam+ a,cςa,cm2
-Eqn.7
-
-Where ΦCO2 is the chemical potential of the CO<sub>2</sub> component, R is the gas constant, and m is the salinity. The mole fraction of CO<sub>2</sub> in the vapor phase, yCO2= p- pH2Op
+Where $\Phi_{\text{CO}_2}$ is the chemical potential of the CO$_2$ component, $R$ is the gas constant, and $m$ is the salinity. The mole fraction of CO$_2$ in the vapor phase, $y_{\text{CO}_2} = \left( \frac{p - p_{\text{H}_2\text{O}}}{p} \right)$.
 
 Then, we compute the phase fractions as:
-
-vl= 1+ sCO21+ zCO21-zCO2
-Eqn.8(a)
-
-vg=1- vl
-Eqn. 8(b)
+\[
+v_l = \frac{(1 + s_{\text{CO}_2})}{\left( 1 + \frac{z_{\text{CO}_2}}{(1-z_{\text{CO}_2})} \right)}
+\]
+\[
+v_g = 1 - v_l
+\]
 
 We conclude by computing the phase component fractions as:
+\[
+y_{\text{CO}_2,l} = \frac{s_{\text{CO}_2}}{(1 + s_{\text{CO}_2})}, \quad y_{\text{H}_2\text{O},l} = 1 - y_{\text{CO}_2,l}
+\]
+\[
+y_{\text{CO}_2,g} = 1, \quad y_{\text{H}_2\text{O},g} = 0
+\]
 
-yCO2,l=sCO21+ sCO2 , yH2O,l=1- yCO2,l
-Eqn. 9(a)
-
-yCO2,g=1, yH2O,g=0
-Eqn. 9(b)
 
 ### ***1.2.2 Computation of the phase densities and phase viscosities***
 

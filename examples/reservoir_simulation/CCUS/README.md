@@ -31,6 +31,21 @@ u_l = -k\lambda_l \nabla\Theta_l = -k\lambda_l \left( \nabla(p - P_{cl}) - \rho_
 \end{equation}
 ```
 
+Where: $l$ is the phase (brine/gas), $k$ is the rock absolute permeability, $\lambda_l$ is the phase mobility ratio, $\mu_l$ is the phase viscosity, $K_{rl}$ is the phase relative permeability, $S_l$ is the phase saturation, $u_l$ is the phase Darcy velocity, $g$ is the acceleration due to gravity, $z$ is the depth, $y_{c,l}$ is the mass fraction of component $c$ in phase $l$, $t$ is time, and $p$ is the pressure.
+
+The system is closed by assuming,
+```math
+\begin{equation}
+\sum_{l} S_l = 1, \quad Z_c = \frac{\rho_c}{\rho_T}, \quad \rho_T = \sum_{c} \rho_c
+\end{equation}
+```
+
+
+```math
+\begin{equation}
+S_l = v_l \frac{\rho_T}{\rho_l}, \quad S_g = v_g \frac{\rho_T}{\rho_g}
+\end{equation}
+```
 ## **1.2 Thermodynamic Equations** 
 
 The CO<sub>2</sub>-brine model includes two components (CO<sub>2</sub> and H<sub>2</sub>O) that are transported by one or two fluid phases (the brine phase and the CO<sub>2</sub> phase). We refer to the brine phase with the subscript l and to the CO<sub>2</sub> phase with the subscript g (although the CO<sub>2</sub> phase can be in supercritical, liquid, or gas state). The water component is only present in the brine phase, while the CO<sub>2</sub> component can be present in the CO<sub>2</sub> phase as well as in the brine phase. Thus, considering the molar phase component fractions,yc,p (i.e., the fraction of the molar mass of phase p represented by component c) 

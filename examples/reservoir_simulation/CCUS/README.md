@@ -561,7 +561,7 @@ The overall loss is then,
 
 ```math
 \begin{equation}
-\[L_{\text{total}} = \sum_{i} \left[(1-R_i^2) + L_{2,i} + \left|1 - \text{SSIM}_i\right|\right], \quad \forall i \in \{P, CO_2, \text{brine}\}\]
+L_{\text{total}} = \sum_{i} \left[(1-R_i^2) + L_{2,i} + \left|1 - \text{SSIM}_i\right|\right], \quad \forall i \in \{P, CO_2, \text{brine}\}
 \end{equation}
 ```
 

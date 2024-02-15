@@ -288,9 +288,51 @@ V(p,S_l;t)_{\text{brine equation},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| 
 
 ## **2.2 Pseudocode**
 
+```math
 |***Algorithm 1***: PINO CO<sub>2</sub>-Brine Reservoir simulator |
-| - |
-|<p>***Input:***    X1=K, φ∈RB0×1×D×W×H, XN1=ql,qg,dt ∈RB0×T×D×W×H </p><p>Ypt, --labelled pressure</p><p>Ylt, -- labelled water saturation</p><p>Ygt, -- labelled gas saturation</p><p>f1:,θp, </p><p>f2:,θl, </p><p>f3:,θg, </p><p>T= -- Time </p><p>epoch, tol, w1,w2,w3,w4,w5, w6, ϵ </p><p></p><p>j = 0 </p><p>while  j≤epoch or (ϕ≤tol) do </p><p>1. Y0p=f1X1;θp, Y0s=f2X1;θl , Y0g=f3X1;θg  </p><p>2. Compute: vl,vg, yCO2,l,yCO2,g,yH2O,l,yH2O,g **using Eqn. (5-9)**</p><p>3. Compute: ρg,ρl,μg,μl **using Eqn. (10-14)**</p><p>4. Compute: Zc= ρcρT </p><p>5. ***Compute:*** ρT= cρc</p><p>6. Compute: Sl\*= vlρTρl , Sg\*= vgρTρg </p><p>7. Compute : ϕl\*= Y1st,-Sl\*22 </p><p>8. Compute : ϕg\*= Y1gt,-Sg\*22 </p><p>&emsp;</p><p>9. Compute:*** <br>   Vqg,p;λgpressure equation,CO2,g=1ns ∇.kρgyCO2,gλg∇p- PCO2,g-ρgyCO2,gqg22</p><p>10. ***Compute :**** <br>    Vql,p;λlpressure equation,CO2,l=1ns ∇.kρlyCO2,lλl∇p- PCO2,l-ρlyCO2,lql22</p><p>11. Compute:* <br>    Vql,p;λlpressure equation,H2O,l=1ns ∇.kρlyH2O,lλl∇p- PH2O,l-ρlyH2O,lql22</p><p>12. Compute:* <br>    Vp,Sg;tgas equation,CO2,g=1nsφ∂∂tρgyCO2,gSg- ∇.kρgyCO2,gλg∇p- PCO2,g-ρgyCO2,gqg22</p><p>13. Compute:* <br>    Vp,Sg;tgas equation,CO2,l=1nsφ∂∂tρlyCO2,lSl- ∇.kρlyCO2,lλg∇p- PCO2,l-ρlyCO2,lql22</p><p></p><p>14. Compute:* <br>    Vp,Sl;tbrine equation,H2O,l=1nsφ∂∂tρlyH2O,lSl- ∇.kρlyH2O,lλg∇p- PH2O,l-ρlyH2O,lql22</p><p>&emsp;</p><p>15. ϕp= Ypt,-f1X1;θp22  </p><p>16. ϕs= Ylt,-f2X1;θl22  </p><p>17. ϕg= Ygt,-f3X1;θg22          </p><p>18. ϕ= w1ϕp+ w2ϕs + w3ϕg+ w4ϕl\*+ w5ϕg\*+ w6Vqg,p;λgpressure equation,CO2,g+w7Vql,p;λlpressure equation,CO2,l+ w8Vp,Sg;tgas equation,CO2,g+w9Vql,p;λlpressure equation,H2O,l+ w10Vp,Sg;tgas equation,CO2,l+ Vp,Sl;tbrine equation,H2O,l</p><p>19. Update models:</p><p>&emsp;θ= θp,θl,θgT</p><p>&emsp;θj+1=θj-ϵ∇ϕθj</p><p>`               `j ← j+ 1 </p><p>***Output***:f1:,θp,f2:,θl, f3:,θg</p>|
+\begin{algorithm}
+\caption{PINO CO$_2$-Brine Reservoir simulator}
+\begin{algorithmic}
+\State \textbf{Input:} $X1=K, \varphi \in \mathbb{R}^{B_0 \times 1 \times D \times W \times H}, XN1=ql,qg,dt \in \mathbb{R}^{B_0 \times T \times D \times W \times H}$
+\State $Ypt$, --labelled pressure
+\State $Ylt$, -- labelled water saturation
+\State $Ygt$, -- labelled gas saturation
+\State $f1:, \theta_p$, 
+\State $f2:, \theta_l$, 
+\State $f3:, \theta_g$, 
+\State $T=$ Time 
+\State epoch, tol, $w1,w2,w3,w4,w5, w6, \epsilon$
+\State $j = 0$ 
+\While{$j \leq \text{epoch}$ or $(\phi \leq \text{tol})$}
+\State $Y0p=f1X1;\theta_p$, $Y0s=f2X1;\theta_l$, $Y0g=f3X1;\theta_g$
+\State Compute: $vl,vg, y_{CO2,l},y_{CO2,g},y_{H2O,l},y_{H2O,g}$ \textbf{using Eqn. (5-9)}
+\State Compute: $\rho_g,\rho_l,\mu_g,\mu_l$ \textbf{using Eqn. (10-14)}
+\State Compute: $Zc= \frac{\rho_c}{\rho_T}$
+\State \textbf{Compute:} $\rho_T= c \rho_c$
+\State Compute: $Sl^*= vl\frac{\rho_T}{\rho_l}$, $Sg^*= vg\frac{\rho_T}{\rho_g}$
+\State Compute : $\phi_l^*= Y1st,-Sl^*22$
+\State Compute : $\phi_g^*= Y1gt,-Sg^*22$
+\State Compute: 
+\State \hspace{1cm} $\text{V}(q_g,p;\lambda_g)\text{pressure equation,CO}_2,g=\frac{1}{n_s} \nabla \cdot k\rho_gy_{CO2,g}\lambda_g\nabla p- P_{CO2,g}-\rho_gy_{CO2,g}q_g22$
+\State \hspace{1cm} $\text{V}(q_l,p;\lambda_l)\text{pressure equation,CO}_2,l=\frac{1}{n_s} \nabla \cdot k\rho_ly_{CO2,l}\lambda_l\nabla p- P_{CO2,l}-\rho_ly_{CO2,l}q_l22$
+\State \hspace{1cm} $\text{V}(q_l,p;\lambda_l)\text{pressure equation,H}_2\text{O},l=\frac{1}{n_s} \nabla \cdot k\rho_ly_{H2O,l}\lambda_l\nabla p- P_{H2O,l}-\rho_ly_{H2O,l}q_l22$
+\State \hspace{1cm} $\text{V}(p,Sg;t)\text{gas equation,CO}_2,g=\frac{1}{n_s} \phi\frac{\partial}{\partial t}\rho_gy_{CO2,g}Sg- \nabla \cdot k\rho_gy_{CO2,g}\lambda_g\nabla p- P_{CO2,g}-\rho_gy_{CO2,g}q_g22$
+\State \hspace{1cm} $\text{V}(p,Sg;t)\text{gas equation,CO}_2,l=\frac{1}{n_s} \phi\frac{\partial}{\partial t}\rho_ly_{CO2,l}Sl- \nabla \cdot k\rho_ly_{CO2,l}\lambda_g\nabla p- P_{CO2,l}-\rho_ly_{CO2,l}q_l22$
+\State \hspace{1cm} $\text{V}(p,Sl;t)\text{brine equation,H}_2\text{O},l=\frac{1}{n_s} \phi\frac{\partial}{\partial t}\rho_ly_{H2O,l}Sl- \nabla \cdot k\rho_ly_{H2O,l}\lambda_g\nabla p- P_{H2O,l}-\rho_ly_{H2O,l}q_l22$
+\State $\phi_p= Ypt,-f1X1;\theta_p22$
+\State $\phi_s= Ylt,-f2X1;\theta_l22$
+\State $\phi_g= Ygt,-f3X1;\theta_g22$
+\State $\phi= w1\phi_p+ w2\phi_s + w3\phi_g+ w4\phi_l^*+ w5\phi_g^*+ w6\text{V}(q_g,p;\lambda_g)\text{pressure equation,CO}_2,g+w7\text{V}(q_l,p;\lambda_l)\text{pressure equation,CO}_2,l+ w8\text{V}(p,Sg;t)\text{gas equation,CO}_2,g+w9\text{V}(q_l,p;\lambda_l)\text{pressure equation,H}_2\text{O},l+ w10\text{V}(p,Sg;t)\text{gas equation,CO}_2,l+ \text{V}(p,Sl;t)\text{brine equation,H}_2\text{O},l$
+\State \textbf{Update models:}
+\State $\theta= \theta_p,\theta_l,\theta_g^T$
+\State $\theta^{(j+1)}=\theta^j-\epsilon \nabla \phi_{\theta}^j$
+\State $j \leftarrow j+ 1$
+\EndWhile
+\State \textbf{Output:} $f1:,\theta_p,f2:,\theta_l, f3:,\theta_g$
+\end{algorithmic}
+\end{algorithm}
+```
+
 
 
 

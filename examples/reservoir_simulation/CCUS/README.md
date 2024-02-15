@@ -288,7 +288,7 @@ V(p,S_l;t)_{\text{brine equation},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| 
 
 ## **2.2 Pseudocode**
 
-**Algorithm 1: PINO CO2-Brine Reservoir simulator**
+**Algorithm 1: PINO CO<sub>2</sub>-Brine Reservoir simulator**
 
 **Input:**  
 $`X_1=\{K,\phi\}\in\mathbb{R}^{B_0\times1\times D\times W\times H}`$,  
@@ -326,14 +326,14 @@ $`\quad`$Compute:
 $`\quad\quad V(p,S_l;t)_{\text{brine equation},H_2 O,l} =\frac{1}{n_s}  \left\|\phi \frac{\partial}{\partial t}(\rho_l y_{H_2 O,l} S_l) - \nabla.k(\rho_l y_{H_2 O,l} \lambda_g \nabla(p- P_{H_2 O,l}))-\rho_l y_{H_2 O,l} q_l\right\|_2^2`$  
 $`\quad\phi_p= \|Y_{pt}-f_1(X_1;\theta_p)\|_2^2`$  
 $`\quad\phi_s= \|Y_{lt}-f_2(X_1;\theta_l)\|_2^2`$  
-$`\quad\phi_g= \|Y_{gt}-f_3(X_1;\theta_g)\|_2^2`$  
+$`\quad\phi_g= \|Y_{gt}-f_3(X_1;\theta_g)\|_2^2`$ 
 
-$`\phi = w_1\phi_p + w_2\phi_s + w_3\phi_g + w_4\phi_l^* + w_5\phi_g^*\\
-\quad + w_6 V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g}\\
-\quad + w_7 V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l}\\
-\quad + w_8 V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g}\\
-\quad + w_9 V(q_l,p;\lambda_l)_{\text{pressure equation},H_2 O,l}\\
-\quad + w_{10} V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l}\\
+$`\phi = w_1\phi_p + w_2\phi_s + w_3\phi_g + w_4\phi_l^* + w_5\phi_g^*\\\\\\
+\quad + w_6 V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g}\\\\\\
+\quad + w_7 V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l}\\\\\\
+\quad + w_8 V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g}\\\\\\
+\quad + w_9 V(q_l,p;\lambda_l)_{\text{pressure equation},H_2 O,l}\\\\\\
+\quad + w_{10} V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l}\\\\\\
 \quad + V(p,S_l;t)_{\text{brine equation},H_2 O,l}`$  
 
 

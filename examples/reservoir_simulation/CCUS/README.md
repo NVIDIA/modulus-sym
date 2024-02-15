@@ -218,41 +218,71 @@ b_z = \mu_w (T)(1 + 0.0816m + 0.0122m^2 + 0.000128m^3)
 
 The physics loss *ansatz* is then,
 
-Vqg,p;λgpressure equation,CO2,g=1ns ∇.kρgyCO2,gλg∇p- PCO2,g-ρgyCO2,gqg22
+The physics loss ansatz is then,
+```math
+\begin{equation}
+V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p - P_{\text{CO}_2,g})) - \rho_g y_{\text{CO}_2,g} q_g \right\|_2^2
+\end{equation}
+```
 
-Eqn. (15a)
+```math
+\begin{equation}
+V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_l y_{\text{CO}_2,l} \lambda_l \nabla(p - P_{\text{CO}_2,l})) - \rho_l y_{\text{CO}_2,l} q_l \right\|_2^2
+\end{equation}
+```
 
-Vql,p;λlpressure equation,CO2,l=1ns ∇.kρlyCO2,lλl∇p- PCO2,l-ρlyCO2,lql22
+```math
+\begin{equation}
+V(q_l,p;\lambda_l)_{\text{pressure equation},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_l y_{\text{H}_2\text{O},l} \lambda_l \nabla(p - P_{\text{H}_2\text{O},l})) - \rho_l y_{\text{H}_2\text{O},l} q_l \right\|_2^2
+\end{equation}
+```
 
-Eqn. (15b)
+```math
+\begin{equation}
+V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_g y_{\text{CO}_2,g} S_g) - \nabla \cdot k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p - P_{\text{CO}_2,g})) - \rho_g y_{\text{CO}_2,g} q_g \right\|_2^2
+\end{equation}
+```
 
-Vql,p;λlpressure equation,H2O,l=1ns ∇.kρlyH2O,lλl∇p- PH2O,l-ρlyH2O,lql22
+```math
+\begin{equation}
+V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_l y_{\text{CO}_2,l} S_l) - \nabla \cdot k(\rho_l y_{\text{CO}_2,l} \lambda_g \nabla(p - P_{\text{CO}_2,l})) - \rho_l y_{\text{CO}_2,l} q_l \right\|_2^2
+\end{equation}
+```
 
-Eqn. (15c)
-
-Vp,Sg;tgas equation,CO2,g=1nsφ∂∂tρgyCO2,gSg- ∇.kρgyCO2,gλg∇p- PCO2,g-ρgyCO2,gqg22
-
-Eqn. (16a)
-
-Vp,Sg;tgas equation,CO2,l=1nsφ∂∂tρlyCO2,lSl- ∇.kρlyCO2,lλg∇p- PCO2,l-ρlyCO2,lql22
-
-Eqn. (16b)
+```math
+\begin{equation}
+V(p,S_l;t)_{\text{brine equation},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_l y_{\text{H}_2\text{O},l} S_l) - \nabla \cdot k(\rho_l y_{\text{H}_2\text{O},l} \lambda_g \nabla(p - P_{\text{H}_2\text{O},l})) - \rho_l y_{\text{H}_2\text{O},l} q_l \right\|_2^2
+\end{equation}
+```
 
 
-Vp,Sl;tbrine equation,H2O,l=1nsφ∂∂tρlyH2O,lSl- ∇.kρlyH2O,lλg∇p- PH2O,l-ρlyH2O,lql22
-Eqn. (16c)
+```math
+\begin{equation}
+\phi_{\text{cfd}} = V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g} + V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l} + V(q_l,p;\lambda_l)_{\text{pressure equation},\text{H}_2\text{O},l} + V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g} + V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l} + V(p,S_w;t)_{\text{brine equation},\text{H}_2\text{O},l}
+\end{equation}
+```
 
-ϕcfd=Vqg,p;λgpressure equation,CO2,g+ Vql,p;λlpressure equation,CO2,l+ Vql,p;λlpressure equation,H2O,l+ Vp,Sg;tgas equation,CO2,g+Vp,Sg;tgas equation,CO2,l+ Vp,Sw;tbrine equation,H2O,l  
+```math
+\begin{equation}
+\phi = \phi_{\text{cfd}} + \phi_{\text{data}}
+\end{equation}
+```
 
-Eqn. (17)
+```math
+\begin{equation}
+\theta = [\theta_p,\theta_s,\theta_g]^T
+\end{equation}
+```
 
-ϕ= ϕcfd+ϕdata
+```math
+\begin{equation}
+\theta^{(j+1)} = \theta^j - \epsilon \nabla \phi_{\theta}^j
+\end{equation}
+```
 
-Eqn. (18)
 
-θ= θp,θs,θgT
 
-θj+1=θj-ϵ∇ϕθj
+
 ## **2.2 Pseudocode**
 
 |***Algorithm 1***: PINO CO<sub>2</sub>-Brine Reservoir simulator |

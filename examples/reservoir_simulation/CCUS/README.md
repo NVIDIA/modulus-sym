@@ -13,29 +13,23 @@ The governing equations for a CO<sub>2</sub>-Brine system is given by.
 \end{equation}
 ```
 
+```math
+\begin{equation}
+u_l = -k\lambda_l \nabla\Theta_l = -k\lambda_l \left( \nabla(p - P_{cl}) - \rho_l g\nabla z \right)
+\end{equation}
+```
 
-ul = -kλl∇Θl= -kλl∇p- Pcl- ρlg∇z 
-Eqn.2
+```math
+\begin{equation}
+\lambda_l = \frac{K_{rl}}{\mu_l}
+\end{equation}
+```
 
-λl= Krlμl
-Eqn.3
-
-φ∂∂tlρlyclSl- ∇.klρlyclλl∇Θl- lρlyclql=0
-Eqn.4(a)
-
-Were.
-
-l  is the phase (brine/gas), k  is the rock absolute permeability, λl is the phase mobility ratio, μl is the phase viscosity, Krl is the phase relative permeability, Sl is the phase saturation,ul is the phase darcy velocity,* g* is the acceleration due to gravity, z is the depth,* yc,l is the mass fraction of component c in phase l, t is time and p is the pressure.
-
-The system is closed by assuming,
-
-lSl=1,  Zc= ρcρT  ,ρT= cρc
-Eqn. 4(b)
-
-
-
-Sl= vlρTρl , Sg= vgρTρg
-Eqn. 4(c)
+```math
+\begin{equation}
+\phi \frac{\partial}{\partial t} \left( \sum_{l} \rho_l y_{cl} S_l \right) - \nabla \cdot k \left( \sum_{l} \rho_l y_{cl} \lambda_l \nabla\Theta_l \right) - \sum_{l} \rho_l y_{cl} q_l = 0
+\end{equation}
+```
 
 ## **1.2 Thermodynamic Equations** 
 

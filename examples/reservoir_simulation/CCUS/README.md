@@ -541,30 +541,18 @@ The result for the PINO surrogate is shown in Fig.2(a), 100 training samples was
 
 
 
-| PINO - CCR | PINO - FNO |
+| PINO | FNO|
 | -----------|------------ |
 | ![Image 1][img1] | ![Image 2][img2] |
 | **(a) - Speed-up using the PINO-CCR machine** | **(b) - Speed-up using the PINO-FNO machine** |
 
-***Figure 3**: Forwarding of the Norne Field. (a) Speed-up using the PINO-CCR machine, and (b) Speed-up using the PINO-FNO machine*
+***Figure 1**: Forwarding of the Field. (a) Speed-up using the PINO-CCR machine, and (b) Speed-up using the PINO-FNO machine*
 
 
 [img1]: COMPARE_RESULTSS/PINO/Evolution.gif "Permeability Field ( 33 by 33 by 1)"
 [img2]: COMPARE_RESULTSS/FNO/Evolution.gif "Permeability Field ( 40 by 40 by 3)"
 
-| Qo (STB/DAY) | Qw (STB/DAY) |
-|---------------------|---------------------|
-| <img src="Numerical_experiment/COMPARE_RESULTS/Oil.png" alt="Image 1" width="600"> | <img src="Numerical_experiment/COMPARE_RESULTS/Water.png" alt="Image 2" width="600"> |
-| **(a) - Outputs from peacemann machine for oil production rate** | **(b) - Outputs from peacemann machine for water production rate** |
 
-| Qg (SCF/DAY) | RMSE FORWARD PROBLEM |
-|---------------------|---------------------|
-| <img src="Numerical_experiment/COMPARE_RESULTS/Gas.png" alt="Image 3" width="600"> | <img src="Numerical_experiment/COMPARE_RESULTS/Histogram.png" alt="Image 4" width="600"> |
-| **(c) - Outputs from peacemann machine for gas production rate** | **(d) - RMSE values between the PINO-CCR & PINO-FNO machine** |
-
-
-***Figure 4**: Forwarding of the Norne Field.Comparison between using the PINO -FNO machine and the PINO – CCR machine and the reference true data(a) Outputs from peacemann machine for oil production rate ,Qo from the 22 producers
-They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. (b) Outputs from peacemann machine for water production rate ,Qw from the 22 producers. (c) Outputs from peacemann machine for gas production rate,Qg from the 22 producers and, (d) RMSE to a reference true data gotten from the Flow numerical solver, The PINO -CCR forward model workflow gave a lower RMSE value than the PINO -FNO forward model workflow*
 
 
 ## Release Notes

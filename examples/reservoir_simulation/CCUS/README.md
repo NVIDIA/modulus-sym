@@ -303,7 +303,7 @@ $`T`$ -- Time
 epoch, tol, $`w_1,w_2,w_3,w_4,w_5,w_6, \epsilon`$
 
 $`j = 0`$  
-**while** $`(j \leq \text{epoch})$ **or** $`(\phi \leq \text{tol})`$ **do**  
+**while** $`(j \leq \text{epoch})`$ **or** $`(\phi \leq \text{tol})`$ **do**  
 $`\quad Y_{0p}=f_1(X_1;\theta_p), Y_{0s}=f_2(X_1;\theta_l), Y_{0g}=f_3(X_1;\theta_g)`$  
 $`\quad$Compute: $v_l,v_g,y_{\text{CO}_2,l},y_{\text{CO}_2,g},y_{H_2 O,l},y_{H_2 O,g}`$  using Eqn. (5-9)  
 $`\quad$Compute: $\rho_g,\rho_l,\mu_g,\mu_l`$  using Eqn. (10-14)  

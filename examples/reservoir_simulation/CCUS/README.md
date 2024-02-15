@@ -159,7 +159,8 @@ $`d_1 = 0.4071119 \times 10^{-2}`$ , $`d_2 = 0.7198037 \times 10^{-4}`$ , $`d_3 
 Where,
 $`x_0 = 0.235156`$ , $`x_1 = -0.491266`$ , $`x_2 = 5.211155 \times 10^{-2}`$ , $`x_3 = 5.347906 \times 10^{-2}`$ , $`x_4 = -1.537102 \times 10^{-2}`$ 
 
-\textbf{Brine phase density and viscosity}
+**<u>Brine phase density and viscosity</u>**
+
 
 ```math
 \begin{equation}

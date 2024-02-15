@@ -313,28 +313,28 @@ $`\quad`$Compute: $`\text{S}_l^*= v_l \rho_T/\rho_l$, $\text{S}_g^*= v_g \rho_T/
 $`\quad`$Compute: $`\phi_l^*= \|Y_{1st}-\text{S}_l^*\|_2^2`$  
 $`\quad`$Compute: $`\phi_g^*= \|Y_{1gt}-\text{S}_g^*\|_2^2`$  
 $`\quad`$Compute:   
-$`\quad\quad V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g} =\frac{1}{n_s}  \left\|\nabla.k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p- P_{\text{CO}_2,g}))-\rho_g y_{\text{CO}_2,g} q_g\right\|_2^2`$  
+$`\quad\quad V(q_g,p;\lambda_g)_{\text{p},\text{CO}_2,g} =\frac{1}{n_s}  \left\|\nabla.k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p- P_{\text{CO}_2,g}))-\rho_g y_{\text{CO}_2,g} q_g\right\|_2^2`$  
 $`\quad`$Compute:   
-$`\quad\quad V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l} =\frac{1}{n_s}  \left\|\nabla.k(\rho_l y_{\text{CO}_2,l} \lambda_l \nabla(p- P_{\text{CO}_2,l}))-\rho_l y_{\text{CO}_2,l} q_l\right\|_2^2`$  
+$`\quad\quad V(q_l,p;\lambda_l)_{\text{p},\text{CO}_2,l} =\frac{1}{n_s}  \left\|\nabla.k(\rho_l y_{\text{CO}_2,l} \lambda_l \nabla(p- P_{\text{CO}_2,l}))-\rho_l y_{\text{CO}_2,l} q_l\right\|_2^2`$  
 $`\quad`$Compute:   
-$`\quad\quad V(q_l,p;\lambda_l)_{\text{pressure equation},H_2 O,l} =\frac{1}{n_s}  \left\|\nabla.k(\rho_l y_{H_2 O,l} \lambda_l \nabla(p- P_{H_2 O,l}))-\rho_l y_{H_2 O,l} q_l\right\|_2^2`$  
+$`\quad\quad V(q_l,p;\lambda_l)_{\text{p},H_2 O,l} =\frac{1}{n_s}  \left\|\nabla.k(\rho_l y_{H_2 O,l} \lambda_l \nabla(p- P_{H_2 O,l}))-\rho_l y_{H_2 O,l} q_l\right\|_2^2`$  
 $`\quad`$Compute:   
-$`\quad\quad V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g} =\frac{1}{n_s}  \left\|\phi \frac{\partial}{\partial t}(\rho_g y_{\text{CO}_2,g} S_g) - \nabla.k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p- P_{\text{CO}_2,g}))-\rho_g y_{\text{CO}_2,g} q_g\right\|_2^2`$  
+$`\quad\quad V(p,S_g;t)_{\text{g},\text{CO}_2,g} =\frac{1}{n_s}  \left\|\phi \frac{\partial}{\partial t}(\rho_g y_{\text{CO}_2,g} S_g) - \nabla.k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p- P_{\text{CO}_2,g}))-\rho_g y_{\text{CO}_2,g} q_g\right\|_2^2`$  
 $`\quad`$Compute:   
-$`\quad\quad V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l} =\frac{1}{n_s}  \left\|\phi \frac{\partial}{\partial t}(\rho_l y_{\text{CO}_2,l} S_l) - \nabla.k(\rho_l y_{\text{CO}_2,l} \lambda_g \nabla(p- P_{\text{CO}_2,l}))-\rho_l y_{\text{CO}_2,l} q_l\right\|_2^2`$  
+$`\quad\quad V(p,S_g;t)_{\text{g},\text{CO}_2,l} =\frac{1}{n_s}  \left\|\phi \frac{\partial}{\partial t}(\rho_l y_{\text{CO}_2,l} S_l) - \nabla.k(\rho_l y_{\text{CO}_2,l} \lambda_g \nabla(p- P_{\text{CO}_2,l}))-\rho_l y_{\text{CO}_2,l} q_l\right\|_2^2`$  
 $`\quad`$Compute:   
-$`\quad\quad V(p,S_l;t)_{\text{brine equation},H_2 O,l} =\frac{1}{n_s}  \left\|\phi \frac{\partial}{\partial t}(\rho_l y_{H_2 O,l} S_l) - \nabla.k(\rho_l y_{H_2 O,l} \lambda_g \nabla(p- P_{H_2 O,l}))-\rho_l y_{H_2 O,l} q_l\right\|_2^2`$  
+$`\quad\quad V(p,S_l;t)_{\text{b},H_2 O,l} =\frac{1}{n_s}  \left\|\phi \frac{\partial}{\partial t}(\rho_l y_{H_2 O,l} S_l) - \nabla.k(\rho_l y_{H_2 O,l} \lambda_g \nabla(p- P_{H_2 O,l}))-\rho_l y_{H_2 O,l} q_l\right\|_2^2`$  
 $`\quad\phi_p= \|Y_{pt}-f_1(X_1;\theta_p)\|_2^2`$  
 $`\quad\phi_s= \|Y_{lt}-f_2(X_1;\theta_l)\|_2^2`$  
 $`\quad\phi_g= \|Y_{gt}-f_3(X_1;\theta_g)\|_2^2`$ 
 
 $`\phi = w_1\phi_p + w_2\phi_s + w_3\phi_g + w_4\phi_l^* + w_5\phi_g^*\\\\\\
-\quad + w_6 V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g}\\\\\\
-\quad + w_7 V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l}\\\\\\
-\quad + w_8 V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g}\\\\\\
-\quad + w_9 V(q_l,p;\lambda_l)_{\text{pressure equation},H_2 O,l}\\\\\\
-\quad + w_{10} V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l}\\\\\\
-\quad + V(p,S_l;t)_{\text{brine equation},H_2 O,l}`$  
+\quad + w_6 V(q_g,p;\lambda_g)_{\text{p},\text{CO}_2,g}\\\\\\
+\quad + w_7 V(q_l,p;\lambda_l)_{\text{p},\text{CO}_2,l}\\\\\\
+\quad + w_8 V(p,S_g;t)_{\text{g},\text{CO}_2,g}\\\\\\
+\quad + w_9 V(q_l,p;\lambda_l)_{\text{p},H_2 O,l}\\\\\\
+\quad + w_{10} V(p,S_g;t)_{\text{g},\text{CO}_2,l}\\\\\\
+\quad + V(p,S_l;t)_{\text{b},H_2 O,l}`$  
 
 
 

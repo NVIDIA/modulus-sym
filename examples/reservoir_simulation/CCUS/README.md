@@ -347,7 +347,7 @@ $`\quad j \leftarrow j+ 1`$
 
 
 
-$`w_1`$ , $`\ldots`$ , $`w_{10}`$  $`\text{ are the weights associated with the loss functions corresponding to the 10 terms. }`$ . $`X_0=\{k,\phi\} \in \mathbb{R}^{(B_0 \times 1 \times W \times H)}`$  $`\text{ are the dictionary inputs. }`$  $`\text{epoch}`$ , $`\text{tol}`$  $`\text{ are the number of epochs and the tolerance level for the loss function. }`$ . $`f_1(:,\theta_p)`$ , $`f_2(:,\theta_l)`$ , $`f_3(:,\theta_g)`$  $`\text{ are the FNO models for the pressure, brine saturation, and gas saturations respectively.}`$ 
+$`w_1`$ , $`\ldots`$ , $`w_{10}`$  $`\text{ are the weights associated with the loss functions corresponding to the 10 terms. }`$ . $`X_0=\{k,\phi\} \in \mathbb{R}^{(B_0 \times 1 \times D \times W \times H)}`$  $`\text{ are the dictionary inputs. }`$  $`\text{epoch}`$ , $`\text{tol}`$  $`\text{ are the number of epochs and the tolerance level for the loss function. }`$ . $`f_1(:,\theta_p)`$ , $`f_2(:,\theta_l)`$ , $`f_3(:,\theta_g)`$  $`\text{ are the FNO models for the pressure, brine saturation, and gas saturations respectively.}`$ 
 
 
 

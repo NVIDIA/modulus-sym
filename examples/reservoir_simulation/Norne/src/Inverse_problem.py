@@ -8416,12 +8416,15 @@ for kk in range(steppi):
     Time_vector[kk] = current_time
     
 
+folderrin = os.path.join(oldfolder, '..', 'HM_RESULTS', 'ADAPT_REKI')
+
+
 Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt,pree, 
                     effectiveuse,wats,oilss, 
                     gasss,nx, ny, nz, N_injw, 
                     N_pr, N_injg, 
                     injectors, producers, 
-                    gass,'../HM_RESULTS/ADAPT_REKI',oldfolder) for kk in range(steppi))
+                    gass,folderrin,oldfolder) for kk in range(steppi))
                         
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
@@ -8517,12 +8520,14 @@ with gzip.open('BEST_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
 
 os.chdir(oldfolder)
 
+
+folderrin = os.path.join(oldfolder, '..', 'HM_RESULTS', 'BEST_RESERVOIR_MODEL')
 Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, 
                     producers, 
-                    gass,'../HM_RESULTS/BEST_RESERVOIR_MODEL',oldfolder ) for kk in range(steppi))
+                    gass,folderrin,oldfolder ) for kk in range(steppi))
                         
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)
@@ -8614,13 +8619,15 @@ with gzip.open('MEAN_RESERVOIR_MODEL.pkl.gz', 'wb') as f1:
     pickle.dump(X_data1, f1)           
 
 os.chdir(oldfolder )
-    
+
+
+folderrin = os.path.join(oldfolder, '..', 'HM_RESULTS', 'MEAN_RESERVOIR_MODEL')    
 Parallel(n_jobs=num_cores,backend='loky', verbose=10)(delayed(process_step)(kk, steppi, dt,preebest, 
                     effectiveuse,watsbest,oilssbest, 
                     gasbest,nx, ny, nz, N_injw, 
                     N_pr, N_injg, injectors, 
                     producers, 
-                    gass,'../HM_RESULTS/MEAN_RESERVOIR_MODEL',oldfolder) for kk in range(steppi))
+                    gass,folderrin,oldfolder) for kk in range(steppi))
                         
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, steppi-1, steppi-1)
 ShowBar(progressBar)

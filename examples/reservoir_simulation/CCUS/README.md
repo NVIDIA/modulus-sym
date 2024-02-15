@@ -119,7 +119,8 @@ y_{\text{CO}_2,l} = \frac{s_{\text{CO}_2}}{(1 + s_{\text{CO}_2})}, \quad y_{\tex
 
 ### **1.2.2 Computation of the phase densities and phase viscosities**
 
-\textbf{CO}_2 \textbf{phase density and viscosity}
+**<u>CO<sub>2</sub></u> phase density and viscosity**
+
 
 The nonlinear Helmholtz energy equation yields, 
 
@@ -148,7 +149,7 @@ Where,
 \end{equation}
 ```
 Where,
-$d_1 = 0.4071119 \times 10^{-2}$, $d_2 = 0.7198037 \times 10^{-4}$, $d_3 = 0.2411697 \times 10^{-16}$, $d_4 = 0.2971072 \times 10^{-22}$, $d_5 = -0.1627888 \times 10^{-22}$
+$`d_1 = 0.4071119 \times 10^{-2}`$ , $`d_2 = 0.7198037 \times 10^{-4}`$ , $`d_3 = 0.2411697 \times 10^{-16}`$ , $`d_4 = 0.2971072 \times 10^{-22}`$ , $`d_5 = -0.1627888 \times 10^{-22}`$ 
 
 ```math
 \begin{equation}
@@ -156,7 +157,7 @@ $d_1 = 0.4071119 \times 10^{-2}$, $d_2 = 0.7198037 \times 10^{-4}$, $d_3 = 0.241
 \end{equation}
 ```
 Where,
-$x_0 = 0.235156$, $x_1 = -0.491266$, $x_2 = 5.211155 \times 10^{-2}$, $x_3 = 5.347906 \times 10^{-2}$, $x_4 = -1.537102 \times 10^{-2}$
+$`x_0 = 0.235156`$ , $`x_1 = -0.491266`$ , $`x_2 = 5.211155 \times 10^{-2}`$ , $`x_3 = 5.347906 \times 10^{-2}`$ , $`x_4 = -1.537102 \times 10^{-2}`$ 
 
 \textbf{Brine phase density and viscosity}
 
@@ -207,14 +208,6 @@ a_z = \mu_w (T) \times 0.000629(1 - \exp(-0.7m))
 b_z = \mu_w (T)(1 + 0.0816m + 0.0122m^2 + 0.000128m^3)
 \end{equation}
 ```
-
-
-
-
-
-
-
-
 
 
 

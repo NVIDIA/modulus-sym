@@ -549,8 +549,8 @@ The result for the PINO surrogate is shown in Fig.2(a), 100 training samples was
 ***Figure 3**: Forwarding of the Norne Field. (a) Speed-up using the PINO-CCR machine, and (b) Speed-up using the PINO-FNO machine*
 
 
-[img1]: Numerical_experiment/COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION/Compare_time.png "Permeability Field ( 33 by 33 by 1)"
-[img2]: Numerical_experiment/COMPARE_RESULTS/PINO/PEACEMANN_FNO/Compare_time.png "Permeability Field ( 40 by 40 by 3)"
+[img1]: COMPARE_RESULTSS/PINO/Evolution.gif "Permeability Field ( 33 by 33 by 1)"
+[img2]: COMPARE_RESULTSS/FNO/Evolution.gif "Permeability Field ( 40 by 40 by 3)"
 
 | Qo (STB/DAY) | Qw (STB/DAY) |
 |---------------------|---------------------|

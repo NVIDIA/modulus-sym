@@ -1374,14 +1374,14 @@ def peaks(n):
 
 def calc_mu_g(p):
     # Average reservoir pressure
-    mu_g = 3e-10 * p ** 2 + 1e-6 * p + 0.0133
+    mu_g = 3e-6 * p ** 2 + 1e-6 * p + 0.0133
     return mu_g
 
 def calc_rs(p_bub, p):
     # p=average reservoir pressure
     cuda = 0
     device1 = torch.device(f"cuda:{cuda}" if torch.cuda.is_available() else "cpu")  
-    rs_factor = torch.where(p < p_bub, torch.tensor(1.0).to(device1,torch.float32), torch.tensor(0.0).to(device1,torch.float32))
+    rs_factor = torch.where(p < p_bub, torch.tensor(1.0).to(device1,torch.float32), torch.tensor(1e-6).to(device1,torch.float32))
     rs = (178.11 ** 2) / 5.615 * (torch.pow(p / p_bub, 1.3) * rs_factor + \
                                   (1 - rs_factor))
     return rs
@@ -2547,9 +2547,9 @@ def Geta_all(folder,nx,ny,nz,effective,oldfolder,check,steppi,steppi_indices):
     
     
     # Filter the slices of interest before the loop
-    filtered_pressure = [pressuree[i] for i in steppi_indices-1]
-    filtered_swat = [swatt[i] for i in steppi_indices-1]
-    filtered_sgas = [sgass[i] for i in steppi_indices-1]
+    filtered_pressure = [pressuree[i] for i in steppi_indices]
+    filtered_swat = [swatt[i] for i in steppi_indices]
+    filtered_sgas = [sgass[i] for i in steppi_indices]
     
     # Active index array and its length
     active_index_array = np.where(actnum == 1)[0]
@@ -5571,9 +5571,11 @@ class Black_oil(torch.nn.Module):
         fin = self.neededM["Q"]
         fin = fin.repeat(u.shape[0], 1, 1, 1, 1)
         fin = fin.clamp(min=1e-6)
+        fin = fin.clamp(max=1e6)
         finwater = self.neededM["Qw"]
         finwater = finwater.repeat(u.shape[0], 1, 1, 1, 1)
         finwater = finwater.clamp(min=1e-6)
+        finwater = finwater.clamp(max=1e6)
         dt = self.neededM["Time"]
         pini = input_var["Pini"]
         poro = input_var["Phi"]
@@ -5584,6 +5586,7 @@ class Black_oil(torch.nn.Module):
         fingas = self.neededM["Qg"]
         fingas = fingas.repeat(u.shape[0], 1, 1, 1, 1)
         fingas = fingas.clamp(min=1e-6)
+        fingas = fingas.clamp(max=1e6)
         actnum = self.neededM["actnum"]
         actnum = actnum.repeat(u.shape[0], 1, 1, 1, 1)
         actnum = actnum.clamp(min=1e-6)
@@ -5622,12 +5625,13 @@ class Black_oil(torch.nn.Module):
         
         avg_p = prior_pressure.mean(dim=2, keepdim=True).mean(dim=3, keepdim=True)\
         .mean(dim=4, keepdim=True)
+        avg_p = replace_with_mean(avg_p)
+        
         UG = calc_mu_g(avg_p)
         RS = calc_rs(self.p_bub, avg_p)
         BG = calc_bg(self.p_bub, self.p_atm, avg_p)
         BO = calc_bo(self.p_bub, self.p_atm, self.CFO, avg_p)
         
-     
 
         avg_p = replace_with_mean(avg_p)
         UG = replace_with_mean(UG)
@@ -5727,18 +5731,7 @@ class Black_oil(torch.nn.Module):
             dcdx = compute_gradient_3d(a1.float(), dx=dxf, dim=0, order=1, padding="replication")
             dcdy = compute_gradient_3d(a1.float(), dx=dxf, dim=1, order=1, padding="replication")
             dcdz = compute_gradient_3d(a1.float(), dx=dxf, dim=2, order=1, padding="replication")        
-            
-            # Apply the function to all tensors that might contain NaNs
-            actnum = replace_nan_with_zero(actnum)
-            fin = replace_nan_with_zero(fin)
-            dcdx = replace_nan_with_zero(dcdx)
-            dudx_fdm = replace_nan_with_zero(dudx_fdm)
-            a1 = replace_nan_with_zero(a1)
-            dduddx_fdm = replace_nan_with_zero(dduddx_fdm)
-            dcdy = replace_nan_with_zero(dcdy)
-            dudy_fdm = replace_nan_with_zero(dudy_fdm)
-            dduddy_fdm = replace_nan_with_zero(dduddy_fdm)
-            
+
             # Compute darcy_pressure using the sanitized tensors
             finoil = compute_peacemannoil(self.UO, BO, self.UW, self.BW, self.DZ, self.RE, device, self.max_inn_fcn, \
                                 self.max_out_fcn, self.params,
@@ -5775,21 +5768,7 @@ class Black_oil(torch.nn.Module):
             dady = compute_gradient_3d(a1water.float(), dx=dxf, dim=1, order=1, padding="replication")
             dadz = compute_gradient_3d(a1water.float(), dx=dxf, dim=2, order=1, padding="replication")        
             
-        
-        
-            # Apply the function to all tensors that could possibly have NaNs
-            actnum = replace_nan_with_zero(actnum)
-            poro = replace_nan_with_zero(poro)
-            dsw = replace_nan_with_zero(dsw)
-            dtime = replace_nan_with_zero(dtime)
-            dadx = replace_nan_with_zero(dadx)
-            dudx = replace_nan_with_zero(dudx)
-            a1water = replace_nan_with_zero(a1water)
-            dduddx = replace_nan_with_zero(dduddx)
-            dady = replace_nan_with_zero(dady)
-            dudy = replace_nan_with_zero(dudy)
-            dduddy = replace_nan_with_zero(dduddy)
-            finusew = replace_nan_with_zero(finusew)
+
             
             # Now, compute darcy_saturation using the sanitized tensors:
             inner_diff = dadx * dudx + a1water * dduddx + dady * dudy + a1water * dduddy \
@@ -5839,22 +5818,7 @@ class Black_oil(torch.nn.Module):
             dubigzdy = compute_gradient_3d(Ubigz.float(), dx=dxf, dim=1, order=1, padding="replication")
             dubigzdz = compute_gradient_3d(Ubigz.float(), dx=dxf, dim=2, order=1, padding="replication")         
                 
-        
-            
-            # Using replace_nan_with_zero on tensors that might contain NaNs:
-            actnum = replace_nan_with_zero(actnum)
-            dubigxdx = replace_nan_with_zero(dubigxdx)
-            fingas = replace_nan_with_zero(fingas)
-            dubigxdy = replace_nan_with_zero(dubigxdy)
-            dubigydx = replace_nan_with_zero(dubigydx)
-            dubigydy = replace_nan_with_zero(dubigydy)
-            poro = replace_nan_with_zero(poro)
-            satg = replace_nan_with_zero(satg)
-            BG = replace_nan_with_zero(BG)
-            sato = replace_nan_with_zero(sato)
-            BO = replace_nan_with_zero(BO)
-            RS = replace_nan_with_zero(RS)
-            dtime = replace_nan_with_zero(dtime)
+
             
             # Now compute darcy_saturationg using the sanitized tensors:
             inner_sum = dubigxdx + dubigxdy + dubigxdz + dubigydx + dubigydy\
@@ -6178,21 +6142,15 @@ class Black_oil(torch.nn.Module):
             sg_loss = dxf * sg_loss 
             
         #p_loss = torch.mul(actnum,p_loss)    
-        p_loss = torch.where(torch.isnan(p_loss), torch.tensor(0, device=p_loss.device), p_loss)
-        p_loss = torch.where(torch.isinf(p_loss), torch.tensor(0, device=p_loss.device), p_loss)
-    
-    
-        s_loss = torch.where(torch.isnan(s_loss), torch.tensor(0, device=s_loss.device), s_loss)
-        s_loss = torch.where(torch.isinf(s_loss), torch.tensor(0, device=s_loss.device), s_loss)
 
-    
-    
-        sg_loss = torch.where(torch.isnan(sg_loss), torch.tensor(0, device=sg_loss.device), sg_loss)
-        sg_loss = torch.where(torch.isinf(sg_loss), torch.tensor(0, device=sg_loss.device), sg_loss)        
-        output_var = {"pressured": p_loss,"saturationd": s_loss,"saturationdg": sg_loss}
         
-
-
+        
+        p_loss = replace_with_mean(p_loss)
+        s_loss = replace_with_mean(s_loss)
+        sg_loss = replace_with_mean(sg_loss)
+    
+     
+        output_var = {"pressured": p_loss,"saturationd": s_loss,"saturationdg": sg_loss}
         return normalize_tensors_adjusted(output_var)
     
 
@@ -6315,11 +6273,11 @@ def run(cfg: ModulusConfig) -> None:
             
 
     if DEFAULT ==1:
-        fno_type = 'FNO'
+        fno_type = 'PINO'
     else:
         fno_typee = None
         while True:
-            fno_typee = int(input('Select 1 = augment darcy loss | 2 = Use peacemann and darcy loss \n'))
+            fno_typee = int(input('Select 1 = Use peacemann and darcy loss  | 2 = augment darcy loss \n'))
             if (fno_typee>2) or (fno_typee<1):
                 #raise SyntaxError('please select value between 1-2')
                 print('')

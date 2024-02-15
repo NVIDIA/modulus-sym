@@ -48,17 +48,17 @@ S_l = v_l \frac{\rho_T}{\rho_l}, \quad S_g = v_g \frac{\rho_T}{\rho_g}
 ```
 ## **1.2 Thermodynamic Equations** 
 
-The CO$_2$-brine model includes two components (CO$_2$ and H$_2$O) that are transported by one or two fluid phases (the brine phase and the CO$_2$ phase). We refer to the brine phase with the subscript $l$ and to the CO$_2$ phase with the subscript $g$ (although the CO$_2$ phase can be in supercritical, liquid, or gas state). The water component is only present in the brine phase, while the CO$_2$ component can be present in the CO$_2$ phase as well as in the brine phase. Thus, considering the molar phase component fractions, $y_{c,p}$ (i.e., the fraction of the molar mass of phase $p$ represented by component $c$).
+The CO$`_2`$-brine model includes two components (CO$`_2`$ and H$`_2`$O) that are transported by one or two fluid phases (the brine phase and the CO$`_2`$ phase). We refer to the brine phase with the subscript $`l`$ and to the CO$`_2`$ phase with the subscript $`g`$ (although the CO$`_2`$ phase can be in supercritical, liquid, or gas state). The water component is only present in the brine phase, while the CO$`_2`$ component can be present in the CO$`_2`$ phase as well as in the brine phase. Thus, considering the molar phase component fractions, $`y_{c,p}`$ (i.e., the fraction of the molar mass of phase $`p`$ represented by component $`c`$).
 
 The update of the fluid properties is done in two steps:
 \begin{enumerate}
-    \item The phase fractions ($v_p$) and phase component fractions ($y_{c,p}$) are computed as a function of pressure ($p$), temperature ($T$), component fractions ($z_c$), and a constant salinity.
-    \item The phase densities ($\rho_p$) and phase viscosities ($\mu_p$) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
+    \item The phase fractions ($`v_p`$) and phase component fractions ($`y_{c,p}`$) are computed as a function of pressure ($`p$), temperature ($`T`$), component fractions ($`z_c`$), and a constant salinity.
+    \item The phase densities ($`\rho_p`$) and phase viscosities ($`\mu_p`$) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
 \end{enumerate}
 
 Once the phase fractions, phase component fractions, phase densities, phase viscosities--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the.
 
-Note that the current implementation of the flow solver is isothermal and that the derivatives with respect to temperature are therefore discarded.
+Note that the current implementation of the flow solver is isothermal and that the derivatives to temperature are therefore discarded.
 
 The models that are used in steps 1) and 2) are reviewed in more detail below.
 

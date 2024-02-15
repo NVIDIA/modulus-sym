@@ -52,7 +52,7 @@ The CO$`_2`$-brine model includes two components (CO$`_2`$ and H$`_2`$O) that ar
 
 The update of the fluid properties is done in two steps:
 
-1) The phase fractions ($`v_p`$) and phase component fractions ($`y_{c,p}`$) are computed as a function of pressure ($`p$), temperature ($`T`$), component fractions ($`z_c`$), and a constant salinity.
+1) The phase fractions ($`v_p`$) and phase component fractions ($`y_{c,p}`$) are computed as a function of pressure ($`p`$), temperature ($`T`$), component fractions ($`z_c`$), and a constant salinity.
 2) The phase densities ($`\rho_p`$) and phase viscosities ($`\mu_p`$) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
 
 

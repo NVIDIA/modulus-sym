@@ -6,8 +6,11 @@ Clement Etienam\*<sup>[^1]</sup>
 ## <a name="_toc132706284"></a>**1.1 Governing Equations** 
 The governing equations for a CO<sub>2</sub>-Brine system is given by. 
 
+```math
+\begin{equation}
 φ∂∂tlρlyclSl- ∇.klρlyclλlul- lρlyclql=0
-Eqn.1
+\end{equation}
+```
 
 ul = -kλl∇Θl= -kλl∇p- Pcl- ρlg∇z 
 Eqn.2

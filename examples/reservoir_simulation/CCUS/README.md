@@ -127,7 +127,6 @@ The nonlinear Helmholtz energy equation yields,
 \begin{equation}
 \frac{P}{(RT\rho_g)} = 1 + \psi \phi_\psi^r (\psi,\tau)
 \end{equation}
-\end{equation}
 ```
 
 Where, 
@@ -137,6 +136,7 @@ Where,
 \end{equation}
 ```
 
+```math
 \begin{equation}
 \mu_g = \mu_o (T) + \mu_{excess} (\rho_g,T)
 \end{equation}

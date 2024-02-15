@@ -553,17 +553,17 @@ The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training
 
 
 
-![alt text](COMPARE_RESULTSs/R2L2_Brine_Saturation.png)***Figure 2**: Numerical *
+![alt text](COMPARE_RESULTSS/R2L2_Brine_Saturation.png)***Figure 2**: Numerical *
 
-![alt text](COMPARE_RESULTSs/R2L2_Gas_Saturation.png)***Figure 3**: Numerical *
+![alt text](COMPARE_RESULTSS/R2L2_Gas_Saturation.png)***Figure 3**: Numerical *
 
-![alt text](COMPARE_RESULTSs/R2L2_pressure_Saturation.png)***Figure 4**: Numerical *
-
-
-![alt text](COMPARE_RESULTSs/Frame1.png)***Figure 5**: Numerical *
+![alt text](COMPARE_RESULTSS/R2L2_pressure_Saturation.png)***Figure 4**: Numerical *
 
 
-![alt text](COMPARE_RESULTSs/Frame2.png)***Figure 6**: Numerical *
+![alt text](COMPARE_RESULTSS/Frame1.png)***Figure 5**: Numerical *
+
+
+![alt text](COMPARE_RESULTSS/Frame2.png)***Figure 6**: Numerical *
 
 ## Release Notes
 

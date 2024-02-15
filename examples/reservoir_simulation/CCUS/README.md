@@ -8,7 +8,8 @@ The governing equations for a CO<sub>2</sub>-Brine system is given by.
 
 ```math
 \begin{equation}
-\phi \frac{\partial}{\partial t} \rho_{lycl} S_l - \nabla \cdot k_l \rho_{lycl} \lambda_l u_l - l \rho_{lycl} q_l = 0
+\phi \frac{\partial}{\partial t} \left( \sum_{l} \rho_l y_{cl} S_l \right) - \nabla \cdot \mathbf{k} \left( \sum_{l} \rho_l y_{cl} \lambda_l u_l \right) - \sum_{l} \rho_l y_{cl} q_l = 0
+
 \end{equation}
 ```
 

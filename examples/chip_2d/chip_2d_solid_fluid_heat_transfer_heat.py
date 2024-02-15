@@ -63,7 +63,7 @@ def run(cfg: ModulusConfig) -> None:
     # boundary params
     inlet_velocity = 5.24386  # m/s
     inlet_temp = 25.0  # C
-    copper_heat_flux = 51.948051948  # W / m2
+    copper_heat_flux = 51.948051948  # K/m (2000 W/m**2)
 
     ################
     # Non dim params

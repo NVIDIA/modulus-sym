@@ -117,63 +117,107 @@ y_{\text{CO}_2,l} = \frac{s_{\text{CO}_2}}{(1 + s_{\text{CO}_2})}, \quad y_{\tex
 ```
 
 
-### ***1.2.2 Computation of the phase densities and phase viscosities***
+### **1.2.2 Computation of the phase densities and phase viscosities**
 
-<b>CO<sub>2</sub> phase density and viscosity</b>
+\textbf{CO}_2 \textbf{phase density and viscosity}
 
 The nonlinear Helmholtz energy equation yields, 
 
-PRTρg=1+ ψϕψrψ,τ
-Eqn. 10(a)
+```math
+\begin{equation}
+\frac{P}{(RT\rho_g)} = 1 + \psi \phi_\psi^r (\psi,\tau)
+\end{equation}
+\end{equation}
+```
 
-Were, 
+Where, 
+```math
+\begin{equation}
+\psi = \frac{\rho_g}{\rho_{crit}}, \quad \tau = \frac{T_{crit}}{T}
+\end{equation}
+```
 
-ψ= ρgρcrit , τ= TcritT
-Eqn. 10(b)
+\begin{equation}
+\mu_g = \mu_o (T) + \mu_{excess} (\rho_g,T)
+\end{equation}
+```
 
-μg= μoT+ μexcessρg,T
-Eqn. 10(c)
+```math
+\begin{equation}
+\mu_{excess} (\rho_g,T) = d_1 \rho_g + d_2 \rho_g^2 + \frac{d_3 \rho_g^6}{T^3} + d_4 \rho_g^8 + \frac{d_5 \rho_g^8}{T}
+\end{equation}
+```
+Where,
+$d_1 = 0.4071119 \times 10^{-2}$, $d_2 = 0.7198037 \times 10^{-4}$, $d_3 = 0.2411697 \times 10^{-16}$, $d_4 = 0.2971072 \times 10^{-22}$, $d_5 = -0.1627888 \times 10^{-22}$
 
-μexcessρg,T= d1ρg+d2ρg2+ d3ρg6T3+ d4ρg8+d5ρg8T 
-Eqn. 10(d)
+```math
+\begin{equation}
+\mu_o (T) = \frac{1.00697T^{0.5}}{B^*(T^*)}, \quad \ln B^*(T^*) = \sum_{i=0}^{4} x_i (\ln T^*)^i, \quad T^* = \omega T, \quad \omega = \frac{1}{251.196 \text{ K}}
+\end{equation}
+```
+Where,
+$x_0 = 0.235156$, $x_1 = -0.491266$, $x_2 = 5.211155 \times 10^{-2}$, $x_3 = 5.347906 \times 10^{-2}$, $x_4 = -1.537102 \times 10^{-2}$
 
-|d1=0.4071119e-2, d2=0.7198037e-4,d3=0.2411697e-16,d4=0.2971072e-22,d5=-0.1627888e-22|
-| - |
+\textbf{Brine phase density and viscosity}
 
-μoT= 1.00697T0.5B\*T\*,  InB\*T\*=i=04xiInT\*i , T\*=ωT, ω=1251.196K
-Eqn. 11
+```math
+\begin{equation}
+\rho_{(l,table)} = A_1 + A_2 x + A_3 x^2 + A_4 x^3
+\end{equation}
+```
 
-|x0=0.235156,   x1=-0.491266,  x2=5.211155e-2,  x3=5.347906e-2,  x4=-1.537102e-2|
-| - |
+```math
+\begin{equation}
+x = c_1 \exp(a_1 m) + c_2 \exp(a_2 T) + c_3 \exp(a_3 P)
+\end{equation}
+```
+
+```math
+\begin{equation}
+\rho_l = \rho_{(l,table)} + M_{\text{CO}_2} C_{\text{CO}_2} - C_{\text{CO}_2} \rho_{(l,table)} V_\phi
+\end{equation}
+```
+
+```math
+\begin{equation}
+C_{\text{CO}_2} = \frac{y_{\text{CO}_2,l} \rho_{(l,table)}}{M_{\text{H}_2\text{O}} (1-y_{\text{CO}_2,l})}
+\end{equation}
+```
+
+```math
+\begin{equation}
+V_\phi = 37.51 - (T \times 9.585 \times 10^{-2}) + (T^2 \times 8.740 \times 10^{-4}) - (T^3 \times 5.044 \times 10^{-7})
+\end{equation}
+```
+
+```math
+\begin{equation}
+\mu_l = a_z T + b_z
+\end{equation}
+```
+
+```math
+\begin{equation}
+a_z = \mu_w (T) \times 0.000629(1 - \exp(-0.7m))
+\end{equation}
+```
+
+```math
+\begin{equation}
+b_z = \mu_w (T)(1 + 0.0816m + 0.0122m^2 + 0.000128m^3)
+\end{equation}
+```
 
 
 
 
-**Brine phase density and viscosity**
 
-ρl,table= A1+ A2x+ A3x2+ A4x3
-Eqn. 12(a)
 
-x= c1expa1m+c2expa2T+c3exp⁡a3P
-Eqn. 12(b)
 
-ρl= ρl,table+ MCO2CCO2-CCO2ρl,tableVϕ
-Eqn. 13(a)
 
-CCO2= yCO2,lρl,tableMH2O1-yCO2,l
-Eqn. 13(b)
 
-Vϕ=37.51-T×9.585e-2+T2×8.740e-4-(T3×5.044e-7)
-Eqn. 13(c)
 
-μl=azT+bz
-Eqn. 14(a)
 
-az= μw(T)×0.0006291-exp⁡(-0.7m) 
-Eqn. 14(b)
-
-bz= μw(T)1+0.0816m+0.0122m2+0.000128m3
-Eqn. 14(c)
 # <b>2. Physics Constrained Neural operator for the CO<sub>2</sub>-Brine case</b>
 
 ## **2.1 Overall discretized equations loss**

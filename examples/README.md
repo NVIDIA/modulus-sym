@@ -22,7 +22,7 @@ such models can help solve real world problems.
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |
 |[Taylor-Green](./taylor_green/)| Fully Connected MLP PINN | Intermediate |Steady state, Multi-GPU|
-|[Turbulent_channel](./turbulent_channel/)| Fourier Feature MLP PINN |Intermediate|Steady state, Multi-GPU|
+|[Turbulent channel](./turbulent_channel/)| Fourier Feature MLP PINN |Intermediate|Steady state, Multi-GPU|
 |[Turbulent super-resolution](./super_resolution/)| Super Resolution Network, Pix2Pix |Intermediate|Steady state, Multi-GPU|
 
 ## Electromagnetics

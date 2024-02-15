@@ -575,10 +575,10 @@ The overall loss is shown in the second column of the second row for all the fig
 ![alt text](COMPARE_RESULTSS/R2L2_pressure.png)***Figure 4**: Numerical *
 
 
-![alt text](COMPARE_RESULTSS/Frame1.png)***Figure 5(a)**: Figure 10**: The tensorboard output of the Run from the PINO & FNO Dynamic modelling *
+![alt text](COMPARE_RESULTSS/Frame1.png)***Figure 5(a)**: The tensorboard output of the Run from the PINO & FNO Dynamic modelling *
 
 
-![alt text](COMPARE_RESULTSS/Frame2.png)***Figure 5(b)**: Figure 10**: The tensorboard output of the Run from the PINO & FNO Dynamic modelling *
+![alt text](COMPARE_RESULTSS/Frame2.png)***Figure 5(b)**: The tensorboard output of the Run from the PINO & FNO Dynamic modelling *
 
 ## Release Notes
 

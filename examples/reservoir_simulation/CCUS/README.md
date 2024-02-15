@@ -551,7 +551,7 @@ The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training
 [img2]: COMPARE_RESULTSS/FNO/Evolution.gif "Permeability Field ( 40 by 40 by 3)"
 
 
-Let $`\(R_P^2\)`$, $`\(R_{CO_2}^2\)`$, $`\(R_{\text{brine}}^2\)`$ denote the $`\(R^2\)`$ accuracy for pressure, $`\(CO_2\)`$ saturation, and brine saturation, bounded by $`\([0,1]\)`$ where $`\(1\)`$ indicates perfect prediction accuracy.
+Let $`(R_P^2)`$, $`(R_{CO_2}^2)`$, $`(R_{\text{brine}}^2)`$ denote the $`(R^2)`$ accuracy for pressure, $`(CO_2)`$ saturation, and brine saturation, bounded by $`\([0,1]\)`$ where $`\(1\)`$ indicates perfect prediction accuracy.
 
 Let $`\(L_{2,P}\)`$, $`\(L_{2,CO_2}\)`$, $`\(L_{2,\text{brine}}\)`$ denote $`\(L_2\)`$ losses for pressure, $`\(CO_2\)`$ saturation, and brine saturation.
 

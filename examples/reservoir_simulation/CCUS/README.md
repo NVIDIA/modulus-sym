@@ -327,14 +327,15 @@ $`\quad\quad V(p,S_l;t)_{\text{brine equation},H_2 O,l} =\frac{1}{n_s}  \left\|\
 $`\quad\phi_p= \|Y_{pt}-f_1(X_1;\theta_p)\|_2^2`$  
 $`\quad\phi_s= \|Y_{lt}-f_2(X_1;\theta_l)\|_2^2`$  
 $`\quad\phi_g= \|Y_{gt}-f_3(X_1;\theta_g)\|_2^2`$  
+
 $`\phi = & w_1\phi_p + w_2\phi_s + w_3\phi_g + w_4\phi_l^* + w_5\phi_g^*\\
 & + w_6 V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g}\\
 & + w_7 V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l}\\
 & + w_8 V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g}\\
 & + w_9 V(q_l,p;\lambda_l)_{\text{pressure equation},H_2 O,l}\\
 & + w_{10} V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l}\\
-& + V(p,S_l;t)_{\text{brine equation},H_2 O,l}
-`$
+& + V(p,S_l;t)_{\text{brine equation},H_2 O,l}`$ 
+
 
 $`\quad`$**Update models:**  
 $`\quad\theta= [\theta_p,\theta_l,\theta_g]^T`$  

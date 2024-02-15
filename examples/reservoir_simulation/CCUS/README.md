@@ -551,6 +551,21 @@ The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training
 [img2]: COMPARE_RESULTSS/FNO/Evolution.gif "Permeability Field ( 40 by 40 by 3)"
 
 
+Let $`\(R_P^2\)`$, $`\(R_{CO_2}^2\)`$, $`\(R_{\text{brine}}^2\)`$ denote the $`\(R^2\)`$ accuracy for pressure, $`\(CO_2\)`$ saturation, and brine saturation, bounded by $`\([0,1]\)`$ where $`\(1\)`$ indicates perfect prediction accuracy.
+
+Let $`\(L_{2,P}\)`$, $`\(L_{2,CO_2}\)`$, $`\(L_{2,\text{brine}}\)`$ denote $`\(L_2\)`$ losses for pressure, $`\(CO_2\)`$ saturation, and brine saturation.
+
+Let $`\(\text{SSIM}_P\)`$, $`\(\text{SSIM}_{CO_2}\)`$, $`\(\text{SSIM}_{\text{brine}}\)`$ denote the Structural Similarity Index Measure values for pressure, $`\(CO_2\)`$ saturation, and brine saturation, respectively. SSIM values range from $`\([-1,1]\)`$, with $`\(1\)`$ indicating perfect similarity between two compared images or datasets.
+
+The overall loss is then,
+
+```math
+\begin{equation}
+\[L_{\text{total}} = \sum_{i} \left[(1-R_i^2) + L_{2,i} + \left|1 - \text{SSIM}_i\right|\right], \quad \forall i \in \{P, CO_2, \text{brine}\}\]
+\end{equation}
+```
+
+The overall loss is shown in the second column of the second row for all figures below.
 
 
 ![alt text](COMPARE_RESULTSS/R2L2_Brine_saturation.png)***Figure 2**: Numerical *

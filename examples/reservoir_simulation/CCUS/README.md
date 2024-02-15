@@ -1,8 +1,9 @@
 <!-- markdownlint-disable -->
 # <b>A Modulus based CO<sub>2</sub>-Brine Physics constrained Neural Operator Forward Model</b>
 
-# <a name="_toc132706283"></a>**1. Forward Problem.**
-## <a name="_toc132706284"></a>**1.1 Governing Equations** 
+## Forward problem
+### <a name="_toc132706284"></a>**1.1 Governing Equations** 
+
 The governing equations for a CO<sub>2</sub>-Brine system is given by. 
 
 ```math

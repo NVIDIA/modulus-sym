@@ -12,10 +12,10 @@ such models can help solve real world problems.
 |Use case|Model|Level|Attributes|
 | --- | --- |  --- | --- |
 |[Lid Driven Cavity Flow](./ldc/)| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
-|[Anti_derivative](./anti_derivative/)| Data and Physics informed DeepONet |Introductory|Steady state, Multi-GPU|
+|[Anti-derivative](./anti_derivative/)| Data and Physics informed DeepONet |Introductory|Steady state, Multi-GPU|
 |[Darcy Flow](./darcy/)| FNO, AFNO, PINO |Introductory|Steady state, Multi-GPU|
-|[ODE_spring_mass](./ode_spring_mass/)| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
-|[Surface_pde](./surface_pde/)| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
+|[Spring-mass system ODE](./ode_spring_mass/)| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
+|[Surface PDE](./surface_pde/)| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
 
 ## Turbulence
 
@@ -52,7 +52,7 @@ such models can help solve real world problems.
 | --- | --- | --- | --- |
 |[Reservoir simulation](./reservoir_simulation/)| FNO, PINO | Advanced | Steady state, Multi-Node|
 |[Seismic wave](./seismic_wave/)| Fully Connected MLP PINN |Intermediate|Steady state, Multi-Node|
-|[Wave_equation](./wave_equation/)| Fully Connected MLP PINN |Intermediate|Steady state, Multi-Node|
+|[Wave equation](./wave_equation/)| Fully Connected MLP PINN |Intermediate|Steady state, Multi-Node|
 
 ## Healthcare
 

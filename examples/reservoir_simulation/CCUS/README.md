@@ -221,39 +221,39 @@ The physics loss *ansatz* is then,
 The physics loss ansatz is then,
 ```math
 \begin{equation}
-V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p - P_{\text{CO}_2,g})) - \rho_g y_{\text{CO}_2,g} q_g \right\|_2^2
+V(q_g,p;\lambda_g)_{\text{p},\text{CO}_2,g} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p - P_{\text{CO}_2,g})) - \rho_g y_{\text{CO}_2,g} q_g \right\|_2^2
 \end{equation}
 ```
 
 ```math
 \begin{equation}
-V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_l y_{\text{CO}_2,l} \lambda_l \nabla(p - P_{\text{CO}_2,l})) - \rho_l y_{\text{CO}_2,l} q_l \right\|_2^2
+V(q_l,p;\lambda_l)_{\text{p},\text{CO}_2,l} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_l y_{\text{CO}_2,l} \lambda_l \nabla(p - P_{\text{CO}_2,l})) - \rho_l y_{\text{CO}_2,l} q_l \right\|_2^2
 \end{equation}
 ```
 
 ```math
 \begin{equation}
-V(q_l,p;\lambda_l)_{\text{pressure equation},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_l y_{\text{H}_2\text{O},l} \lambda_l \nabla(p - P_{\text{H}_2\text{O},l})) - \rho_l y_{\text{H}_2\text{O},l} q_l \right\|_2^2
+V(q_l,p;\lambda_l)_{\text{p},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| \nabla \cdot k(\rho_l y_{\text{H}_2\text{O},l} \lambda_l \nabla(p - P_{\text{H}_2\text{O},l})) - \rho_l y_{\text{H}_2\text{O},l} q_l \right\|_2^2
 \end{equation}
 ```
 
 ```math
 \begin{equation}
-V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_g y_{\text{CO}_2,g} S_g) -
+V(p,S_g;t)_{\text{g},\text{CO}_2,g} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_g y_{\text{CO}_2,g} S_g) -
 \nabla \cdot k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p - P_{\text{CO}_2,g})) - \rho_g y_{\text{CO}_2,g} q_g \right\|_2^2
 \end{equation}
 ```
 
 ```math
 \begin{equation}
-V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_l y_{\text{CO}_2,l} S_l) -
+V(p,S_g;t)_{\text{g},\text{CO}_2,l} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_l y_{\text{CO}_2,l} S_l) -
  \nabla \cdot k(\rho_l y_{\text{CO}_2,l} \lambda_g \nabla(p - P_{\text{CO}_2,l})) - \rho_l y_{\text{CO}_2,l} q_l \right\|_2^2
 \end{equation}
 ```
 
 ```math
 \begin{equation}
-V(p,S_l;t)_{\text{brine equation},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_l y_{\text{H}_2\text{O},l} S_l) -
+V(p,S_l;t)_{\text{b},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| \phi \frac{\partial}{\partial t} (\rho_l y_{\text{H}_2\text{O},l} S_l) -
  \nabla \cdot k(\rho_l y_{\text{H}_2\text{O},l} \lambda_g \nabla(p - P_{\text{H}_2\text{O},l})) - \rho_l y_{\text{H}_2\text{O},l} q_l \right\|_2^2
 \end{equation}
 ```
@@ -261,7 +261,7 @@ V(p,S_l;t)_{\text{brine equation},\text{H}_2\text{O},l} = \frac{1}{n_s} \left\| 
 
 ```math
 \begin{equation}
-\phi_{\text{cfd}} = V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g} + V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l} + V(q_l,p;\lambda_l)_{\text{pressure equation},\text{H}_2\text{O},l} + V(p,S_g;t)_{\text{gas equation},\text{CO}_2,g} + V(p,S_g;t)_{\text{gas equation},\text{CO}_2,l} + V(p,S_w;t)_{\text{brine equation},\text{H}_2\text{O},l}
+\phi_{\text{cfd}} = V(q_g,p;\lambda_g)_{\text{p},\text{CO}_2,g} + V(q_l,p;\lambda_l)_{\text{p},\text{CO}_2,l} + V(q_l,p;\lambda_l)_{\text{p},\text{H}_2\text{O},l} + V(p,S_g;t)_{\text{g},\text{CO}_2,g} + V(p,S_g;t)_{\text{g},\text{CO}_2,l} + V(p,S_w;t)_{\text{b},\text{H}_2\text{O},l}
 \end{equation}
 ```
 
@@ -347,10 +347,9 @@ $`\quad j \leftarrow j+ 1`$
 
 
 
+$`w_1`$ , $`\ldots`$ , $`w_{10}`$  $`\text{ are the weights associated with the loss functions corresponding to the 10 terms. }`$ . $`X_0=\{k,\phi\} \in \mathbb{R}^{(B_0 \times 1 \times W \times H)}`$  $`\text{ are the dictionary inputs. }`$  $`\text{epoch}`$ , $`\text{tol}`$  $`\text{ are the number of epochs and the tolerance level for the loss function. }`$ . $`f_1(:,\theta_p)`$ , $`f_2(:,\theta_l)`$ , $`f_3(:,\theta_g)`$  $`\text{ are the FNO models for the pressure, brine saturation, and gas saturations respectively.}`$ 
 
 
-
-w1,…w10 are the weights associated to the loss functions associated to the 10 terms. X0=k,φ∈RB0×1×W×H are the dictionary inputs. epoch,tol are the number or epochs and the tolerance level for the loss function f1:,θp,f2:,θl, f3:,θgare the *FNO* models for the pressure, brine saturation and gas saturations respectively.
 
 # **3. Results for Physics Constrained Black Oil Model (***Norne* Field)**.**
 Below we show the application of a physics constrained neural operator to solve the black oil model of a real field.

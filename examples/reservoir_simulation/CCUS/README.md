@@ -534,11 +534,9 @@ tensorboard --logdir=./ --port=7007
 
 ## Results
 ### Summary of Numerical Model
-The result for the PINO surrogate is shown in Fig.2(a), 100 training samples was used were we compute the data loss and physics loss. The water flows from the injectors (downwards facing arrows) towards the producers (upwards facing arrows). The size of the reservoir computational voxel is nx, ny, nz = 46,112,22. Three phases are considered (oil,gas and water) and the wells (9 water injectors and 4 gas injectors and 22 producers) shown here [link](https://www.equinor.com/energy/norne) . The 22 producers well have measurable quantities of oil rate, gas rate and  water rate are controlled by bottom-hole-pressure. The 9 water injector wells have measurable quantity of bottom hole pressure (BHP), controlled by injection rates. 3,298 days of simulation are simulated. The left column of Fig.2(a) are the responses from the PINO surrogate, the middle column are the responses from the Flow finite volume solver  and the right column is the difference between each response. For all panels in Fig. 2(a), the first row is for the pressure, the second row is for the water saturation, the third row is for oil saturation and the fourth row is for the gas saturation
+The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training samples was used were we compute the data loss and physics loss. The water flows from the injectors (downwards facing arrows) towards the producers (upwards facing arrows). The size of the reservoir computational voxel is nx, ny, nz = 50,50,10. Two phases are considered (CO$`_2`$ and brine) having only 1 CO$`_2`$ injector. 500 years of simulation are simulated. The left column of Fig.1(a & b) are the responses from the PINO and FNO surrogate, the middle column are the responses from the Flow finite volume solver  and the right column is the difference between each response. For all panels in Fig. 1(a & b), the first row is for the pressure, the second row is for the brine saturation, the third row is  for the CO$`_2`$ saturation
 
-- The results from the Forward Problem using the PINO implementation
-![alt text](Numerical_experiment/COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION/Evolution.gif)***Figure 2**: Numerical implementation of Reservoir forward simulation shwoing the pressure (first row), water saturation (second row), oil saturation (third row) and gas saturation (fourth row) evolution. PINO based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle-column) and the difference in magnitudes from both approaches (last-column) with the well locations*
-
+- The results from the Forward Problem using the PINO & FNO implementation
 
 
 | PINO | FNO|
@@ -546,7 +544,7 @@ The result for the PINO surrogate is shown in Fig.2(a), 100 training samples was
 | ![Image 1][img1] | ![Image 2][img2] |
 | **(a) - Speed-up using the PINO-CCR machine** | **(b) - Speed-up using the PINO-FNO machine** |
 
-***Figure 1**: Forwarding of the Field. (a) Speed-up using the PINO-CCR machine, and (b) Speed-up using the PINO-FNO machine*
+***Figure 1**: (a) Numerical implementation of Reservoir forward simulation showing the pressure (first row), brine saturation (second row) and CO$`_2`$ saturation (last row) evolution. PINO-based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle column) and the difference in magnitudes from both approaches (last column) with the well locations ,(b) Numerical implementation of Reservoir forward simulation showing the pressure (first row), brine saturation (second row) and CO$`_2`$ saturation (last row) evolution. FNO-based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle column) and the difference in magnitudes from both approaches (last column) with the well locations *
 
 
 [img1]: COMPARE_RESULTSS/PINO/Evolution.gif "Permeability Field ( 33 by 33 by 1)"
@@ -554,6 +552,18 @@ The result for the PINO surrogate is shown in Fig.2(a), 100 training samples was
 
 
 
+
+![alt text](COMPARE_RESULTSs/R2L2_Brine_Saturation.png)***Figure 2**: Numerical *
+
+![alt text](COMPARE_RESULTSs/R2L2_Gas_Saturation.png)***Figure 3**: Numerical *
+
+![alt text](COMPARE_RESULTSs/R2L2_pressure_Saturation.png)***Figure 4**: Numerical *
+
+
+![alt text](COMPARE_RESULTSs/Frame1.png)***Figure 5**: Numerical *
+
+
+![alt text](COMPARE_RESULTSs/Frame2.png)***Figure 6**: Numerical *
 
 ## Release Notes
 

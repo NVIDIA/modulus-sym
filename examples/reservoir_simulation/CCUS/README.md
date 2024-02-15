@@ -568,11 +568,11 @@ L_{\text{total}} = \sum_{i} \left[(1-R_i^2) + L_{2,i} + \left|1 - \text{SSIM}_i\
 The overall loss is shown in the second column of the second row for all the figures below.
 
 
-![alt text](COMPARE_RESULTSS/R2L2_Brine_saturation.png)**Figure 2**: Numerical 
+![alt text](COMPARE_RESULTSS/R2L2_Brine_saturation.png)**Figure 2**: Brine saturation 
 
-![alt text](COMPARE_RESULTSS/R2L2_Gas_saturation.png)**Figure 3**: Numerical 
+![alt text](COMPARE_RESULTSS/R2L2_Gas_saturation.png)**Figure 3**: CO$`_2`$ saturation
 
-![alt text](COMPARE_RESULTSS/R2L2_pressure.png)**Figure 4**: Numerical 
+![alt text](COMPARE_RESULTSS/R2L2_pressure.png)**Figure 4**: Pressure 
 
 
 ![alt text](COMPARE_RESULTSS/Frame1.png)**Figure 5(a)**: The tensorboard output of the Run from the PINO & FNO Dynamic modelling 

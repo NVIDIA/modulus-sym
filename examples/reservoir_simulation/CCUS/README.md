@@ -69,9 +69,7 @@ Note that the pressures are in Pascal, temperatures are in Kelvin, and the salin
 
 ```math
 \begin{equation}
-\[
 Z = \left( \frac{p_r V_r}{T_r} \right) = 1 + \frac{ (a_1 + \frac{a_2}{T_r^2} + \frac{a_3}{T_r^3})}{V_r} + \frac{(a_4 + \frac{a_5}{T_r^2} + \frac{a_6}{T_r^3})}{(V_r^2)} + \frac{(a_7 + \frac{a_8}{T_r^2} + \frac{a_9}{T_r^3})}{(V_r^4)} + \frac{(a_{10} + \frac{a_{11}}{T_r^2} + \frac{a_{12}}{T_r^3})}{(V_r^5)} + \frac{a_{13}}{(T_r^3 V_r^2)} \left( a_{14} + a_{15} \left( \frac{1}{V_r^2} \right) \right) \exp \left( -a_{15} \left( \frac{1}{V_r^2} \right) \right)
-\]
 \end{equation}
 ```
 
@@ -83,9 +81,7 @@ Using the reduced volume, $`V_r`$, we compute the fugacity coefficient of CO$`_2
 
 ```math
 \begin{equation}
-\[
 \ln \phi (T,P) = Z - 1 - \ln Z + \frac{(a_1 + \frac{a_2}{T_r^2} + \frac{a_3}{T_r^3})}{V_r} + \frac{(a_4 + \frac{a_5}{T_r^2} + \frac{a_6}{T_r^3})}{(2V_r^2)} + \frac{(a_7 + \frac{a_8}{T_r^2} + \frac{a_9}{T_r^3})}{(4V_r^4)} + \frac{(a_{10} + \frac{a_{11}}{T_r^2} + \frac{a_{12}}{T_r^3})}{(5V_r^5)} + \frac{a_{13}}{(2T_r^3 V_r^2)} \left[ a_{14} + 1 - \left( a_{14} + 1 + \frac{a_{15}}{(V_r^2)} \right) \right] \exp \left( -\frac{a_{15}}{(V_r^2)} \right)
-\]
 \end{equation}
 ```
 
@@ -93,9 +89,7 @@ To conclude, we use the fugacity coefficient of CO$`_2`$ to compute and store th
 
 ```math
 \begin{equation}
-\[
 \ln \frac{y_{\text{CO}_2}}{s_{\text{CO}_2}} P = \frac{\Phi_{\text{CO}_2}}{RT} - \ln \phi (T,P) + \sum_{c} 2\lambda_c m + \sum_{a} 2\lambda_a m + \sum_{(a,c)} \xi_{(a,c)} m^2
-\]
 \end{equation}
 ```
 
@@ -104,24 +98,23 @@ Where $`\Phi_{\text{CO}_2}$ is the chemical potential of the CO$`_2`$ component,
 Then, we compute the phase fractions as:
 ```math
 \begin{equation}
-\[
 v_l = \frac{(1 + s_{\text{CO}_2})}{\left( 1 + \frac{z_{\text{CO}_2}}{(1-z_{\text{CO}_2})} \right)}
-\]
-\[
+,
+
 v_g = 1 - v_l
-\]
+
 \end{equation}
 ```
 
 We conclude by computing the phase component fractions as:
 ```math
 \begin{equation}
-\[
+
 y_{\text{CO}_2,l} = \frac{s_{\text{CO}_2}}{(1 + s_{\text{CO}_2})}, \quad y_{\text{H}_2\text{O},l} = 1 - y_{\text{CO}_2,l}
-\]
-\[
+
+,
 y_{\text{CO}_2,g} = 1, \quad y_{\text{H}_2\text{O},g} = 0
-\]
+
 \end{equation}
 ```
 

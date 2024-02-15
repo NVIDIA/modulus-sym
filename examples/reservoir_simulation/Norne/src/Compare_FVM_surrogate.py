@@ -5506,7 +5506,7 @@ def process_step(kk, steppi, dt, pressure, effectiveuse,
                  Sgas, Sgas_true, nx, ny, nz, N_injw, N_pr, N_injg, 
                  injectors, producers, gass,fol,fol1):
     
-    #os.chdir(fol)
+    os.chdir(fol)
     progressBar = "\rPlotting Progress: " + ProgressBar(steppi-1, kk-1, steppi-1)
     ShowBar(progressBar)
     time.sleep(1)     
@@ -5599,7 +5599,7 @@ def process_step(kk, steppi, dt, pressure, effectiveuse,
     plt.clf()
     plt.close()
     return R2p, L2p, R2w, L2w, R2o, L2o, R2g, L2g
-    #os.chdir(fol1)
+    os.chdir(fol1)
 
 
 oldfolder = os.getcwd()
@@ -5630,7 +5630,11 @@ print('-----------------------------------------------------------------------')
 #pred_type=int(input('Choose: 1=Hard Prediction, 2= Soft Prediction: ')) 
 pred_type = 1
 
-folderr = '../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION'
+#folderr = '../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION'
+
+folderr = os.path.join(oldfolder, '..', 'COMPARE_RESULTS', 'PINO','PEACEMANN_CCR','HARD_PREDICTION')
+
+
 if not os.path.exists('../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION'):
     os.makedirs('../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION')
 else:
@@ -6012,8 +6016,8 @@ Accuracy_water = np.zeros((steppi,2))
 Accuracy_gas = np.zeros((steppi,2))
 
 
-os.chdir(folderr)
-results = Parallel(n_jobs=num_cores)(delayed(process_step)(kk, steppi, dt, pressure, 
+
+results = Parallel(n_jobs=num_cores)(delayed(process_step,backend="loky", verbose=10)(kk, steppi, dt, pressure, 
                     effectiveuse, pressure_true, Swater, Swater_true, Soil, 
                     Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
                     N_pr, N_injg, 

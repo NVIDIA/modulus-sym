@@ -351,35 +351,234 @@ $`w_1`$ , $`\ldots`$ , $`w_{10}`$  $`\text{ are the weights associated with the 
 
 
 
-# **3. Results for Physics Constrained Black Oil Model (***Norne* Field)**.**
-Below we show the application of a physics constrained neural operator to solve the black oil model of a real field.
+## Important Dependencies & Prerequisites:
+- Nvidia's Modulus symbolic v23.09 :[link](https://github.com/NVIDIA/modulus-sym)
+- CUDA 11.8 : [link](https://developer.nvidia.com/cuda-11-8-0-download-archive)
+- CuPy : [link](https://github.com/cupy/cupy.git)
+- Python 3.8 upwards
 
-![](Aspose.Words.19495806-8bc0-4e3d-951a-290e1d8e2574.001.png)
+## Getting Started:
+- These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
+- The code is developed in a Linux enviroment.
 
-***Figure 1(a):** Forwarding of the Norne Field.* Nx=46 ,  Ny=112 , Nz=22*. At Time = 8 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus’s PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate’s prediction and the numerical reservoir simulator (Flow)*
+## Installation - Bare metal / Docker
+
+- From terminal create a new conda enviroment named **MDLO** (check if conda is installed) .
+```bash
+conda create --name MDLO python=3.8
+```
+
+Clone this code base repository in a dedicated **work folder**.
+```bash
+cd **work folder**
+conda activate MDLO
+git lfs clone https://github.com/NVIDIA/modulus-sym.git
+```
+### Bare-metal
+- From terminal do these sequence of operations to install Modulus v23.09: [link](https://github.com/NVIDIA/modulus-sym.git)
+```bash
+pip install nvidia-modulus.sym
+             
+```
+- From terminal, install (missing) dependencies in 'requirements.txt' in the conda enviroment **MDLO**
+- Follow instructions to install CuPy from : [link](https://github.com/cupy/cupy.git)
 
 
 
-![](Aspose.Words.19495806-8bc0-4e3d-951a-290e1d8e2574.002.png)
+### Docker (Recommended)
+- You may need to temporarily deactivate any **vpn** for the docker installation & run
+- Note, NVIDIA Container Toolkit must be installed first. This extension enables Docker daemon to treat GPUs properly.
 
-***Figure 1(b):** Forwarding of the Norne Field.* Nx=46 ,  Ny=112 , Nz=22*. At Time = 968 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus’s PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate’s prediction and the numerical reservoir simulator (Flow)*
+- Please follow the installation instructions in [link](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+
+If you encounter a **Conflicting values set for option Signed** error when running apt update as shown below,
+
+```bash
+sudo apt-get update
+E: Conflicting values set for option Signed-By regarding source https://nvidia.github.io/libnvidia-container/stable/ubuntu18.04/amd64/ /: /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg !=
+E: The list of sources could not be read.
+```
+Do the following
+```bash
+grep "nvidia.github.io" /etc/apt/sources.list.d/*
+grep -l "nvidia.github.io" /etc/apt/sources.list.d/* | grep -vE "/nvidia-container-toolkit.list\$"
+```
+Delete the file(s) that will be shown from running the command above
+```bash
+sudo rm -f FILENAME
+```
+where FILENAME is the name of the file(s) shown above
+
+More Troubleshooting can be found at [link](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/troubleshooting.html)
+
+```bash
+# enable shell script execution.
+sudo chmod +x ./scripts/docker/docker-build.sh
+sudo chmod +x set_env.sh
+# Build docker image
+./scripts/docker/docker-build.sh
+
+# enable shell script execution.
+sudo chmod +x ./scripts/docker/docker-run.sh
+# Run docker container (also enables X server for docker)
+./scripts/docker/docker-run.sh
+```
+
+
+### Run
+**OPM Flow** is a fully CPU based Black oil reservoir simulator.
+
+[link](https://opm-project.org/?page_id=19 )
+
+#### Forward problem
+
+
+- Navigate to the code base root directory - **work folder** via terminal.
+
+##### Bare Metal alone
+```bash
+cd **work folder**
+```
+- where **work folder** is the location you downloaded the code base to.
+
+- Download the supplemental material.
+
+- Run the Forward Problem surrogation with PINO  via the **src** folder.
+
+##### Bare Metal
+```bash
+conda activate MDLO 
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+cd src
+python Forward_problem_PINO.py
+python Learn_CCR.py
+cd ..
+conda deactivate
+```
+
+##### Docker
+```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+cd src
+python Forward_problem_PINO.py
+python Learn_CCR.py
+cd ..
+```
+
+
+- Forward problem solution results are found in the root directory folder **outputs**
+
+- Compare the surrogate solution from **PINO** with the finite volume reservoir simulator (**NVRS**) from the **src** folder.
 
 
 
+##### Bare Metal
+```bash
+conda activate MDLO
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+cd src
+python Compare_FVM_Surrogate.py
+cd ..
+conda deactivate
+```
+
+##### Docker
+```bash
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+unzip modulus_reservoir_simulation_norne_supplemental_material.zip
+cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+cd src
+python Compare_FVM_Surrogate.py
+cd ..
+```
+
+- Results for the comparison are found in the root directory folder **COMPARE_RESULTS**
+
+## Setting up Tensorboard
+Tensorboard is a great tool for visualization of machine learning experiments. To visualize the various training and validation losses, Tensorboard can be set up as follows:
+
+- In a separate terminal window, navigate to the working directory of the forward problem run)
+
+- Type in the following command on the command line:
+
+##### Bare Metal
+```bash
+conda activate MDLO
+cd src
+tensorboard --logdir=./ --port=7007
+```
+
+##### Docker
+```bash
+cd src
+tensorboard --logdir=./ --port=7007
+```
 
 
-![](Aspose.Words.19495806-8bc0-4e3d-951a-290e1d8e2574.003.png)
+-Specify the port you want to use. This example uses 7007. Once running, the command prompt shows the url that you will use to display the results.
 
-***Figure 1(c):** Forwarding of the Norne Field.* Nx=46 ,  Ny=112 , Nz=22*. At Time = 2104 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus’s PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate’s prediction and the numerical reservoir simulator (Flow)*
-
-
-
-![](Aspose.Words.19495806-8bc0-4e3d-951a-290e1d8e2574.004.png)
-
-***Figure 1(d):** Forwarding of the Norne Field.* Nx=46 ,  Ny=112 , Nz=22*. At Time = 3298 days. Dynamic properties comparison between the pressure, water saturation, oil saturation and gas saturation field between Nvidia Modulus’s PINO surrogate (left column), Flow reservoir simulator (middle column) and the difference between both approaches (last column). They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. We can see good concordance between the surrogate’s prediction and the numerical reservoir simulator (Flow)*
+- To view results, open a web browser and go to the url shown by the command prompt. An example would be: http://localhost:7007/#scalars. A window as shown in Fig. 10 should open up in the browser window.
 
 
+## Results
+### Summary of Numerical Model
+The result for the PINO surrogate is shown in Fig.2(a), 100 training samples was used were we compute the data loss and physics loss. The water flows from the injectors (downwards facing arrows) towards the producers (upwards facing arrows). The size of the reservoir computational voxel is nx, ny, nz = 46,112,22. Three phases are considered (oil,gas and water) and the wells (9 water injectors and 4 gas injectors and 22 producers) shown here [link](https://www.equinor.com/energy/norne) . The 22 producers well have measurable quantities of oil rate, gas rate and  water rate are controlled by bottom-hole-pressure. The 9 water injector wells have measurable quantity of bottom hole pressure (BHP), controlled by injection rates. 3,298 days of simulation are simulated. The left column of Fig.2(a) are the responses from the PINO surrogate, the middle column are the responses from the Flow finite volume solver  and the right column is the difference between each response. For all panels in Fig. 2(a), the first row is for the pressure, the second row is for the water saturation, the third row is for oil saturation and the fourth row is for the gas saturation
 
+- The results from the Forward Problem using the PINO implementation
+![alt text](Numerical_experiment/COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION/Evolution.gif)***Figure 2**: Numerical implementation of Reservoir forward simulation shwoing the pressure (first row), water saturation (second row), oil saturation (third row) and gas saturation (fourth row) evolution. PINO based reservoir forwarding (left column), OPM-Flow based reservoir forwarding (first principle), (middle-column) and the difference in magnitudes from both approaches (last-column) with the well locations*
+
+
+
+| PINO - CCR | PINO - FNO |
+| -----------|------------ |
+| ![Image 1][img1] | ![Image 2][img2] |
+| **(a) - Speed-up using the PINO-CCR machine** | **(b) - Speed-up using the PINO-FNO machine** |
+
+***Figure 3**: Forwarding of the Norne Field. (a) Speed-up using the PINO-CCR machine, and (b) Speed-up using the PINO-FNO machine*
+
+
+[img1]: Numerical_experiment/COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION/Compare_time.png "Permeability Field ( 33 by 33 by 1)"
+[img2]: Numerical_experiment/COMPARE_RESULTS/PINO/PEACEMANN_FNO/Compare_time.png "Permeability Field ( 40 by 40 by 3)"
+
+| Qo (STB/DAY) | Qw (STB/DAY) |
+|---------------------|---------------------|
+| <img src="Numerical_experiment/COMPARE_RESULTS/Oil.png" alt="Image 1" width="600"> | <img src="Numerical_experiment/COMPARE_RESULTS/Water.png" alt="Image 2" width="600"> |
+| **(a) - Outputs from peacemann machine for oil production rate** | **(b) - Outputs from peacemann machine for water production rate** |
+
+| Qg (SCF/DAY) | RMSE FORWARD PROBLEM |
+|---------------------|---------------------|
+| <img src="Numerical_experiment/COMPARE_RESULTS/Gas.png" alt="Image 3" width="600"> | <img src="Numerical_experiment/COMPARE_RESULTS/Histogram.png" alt="Image 4" width="600"> |
+| **(c) - Outputs from peacemann machine for gas production rate** | **(d) - RMSE values between the PINO-CCR & PINO-FNO machine** |
+
+
+***Figure 4**: Forwarding of the Norne Field.Comparison between using the PINO -FNO machine and the PINO – CCR machine and the reference true data(a) Outputs from peacemann machine for oil production rate ,Qo from the 22 producers
+They are 22 oil/water/gas producers (green), 9 water injectors (blue) and 4 gas injectors) red. (b) Outputs from peacemann machine for water production rate ,Qw from the 22 producers. (c) Outputs from peacemann machine for gas production rate,Qg from the 22 producers and, (d) RMSE to a reference true data gotten from the Flow numerical solver, The PINO -CCR forward model workflow gave a lower RMSE value than the PINO -FNO forward model workflow*
+
+
+## Release Notes
+
+**24.01**
+* First release 
+
+## End User License Agreement (EULA)
+Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agreement.pdf** for guidance.
+
+## Author:
+- Clement Etienam- Solution Architect-Energy @Nvidia  Email: cetienam@nvidia.com
+
+## Contributors:
+- Kaustubh Tangsali- Nvidia
+- Issam Said- Nvidia
 
 
 

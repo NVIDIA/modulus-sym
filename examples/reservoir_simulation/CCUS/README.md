@@ -99,9 +99,8 @@ Then, we compute the phase fractions as:
 ```math
 \begin{equation}
 v_l = \frac{(1 + s_{\text{CO}_2})}{\left( 1 + \frac{z_{\text{CO}_2}}{(1-z_{\text{CO}_2})} \right)}
-,
 
-v_g = 1 - v_l
+\quad v_g = 1 - v_l
 
 \end{equation}
 ```
@@ -112,8 +111,7 @@ We conclude by computing the phase component fractions as:
 
 y_{\text{CO}_2,l} = \frac{s_{\text{CO}_2}}{(1 + s_{\text{CO}_2})}, \quad y_{\text{H}_2\text{O},l} = 1 - y_{\text{CO}_2,l}
 
-,
-y_{\text{CO}_2,g} = 1, \quad y_{\text{H}_2\text{O},g} = 0
+\quad y_{\text{CO}_2,g} = 1, \quad y_{\text{H}_2\text{O},g} = 0
 
 \end{equation}
 ```

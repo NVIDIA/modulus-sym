@@ -570,7 +570,7 @@ The overall loss is shown in the second column of the second row for all the fig
 
 ![alt text](COMPARE_RESULTSS/R2L2_Brine_saturation.png)**Figure 2**: Brine saturation 
 
-![alt text](COMPARE_RESULTSS/R2L2_Gas_saturation.png)**Figure 3**: CO$`_2`$ saturation
+![alt text](COMPARE_RESULTSS/R2L2_Gas_saturation.png)**Figure 3**:  $`CO_2`$ saturation
 
 ![alt text](COMPARE_RESULTSS/R2L2_pressure.png)**Figure 4**: Pressure 
 

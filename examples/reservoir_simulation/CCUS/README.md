@@ -1,7 +1,6 @@
 <!-- markdownlint-disable -->
 # <b>A Modulus based CO<sub>2</sub>-Brine Physics constrained Neural Operator Forward Model</b>
 
-Clement Etienam\*<sup>[^1]</sup> 
 # <a name="_toc132706283"></a>**1. Forward Problem.**
 ## <a name="_toc132706284"></a>**1.1 Governing Equations** 
 The governing equations for a CO<sub>2</sub>-Brine system is given by. 
@@ -594,7 +593,7 @@ Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agree
 1. Zongyi Li, Nikola Kovachki, Kamyar Azizzadenesheli, Burigede Liu, Kaushik Bhattacharya, Andrew Stuart, Anima Anandkumar. Fourier Neural Operator for Parametric Partial Differential Equations. https://doi.org/10.48550/arXiv.2010.08895
 1. Zongyi Li, Hongkai Zheng, Nikola Kovachki, David Jin, Haoxuan Chen, Burigede Liu, Kamyar Azizzadenesheli, Anima Anandkumar.Physics-Informed Neural Operator for Learning Partial Differential Equations. https://arxiv.org/pdf/2111.03794.pdf
 
-**2 **|** Page
+
 
 
 [^1]: `  `Nvidia Corporation

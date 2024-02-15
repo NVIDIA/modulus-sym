@@ -305,14 +305,14 @@ epoch, tol, $`w_1,w_2,w_3,w_4,w_5,w_6, \epsilon`$
 $`j = 0`$  
 **while** $`(j \leq \text{epoch})`$ **or** $`(\phi \leq \text{tol})`$ **do**  
 $`\quad Y_{0p}=f_1(X_1;\theta_p), Y_{0s}=f_2(X_1;\theta_l), Y_{0g}=f_3(X_1;\theta_g)`$  
-$`\quad$Compute: $v_l,v_g,y_{\text{CO}_2,l},y_{\text{CO}_2,g},y_{H_2 O,l},y_{H_2 O,g}`$  using Eqn. (5-9)  
-$`\quad$Compute: $\rho_g,\rho_l,\mu_g,\mu_l`$  using Eqn. (10-14)  
-$`\quad$Compute: $Z_c=  \rho_c/\rho_T`$  
-$`\quad$Compute: $\rho_T= \sum_c\rho_c`$  
-$`\quad$Compute: $\text{S}_l^*= v_l \rho_T/\rho_l$, $\text{S}_g^*= v_g \rho_T/\rho_g`$  
-$`\quad$Compute: $\phi_l^*= \|Y_{1st}-\text{S}_l^*\|_2^2`$  
-$`\quad$Compute: $\phi_g^*= \|Y_{1gt}-\text{S}_g^*\|_2^2`$  
-$`\quad$Compute:   
+$`\quad`$Compute: $`v_l,v_g,y_{\text{CO}_2,l},y_{\text{CO}_2,g},y_{H_2 O,l},y_{H_2 O,g}`$  using Eqn. (5-9)  
+$`\quad`$Compute: $`\rho_g,\rho_l,\mu_g,\mu_l`$  using Eqn. (10-14)  
+$`\quad`$Compute: $`Z_c=  \rho_c/\rho_T`$  
+$`\quad`$Compute: $`\rho_T= \sum_c\rho_c`$  
+$`\quad`$Compute: $`\text{S}_l^*= v_l \rho_T/\rho_l$, $\text{S}_g^*= v_g \rho_T/\rho_g`$  
+$`\quad`$Compute: $`\phi_l^*= \|Y_{1st}-\text{S}_l^*\|_2^2`$  
+$`\quad`$Compute: $`\phi_g^*= \|Y_{1gt}-\text{S}_g^*\|_2^2`$  
+$`\quad`$Compute:   
 $`\quad\quad V(q_g,p;\lambda_g)_{\text{pressure equation},\text{CO}_2,g} =\frac{1}{n_s}  \left\|\nabla.k(\rho_g y_{\text{CO}_2,g} \lambda_g \nabla(p- P_{\text{CO}_2,g}))-\rho_g y_{\text{CO}_2,g} q_g\right\|_2^2`$  
 $`\quad`$Compute:   
 $`\quad\quad V(q_l,p;\lambda_l)_{\text{pressure equation},\text{CO}_2,l} =\frac{1}{n_s}  \left\|\nabla.k(\rho_l y_{\text{CO}_2,l} \lambda_l \nabla(p- P_{\text{CO}_2,l}))-\rho_l y_{\text{CO}_2,l} q_l\right\|_2^2`$  

@@ -502,22 +502,18 @@ The result for the PINO surrogate is shown in Fig.2(a), 500 training samples was
 
 ## Release Notes
 
-**23.03**
-* Increase degree of freedom in the number of injector and producer well configuration.
+**24.01**
+* Increase the degree of freedom in the number of injectors and producer well configuration.
 * Weighted scheme during the Kalman gain computation for the aREKI update.
 * Diffusion model adjusted and implemented.
-* 3D well plots with injection and producer wells animations/movie.
+* 3D well plots with injection and producer wells animations/movies.
 * Variation convolution autoencoder better implemented.
-* 2 new PINO implementation accounting for the Overall Flux and water specific flux during the pde loss computation.
-* Experimental gradient based method implementd with Adam & LBFGS for comparison purposes only to the aREKI scheme.
+* 2 new PINO implementations accounting for the Overall Flux and water-specific flux during the pde loss computation.
+* Experimental gradient-based method implemented with Adam & LBFGS for comparison purposes only to the aREKI scheme.
 * Sensible initial ensemble initialisation from MPS and 6 new training images (TI's).
-* Constrained presure residual method for the fully/adaptive implict finitie volume numerical solver implemented. This method has a 2 stage V cyclec AMG, with the coarsening, aggregation, colouring & level-scheduling implemented during the restrcition operation. SOR, Gauss-Seidel, Jacobi implemented during the smoothing operation. The solution from the pressure solve serves as an initialiser for the saturation solver, which is a left-preconditioned GMRES with an ILU(0) preconditoner. 
+* Constrained pressure residual method for the fully/adaptive implicit finite volume numerical solver implemented. This method has a 2-stage V cyclec AMG, with the coarsening, aggregation, colouring & level-scheduling implemented during the restriction operation. SOR, Gauss-Seidel, and Jacobi were implemented during the smoothing operation. The solution from the pressure solution serves as an initialiser for the saturation solver, which is a left-preconditioned GMRES with an ILU(0) preconditioner. 
 
-**23.02**
-* Bug Fixes
 
-**23.01**
-* First release 
 
 ## End User License Agreement (EULA)
 Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agreement.pdf** for guidance.
@@ -528,10 +524,7 @@ Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agree
 ## Contributors:
 - Oleg Ovcharenko- Nvidia
 - Issam Said- Nvidia
-- Tugrul Konuk- Nvidia
-- Pavel Dimitrov- Nvidia
-- Nikki Andreas Loppi-Nvidia
-- Shourya Otta- Nvidia
+
 
 ## References:
 [1] Aanonsen, S., Oliver, D., Reynolds, A. & Valles, B., 2009. The Ensemble Kalman Filter in Reservoir Engineering--a Review. SPE Journal, 14(3), pp. 393-412.

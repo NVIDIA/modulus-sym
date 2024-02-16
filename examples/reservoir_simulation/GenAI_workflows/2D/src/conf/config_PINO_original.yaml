@@ -1,0 +1,54 @@
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+cuda_graphs: false
+jit: false
+
+custom:
+  gradient_method: fdm
+  ntrain: 1998
+  nval: 1
+  ntest: 1
+  epochs: 300
+  epochs2: 500
+  pde_weighting: 1
+  data_weighting: 1
+  dataw: 1e1
+  testw: 1
+  pdew: 1e-2
+  batch_size: 9000
+  batch_size2: 2000
+
+
+ 
+network_dir : "ResSim"
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+  
+optimizer:
+    weight_decay: 1e-4
+    lr: 1e-3
+
+training:
+  rec_results_freq : 100
+  max_steps : 1000
+
+
+loss:
+  weights:
+    pressure: 1.0
+    pressured: 0.1
+    water_sat: 1.0
+    saturationd: 0.1    
+
+batch_size:
+  grid: 20
+  validation: 1
+  test: 1
+  unlabelled: 250
+

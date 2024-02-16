@@ -150,7 +150,7 @@ python NVRS/simulator.py Run.yaml
 
 
 
-[img1]: Black_oil_simulator/RESULTS/33331/Permeability.png "Permeability Field ( 33 by 33 by 1)"
+[img1]: RESULTS/33331/Permeability.png "Permeability Field ( 33 by 33 by 1)"
 [img2]: GPU_reservoir_simulator/RESULTS/40403/Permeability.png "Permeability Field ( 40 by 40 by 3)"
 [img3]: GPU_reservoir_simulator/RESULTS/40605/Permeability.png "Permeability Field ( 40 by 60 by 5)"
 [img4]: GPU_reservoir_simulator/RESULTS/33331/Evolution_pressure_3D.gif "Pressure Field (33 by 33 by 1)"

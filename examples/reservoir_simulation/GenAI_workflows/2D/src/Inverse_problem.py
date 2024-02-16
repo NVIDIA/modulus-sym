@@ -116,9 +116,9 @@ from tensorflow.keras.layers import BatchNormalization,ZeroPadding2D,Dense,\
 UpSampling2D, Conv2D,MaxPooling2D
 from shutil import rmtree
 import pickle
-from modulus.models.fno import *
-from modulus.models.afno.afno import *
-from modulus.key import Key
+from modulus.sym.models.fno import *
+from modulus.sym.models.afno.afno import *
+from modulus.sym.key import Key
 from collections import OrderedDict
 import os.path
 from numpy.linalg import inv

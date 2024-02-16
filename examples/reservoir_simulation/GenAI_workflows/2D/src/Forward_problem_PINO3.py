@@ -23,15 +23,15 @@ import os
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import modulus
-from modulus.hydra import  ModulusConfig
-from modulus.hydra import to_absolute_path
-from modulus.key import Key
+from modulus.sym.hydra import  ModulusConfig
+from modulus.sym.hydra import to_absolute_path
+from modulus.sym.key import Key
 from NVRS import *
 import time
 from datetime import timedelta
 from utilities import preprocess_FNO_mat
 from ops import dx, ddx
-from modulus.models.fno import *
+from modulus.sym.models.fno import *
 import cupy as cp
 from PIL import Image
 #import glob
@@ -503,7 +503,7 @@ def MyLossClement(a,b):
     #loss = ((a-b)**2).mean()
     return loss 
     
-@modulus.main(config_path="conf", config_name="config_PINO_original")
+@modulus.sym.main(config_path="conf", config_name="config_PINO_original")
 def run(cfg: ModulusConfig) -> None:
     print('')
     print('------------------------------------------------------------------')    

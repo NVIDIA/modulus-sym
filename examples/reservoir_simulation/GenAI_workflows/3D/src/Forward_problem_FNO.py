@@ -20,18 +20,18 @@ import numpy as np
 import os
 import modulus
 import torch
-from modulus.hydra import  ModulusConfig
-from modulus.hydra import to_absolute_path
-from modulus.key import Key
-from modulus.solver import Solver
-from modulus.domain import Domain
-from modulus.domain.constraint import SupervisedGridConstraint
-from modulus.domain.validator import GridValidator
-from modulus.dataset import DictGridDataset
-from modulus.utils.io.plotter import GridValidatorPlotter
+from modulus.sym.hydra import  ModulusConfig
+from modulus.sym.hydra import to_absolute_path
+from modulus.sym.key import Key
+from modulus.sym.solver import Solver
+from modulus.sym.sym.domain import Domain
+from modulus.sym.domain.constraint import SupervisedGridConstraint
+from modulus.sym.domain.validator import GridValidator
+from modulus.sym.dataset import DictGridDataset
+from modulus.sym.utils.io.plotter import GridValidatorPlotter
 from NVRS import *
 from utilities import load_FNO_dataset2,preprocess_FNO_mat
-from modulus.models.fno import *
+from modulus.sym.models.fno import *
 import shutil
 import cupy as cp
 from skimage.transform import resize
@@ -68,7 +68,7 @@ def save_response_content(response, destination):
         for chunk in response.iter_content(CHUNK_SIZE):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)
-from modulus.utils.io.plotter import ValidatorPlotter
+from modulus.sym.utils.io.plotter import ValidatorPlotter
 
 
 class CustomValidatorPlotterP(ValidatorPlotter):
@@ -558,7 +558,7 @@ class CustomValidatorPlotterS(ValidatorPlotter):
 
     
 
-@modulus.main(config_path="conf", config_name="config_FNO")
+@modulus.sym.main(config_path="conf", config_name="config_FNO")
 def run(cfg: ModulusConfig) -> None:
     text = """
                                                               dddddddd                                                         

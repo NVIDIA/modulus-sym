@@ -98,8 +98,8 @@ from tensorflow.keras.models import load_model,Model,Sequential
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.layers import Input, \
 UpSampling2D, Conv2D,MaxPooling2D,Dense
-from modulus.models.fno import *
-from modulus.key import Key
+from modulus.sym.models.fno import *
+from modulus.sym.key import Key
 import os.path
 from PIL import Image
 import numpy;

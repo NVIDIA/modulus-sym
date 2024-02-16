@@ -55,7 +55,6 @@ The update of the fluid properties is done in two steps:
 1) The phase fractions ($`v_p`$) and phase component fractions ($`y_{c,p}`$) are computed as a function of pressure ($`p`$), temperature ($`T`$), component fractions ($`z_c`$), and a constant salinity.
 2) The phase densities ($`\rho_p`$) and phase viscosities ($`\mu_p`$) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
 
-Once the phase fractions, phase component fractions, phase densities, phase viscosities--and their derivatives to pressure, temperature, and component fractions--have been computed, the.
 
 Note that the current implementation of the flow solver is isothermal and that the derivatives to temperature are therefore discarded.
 
@@ -63,9 +62,9 @@ The models that are used in steps 1) and 2) are reviewed in more detail below.
 
 
 #### **Computation of the phase fractions and phase component fractions (flash)** 
-We compute the values of CO$`_2`$ solubility in brine as a function of pressure, temperature, and a constant salinity. We define the pressure ($`p`$) and temperature ($`T`$):
+We compute the values of CO$`_2`$ solubility in brine as a function of pressure, temperature, and a constant salinity. We note the pressure ($`p`$) and temperature ($`T`$):
 
-Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). The temperature must be between 283.15 and 623.15 Kelvin. The table is populated using the model of Duan and Sun (2003). Specifically, we solve the following nonlinear CO$`_2$ equation of state (Duan and Sun, 2003) for each pair to obtain the reduced volume,
+Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). The temperature must be between 283.15 and 623.15 Kelvin. We solve the following nonlinear CO$`_2$ equation of state (Duan and Sun, 2003) for each pair to obtain the reduced volume as,
 
 ```math
 \begin{equation}
@@ -534,7 +533,7 @@ tensorboard --logdir=./ --port=7007
 
 ## Results
 ### Summary of Numerical Model
-The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training samples were used where we computed the data loss and physics loss. The water flows from the injectors (downwards-facing arrows) towards the producers (upwards-facing arrows). The size of the reservoir computational voxel is nx, ny, nz = 50,50,10. Two phases are considered (CO$`_2`$ and brine) having only 1 CO$`_2`$ injector. 500 years of simulation are simulated. The left column of Fig.1(a & b) contains the responses from the PINO and FNO surrogate, the middle column is the responses from the Flow finite volume solver  and the right column is the difference between each response. For all panels in Fig. 1(a & b), the first row is for the pressure, the second row is for the brine saturation, the third row is  for the CO$`_2`$ saturation
+The result for the PINO and FNO surrogate is shown in Fig.1(a & b), 500 training samples were used where we computed the data loss and physics loss. The size of the reservoir computational voxel is nx, ny, nz = 50,50,10. Two phases are considered (CO$`_2`$ and brine) having only 1 CO$`_2`$ injector. 500 years of simulation are simulated. The left column of Fig.1(a & b) contains the responses from the PINO and FNO surrogate, the middle column is the responses from the Flow finite volume solver  and the right column is the difference between each response. For all panels in Fig. 1(a & b), the first row is for the pressure, the second row is for the brine saturation, the third row is  for the CO$`_2`$ saturation
 
 - The results from the Forward Problem using the PINO & FNO implementation
 
@@ -585,8 +584,7 @@ The overall loss is shown in the second column of the second row for all the fig
 **24.01**
 * First release 
 
-## End User License Agreement (EULA)
-Refer to the included Energy SDK License Agreement in **Energy_SDK_License_Agreement.pdf** for guidance.
+
 
 ## Author:
 - Clement Etienam- Solution Architect-Energy @Nvidia  Email: cetienam@nvidia.com

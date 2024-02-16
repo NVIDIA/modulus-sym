@@ -151,24 +151,24 @@ python NVRS/simulator.py Run.yaml
 
 
 [img1]: RESULTS/33331/Permeability.png "Permeability Field ( 33 by 33 by 1)"
-[img2]: GPU_reservoir_simulator/RESULTS/40403/Permeability.png "Permeability Field ( 40 by 40 by 3)"
-[img3]: GPU_reservoir_simulator/RESULTS/40605/Permeability.png "Permeability Field ( 40 by 60 by 5)"
-[img4]: GPU_reservoir_simulator/RESULTS/33331/Evolution_pressure_3D.gif "Pressure Field (33 by 33 by 1)"
-[img5]: GPU_reservoir_simulator/RESULTS/40403/Evolution_pressure_3D.gif "Pressure Field (40 by 40 by 3)"
-[img6]: GPU_reservoir_simulator/RESULTS/40605/Evolution_pressure_3D.gif "Pressure Field (40 by 60 by 5)"
-[img7]: GPU_reservoir_simulator/RESULTS/33331/Evolution_water_3D.gif "Water Field (33 by 33 by 1)"
-[img8]: GPU_reservoir_simulator/RESULTS/40403/Evolution_water_3D.gif "Water Field (40 by 40 by 3)"
-[img9]: GPU_reservoir_simulator/RESULTS/40605/Evolution_water_3D.gif "Water Field (40 by 60 by 5)"
-[img10]: GPU_reservoir_simulator/RESULTS/33331/Evolution_oil_3D.gif "Oil Field (33 by 33 by 1)"
-[img11]: GPU_reservoir_simulator/RESULTS/40403/Evolution_oil_3D.gif "Oil Field (40 by 40 by 3)"
-[img12]: GPU_reservoir_simulator/RESULTS/40605/Evolution_oil_3D.gif "Oil Field (40 by 60 by 5)"
-[img13]: GPU_reservoir_simulator/RESULTS/33331/Evolution2_impededance.gif "Impedance Field (33 by 33 by 1)"
-[img14]: GPU_reservoir_simulator/RESULTS/40403/Evolution2_impededance.gif "Impedance Field (40 by 40 by 3)"
-[img15]: GPU_reservoir_simulator/RESULTS/40605/Evolution2_impededance.gif "Impedance Field (40 by 60 by 5)"
+[img2]: RESULTS/40403/Permeability.png "Permeability Field ( 40 by 40 by 3)"
+[img3]: RESULTS/40605/Permeability.png "Permeability Field ( 40 by 60 by 5)"
+[img4]: RESULTS/33331/Evolution_pressure_3D.gif "Pressure Field (33 by 33 by 1)"
+[img5]: RESULTS/40403/Evolution_pressure_3D.gif "Pressure Field (40 by 40 by 3)"
+[img6]: RESULTS/40605/Evolution_pressure_3D.gif "Pressure Field (40 by 60 by 5)"
+[img7]: RESULTS/33331/Evolution_water_3D.gif "Water Field (33 by 33 by 1)"
+[img8]: RESULTS/40403/Evolution_water_3D.gif "Water Field (40 by 40 by 3)"
+[img9]: RESULTS/40605/Evolution_water_3D.gif "Water Field (40 by 60 by 5)"
+[img10]: RESULTS/33331/Evolution_oil_3D.gif "Oil Field (33 by 33 by 1)"
+[img11]: RESULTS/40403/Evolution_oil_3D.gif "Oil Field (40 by 40 by 3)"
+[img12]: RESULTS/40605/Evolution_oil_3D.gif "Oil Field (40 by 60 by 5)"
+[img13]: RESULTS/33331/Evolution2_impededance.gif "Impedance Field (33 by 33 by 1)"
+[img14]: RESULTS/40403/Evolution2_impededance.gif "Impedance Field (40 by 40 by 3)"
+[img15]: RESULTS/40605/Evolution2_impededance.gif "Impedance Field (40 by 60 by 5)"
 
 
 
-### Contacts
+### Contacts and Authors
 
 Clement Etienam cetienam@nvidia.com
 

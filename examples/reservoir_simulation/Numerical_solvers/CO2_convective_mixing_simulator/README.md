@@ -234,13 +234,39 @@ sudo chmod +x ./scripts/docker/docker-run.sh
 - These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
 - The code is developed in a Linux enviroment.
 
-![alt text](Evolution.gif)*Figure 1: CO2 dissolution in brine over some epoch iterations*
+![alt text](Evolution.gif)**Figure 1**: CO2 dissolution in brine over some epoch iterations 
 
 
 - From terminal, install (missing) dependencies in 'requirements.txt' in the conda enviroment **MDLO**
 - Follow instructions to install CuPy from : [link](https://github.com/cupy/cupy.git)
 
+### Run
 
+
+#### Forward problem
+
+
+- Navigate to the code base root directory - **work folder** via terminal.
+
+##### Bare Metal alone
+```bash
+cd **work folder**
+```
+- where **work folder** is the location you downloaded the code base to.
+
+- Download the supplemental material.
+
+
+##### Bare Metal
+```bash
+conda activate MDLO 
+cd src
+python Convective_Mixing.py
+
+
+cd ..
+conda deactivate
+```
 ## Author:
 - Clement Etienam- Solution Architect-Energy @Nvidia  Email: cetienam@nvidia.com
 

@@ -208,25 +208,16 @@ Clone this code base repository in a dedicated **work folder**.
 ```bash
 cd **work folder**
 conda activate MDLO
-git clone https://gitlab-master.nvidia.com/GlobalEnergyTeam/simulation/modulus_nvidia_slb_pino_ressim_poc.git
+git lfs clone https://github.com/NVIDIA/modulus-sym.git
 ```
 ### Bare-metal
-- From terminal do these sequence of operations to install Modulus v22.09: [link](https://docs.nvidia.com/deeplearning/modulus/user_guide/getting_started/installation.html)
+- From terminal do these sequence of operations to install Modulus v23.09: [link](https://github.com/NVIDIA/modulus-sym.git)
 ```bash
-pip3 install matplotlib transforms3d future typing numpy quadpy\
-             numpy-stl==2.16.3 h5py sympy==1.5.1 termcolor psutil\
-             symengine==0.6.1 numba Cython chaospy torch_optimizer\
-             vtk chaospy termcolor omegaconf hydra-core==1.1.1 einops\
-             timm tensorboard pandas orthopy ndim functorch pint kneed\
-             scikit-mps kneed pyDOE FyeldGenerator py-cpuinfo gdown\
-             gstools scikit-image ema-pytorch accelerate tensorflow==2.9.1\
-             joblib pyvista
+pip install nvidia-modulus.sym
              
-
-git clone git@gitlab.com:nvidia/modulus/modulus.git
-cd ./Modulus/
-python setup.py install
 ```
+- From terminal, install (missing) dependencies in 'requirements.txt' in the conda enviroment **MDLO**
+- Follow instructions to install CuPy from : [link](https://github.com/cupy/cupy.git)
 - From terminal, install (missing) dependencies in 'requirements.txt' in the conda enviroment **MDLO**
 - Follow instructions to install AMGX from [link](https://github.com/NVIDIA/AMGX.git)
 - Follow instructions to install CuPy from : [link](https://github.com/cupy/cupy.git)

@@ -8062,7 +8062,7 @@ while (snn<1):
     if do_localisation == 1:
         
         if ii == 0:
-            locmat = Localisation(10,nx,ny,nz,Ne)
+            locmat = Localisation(5,nx,ny,nz,Ne)
             see1 = locmat[:nx*ny*nz,:] * effec
             XX, YY = np.meshgrid(np.arange(nx),np.arange(ny))  
             look = np.reshape(see1[:,1],(nx,ny,nz),'F')

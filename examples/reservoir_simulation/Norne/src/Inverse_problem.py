@@ -838,7 +838,7 @@ def PREDICTION_CCR__MACHINE(ii,nclusters,inputtest,numcols,\
     #numcols=13
     labelDA = np.reshape(labelDA, (-1, 1), 'F')
     for i in range(nclusters):
-        print('-- Predicting cluster: ' + str(i+1) + ' | ' + str(nclusters))
+        #print('-- Predicting cluster: ' + str(i+1) + ' | ' + str(nclusters))
         if experts ==1:#Polynomial regressor experts
             filename2="Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) +".pkl"
             filename2b="polfeat_" + str(ii) + "_Cluster_" + str(i) +".pkl"

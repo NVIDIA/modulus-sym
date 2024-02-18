@@ -2547,9 +2547,9 @@ def Geta_all(folder,nx,ny,nz,effective,oldfolder,check,steppi,steppi_indices):
     
     
     # Filter the slices of interest before the loop
-    filtered_pressure = [pressuree[i] for i in steppi_indices]
-    filtered_swat = [swatt[i] for i in steppi_indices]
-    filtered_sgas = [sgass[i] for i in steppi_indices]
+    filtered_pressure = pressuree
+    filtered_swat = swatt
+    filtered_sgas = sgass
     
     # Active index array and its length
     active_index_array = np.where(actnum == 1)[0]
@@ -2577,7 +2577,15 @@ def Geta_all(folder,nx,ny,nz,effective,oldfolder,check,steppi,steppi_indices):
     sgas = np.stack(sgas, axis=0)
     pressure = np.stack(pressure, axis=0)
     swat = np.stack(swat, axis=0)
-
+	
+    sgas = sgas[1:,:,:,:]
+    swat = swat[1:,:,:,:]
+    pressure = pressure[1:,:,:,:]
+    
+    
+    sgas = sgas[steppi_indices-1,:,:,:]
+    swat = swat[steppi_indices-1,:,:,:]
+    pressure = pressure[steppi_indices-1,:,:,:]
     """
     This section is for the FTM vaues
     """

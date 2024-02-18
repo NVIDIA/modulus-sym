@@ -8185,7 +8185,7 @@ while (snn<1):
                 
         tinumeanprior = tinuke
         tinubestprior = tinukebest            
-    if (best_cost_best > tinukebest) :
+    if (best_cost_mean > tinuke) :
         print('**********************************************************' )
         print('Ensemble of permeability and porosity saved             ')
         print('Current best mean cost = ' + str(best_cost_mean))

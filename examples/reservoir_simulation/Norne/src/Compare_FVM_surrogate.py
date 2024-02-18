@@ -6017,7 +6017,7 @@ Accuracy_gas = np.zeros((steppi,2))
 
 
 
-results = Parallel(n_jobs=num_cores)(delayed(process_step,backend="loky", verbose=10)(kk, steppi, dt, pressure, 
+results = Parallel(n_jobs=num_cores,backend="loky", verbose=10)(delayed(process_step)(kk, steppi, dt, pressure, 
                     effectiveuse, pressure_true, Swater, Swater_true, Soil, 
                     Soil_true, Sgas, Sgas_true, nx, ny, nz, N_injw, 
                     N_pr, N_injg, 

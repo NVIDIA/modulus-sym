@@ -7617,7 +7617,7 @@ TEMPLATEFILE['Iterations'] = Termm
 print('')
 
 if DEFAULT ==1:
-    Ne = 130
+    Ne = 200
 else:
     Ne = None
     while True:

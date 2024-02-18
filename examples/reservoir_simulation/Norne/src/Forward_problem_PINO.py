@@ -6273,7 +6273,7 @@ def run(cfg: ModulusConfig) -> None:
             
 
     if DEFAULT ==1:
-        fno_type = 'PINO'
+        fno_type = 'FNO'
     else:
         fno_typee = None
         while True:

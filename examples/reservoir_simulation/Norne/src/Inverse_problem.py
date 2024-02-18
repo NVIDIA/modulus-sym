@@ -7346,7 +7346,7 @@ print('********************Model Loaded*************************************')
 
 print('')
 if (DEFAULT==1):
-    Trainmoe = 1
+    Trainmoe = 2
     print('Inference peacemann with Mixture of Experts\n')
 else: 
     Trainmoe = None
@@ -7617,7 +7617,7 @@ TEMPLATEFILE['Iterations'] = Termm
 print('')
 
 if DEFAULT ==1:
-    Ne = 200
+    Ne = 150
 else:
     Ne = None
     while True:
@@ -8062,7 +8062,7 @@ while (snn<1):
     if do_localisation == 1:
         
         if ii == 0:
-            locmat = Localisation(5,nx,ny,nz,Ne)
+            locmat = Localisation(10,nx,ny,nz,Ne)
             see1 = locmat[:nx*ny*nz,:] * effec
             XX, YY = np.meshgrid(np.arange(nx),np.arange(ny))  
             look = np.reshape(see1[:,1],(nx,ny,nz),'F')

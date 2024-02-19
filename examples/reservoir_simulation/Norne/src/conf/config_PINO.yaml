@@ -135,6 +135,7 @@ loss:
     pressured: 1e-6
     oild: 1e-6
     water_sat: 1.0
+    oil_sat: 1.0
     saturationd: 1e-6
     waterd: 1e-6  
     gas_sat: 20.0

@@ -7499,11 +7499,11 @@ print('---------------------------------------------------------------------')
 print('')
 print('---------------------------------------------------------------------')
 
-#noise_level=float(input('Enter the masurement data noise level in % (1%-5%): '))
+noise_level=float(input('Enter the masurement data noise level in % (5%-20%): '))
 #noise_level = 10
 print('')
 print('---------------------------------------------------------------------')
-noise_level=0.01#noise_level/100
+noise_level=noise_level/100
 print('')
 
 choice=2 

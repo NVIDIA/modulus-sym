@@ -7498,12 +7498,22 @@ print('-------------------------------- Pior Selected------------------------')
 print('---------------------------------------------------------------------')
 print('')
 print('---------------------------------------------------------------------')
-
-noise_level=float(input('Enter the masurement data noise level in % (5%-20%): '))
+noise_level = None
+while True:
+    noise_level=float(input('Enter the measurement data noise level in % (5%-25%): '))
+    noise_level=noise_level/100
+    if (noise_level>25) or (noise_level<5):
+        #raise SyntaxError('please select value between 1-2')
+        print('')
+        print('please try again and select value between 5%-25%')
+    else:
+        
+        break 
+#noise_level=float(input('Enter the measurement data noise level in % (5%-20%): '))
 #noise_level = 10
 print('')
 print('---------------------------------------------------------------------')
-noise_level=noise_level/100
+#noise_level=noise_level/100
 print('')
 
 choice=2 

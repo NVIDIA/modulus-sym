@@ -7346,7 +7346,7 @@ print('********************Model Loaded*************************************')
 
 print('')
 if (DEFAULT==1):
-    Trainmoe = 2
+    Trainmoe = 1
     print('Inference peacemann with Mixture of Experts\n')
 else: 
     Trainmoe = None

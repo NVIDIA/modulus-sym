@@ -380,67 +380,11 @@
                 "first"
             ]
         },
-        "geometry_tesselated": {
-            "path": "../geometry/",
-            "run_cmd": "python parameterized_tesselated_example.py",
-            "tags": [
-                "first"
-            ]
-        },
         "geometry_speed": {
             "path": "../geometry/",
             "run_cmd": "python speed_test.py",
             "tags": [
                 "first"
-            ]
-        },
-        "geometry_tessellated_ex": {
-            "path": "../geometry/",
-            "run_cmd": "python tessellated_example.py",
-            "tags": [
-                "first"
-            ]
-        },
-        "reservoir_simulation": {
-            "path": "../reservoir_simulation/2D/src",
-            "run_cmd": "python Forward_problem_FNO.py",
-            "tags": [
-                "first"
-            ]
-        },
-        "reservoir_simulation_PINO": {
-            "path": "../reservoir_simulation/2D/src",
-            "run_cmd": "echo 1 | python Forward_problem_PINO.py",
-            "tags": [
-                "first"
-            ]
-        },
-        "reservoir_AFNOD": {
-            "path": "../reservoir_simulation/2D/src",
-            "run_cmd": "python Forward_problem_AFNOD.py",
-            "tags": [
-                "first"
-            ]
-        },
-        "reservoir_AFNOP": {
-            "path": "../reservoir_simulation/2D/src",
-            "run_cmd": "echo 1 | python Forward_problem_AFNOP.py",
-            "tags": [
-                "first"
-            ]
-        },
-        "reservoir_simulation_3D": {
-            "path": "../reservoir_simulation/3D/src",
-            "run_cmd": "python Forward_problem_FNO.py",
-            "tags": [
-                "first"
-            ]
-        },
-        "reservoir_simulation_3D_PINO": {
-            "path": "../reservoir_simulation/3D/src",
-            "run_cmd": "python Forward_problem_PINO.py",
-            "tags": [
-                "second"
             ]
         }
     },

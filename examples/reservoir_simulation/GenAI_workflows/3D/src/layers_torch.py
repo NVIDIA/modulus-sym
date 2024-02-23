@@ -363,7 +363,7 @@ class FourierLayer(nn.Module):
                     np_f.append(
                         np.reshape(
                             np.stack(np_f_i, axis=-1),
-                            (nr_freq ** in_features, in_features),
+                            (nr_freq**in_features, in_features),
                         )
                     )
                 if "axis" in frequencies[0]:

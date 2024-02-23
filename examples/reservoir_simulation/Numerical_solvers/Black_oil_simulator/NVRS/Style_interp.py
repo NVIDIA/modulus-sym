@@ -29,7 +29,7 @@ from math import ceil, isnan
 try:
     from math import nan
 except:
-    nan = float('nan')
+    nan = float("nan")
 
 import numba
 import numpy as np
@@ -38,13 +38,13 @@ from numba import cuda
 
 try:
     import cupy
+
     if cupy.result_type is np.result_type:
         # Workaround until cupy release of https://github.com/cupy/cupy/pull/2249
         # Without this, cupy.histogram raises an error that cupy.result_type
         # is not defined.
         cupy.result_type = lambda *args: np.result_type(
-            *[arg.dtype if isinstance(arg, cupy.ndarray) else arg
-              for arg in args]
+            *[arg.dtype if isinstance(arg, cupy.ndarray) else arg for arg in args]
         )
 except:
     cupy = None
@@ -108,13 +108,15 @@ def masked_clip_2d(data, mask, lower, upper):
 # Behaviour of numba.cuda.atomic.max/min changed in 0.50 so as to behave as per
 # np.nanmax/np.nanmin
 
+
 @cuda.jit(device=True)
 def cuda_atomic_nanmin(ary, idx, val):
     return cuda.atomic.nanmin(ary, idx, val)
+
+
 @cuda.jit(device=True)
 def cuda_atomic_nanmax(ary, idx, val):
     return cuda.atomic.nanmax(ary, idx, val)
-
 
 
 @cuda.jit
@@ -143,7 +145,12 @@ def interp(x, xp, fp, left=None, right=None):
         right = fp[-1]
     right = float(right)
     interp2d_kernel[cuda_args(x.shape)](
-        x.astype(cupy.float64), xp.astype(cupy.float64), fp.astype(cupy.float64), left, right, output_y
+        x.astype(cupy.float64),
+        xp.astype(cupy.float64),
+        fp.astype(cupy.float64),
+        left,
+        right,
+        output_y,
     )
     return output_y
 

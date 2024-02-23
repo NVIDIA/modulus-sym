@@ -60,12 +60,11 @@ class CustomSum(Aggregator):
         decay_weight1 = (torch.tanh((10000 - step_tensor) * smoothness) + 1.0) * 0.5
         lambda_pressure = 1.0
         lambda_saturation = 1.0
-# # Add losses
+        # # Add losses
         for key in losses.keys():
             if "pressure" in key:
-                loss += lambda_pressure*(1-decay_weight1)*((losses[key]))
-            if "water_sat" in key : 
-                loss += lambda_saturation*(1-decay_weight1) *((losses[key]))
+                loss += lambda_pressure * (1 - decay_weight1) * ((losses[key]))
+            if "water_sat" in key:
+                loss += lambda_saturation * (1 - decay_weight1) * ((losses[key]))
 
         return loss
-

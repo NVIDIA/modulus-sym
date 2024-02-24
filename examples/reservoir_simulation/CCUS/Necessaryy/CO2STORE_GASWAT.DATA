@@ -1,0 +1,215 @@
+-- This reservoir simulation deck is made available under the Open Database
+-- License: http://opendatacommons.org/licenses/odbl/1.0/. Any rights in
+-- individual contents of the database are licensed under the Database Contents
+-- License: http://opendatacommons.org/licenses/dbcl/1.0/
+
+-- Copyright (C) 2023 TNO
+
+-- Test case for CO2STORE in combination with GASWAT.
+----------------------------------------------------------------------------
+RUNSPEC
+---------------------------------------------------------------------------- 
+TITLE
+ 
+START
+ 1 'FEB' 2024 /
+ 
+METRIC
+
+CO2STORE
+
+
+COMPS
+2
+/
+
+DIMENS
+   50 50 10  /
+
+TABDIMS
+ 1 1 40 40 /
+
+EQLDIMS
+ 1 1* 20 1 20 /
+ 
+REGDIMS
+ 10 1 0 1 0 /   
+
+WELLDIMS
+2 30 1 1/
+ 
+
+GASWAT
+UNIFOUT
+UNIFIN
+
+GRID    ================================================
+INIT
+
+TOPS
+2500*2000/
+
+DXV
+50*20 /
+DYV
+50*20 /
+DZV
+10*5 /
+
+--EQUALS
+--PERMX  100   /
+--PERMY  100  /
+--PERMZ  100 /
+--PORO   0.25  /
+--/
+
+INCLUDE
+ 'porosity.dat' /
+
+INCLUDE
+ 'permx.dat' /
+
+
+
+COPY
+   PERMX PERMY /
+   PERMX PERMZ /
+/
+
+EDIT    ================================================
+
+MULTIPLY 
+PORV 10000000 1 1 1 50 1 10/ 
+PORV 10000000 1 50 1 1 1 10/ 
+PORV 10000000 50 50 1 50 1 10/ 
+PORV 10000000 1 50 50 50 1 10/ 
+/
+
+PROPS    ======================================================
+
+
+ROCK
+ 200 5e-05 / 
+
+
+RTEMP
+  80 
+/
+
+
+NCOMPS
+
+       2
+/
+CNAMES
+
+   'CO2'
+   'H2O'
+
+/
+
+ZMFVD
+-- depth  CO2  H2O  
+ 2000   0 1.0   
+ 2100 0 1.0   / 
+
+
+--- relative permeabilities
+
+WSF
+0.20  0.0  
+0.40  0.1  
+0.80  0.5  
+1.0   1.0  
+/
+
+GSF 
+0   0.0  0.0 
+0.08   0.001  0.0 
+0.17  0.01   0.0 
+0.35  0.05     0.0  
+0.53  0.20   0.0 
+0.62  0.35   0.0 
+0.65  0.39   0.0 
+0.71  0.56   0.0 
+0.80   1.0    0.0 
+/
+
+SOLUTION ===============================================================
+
+EQUIL
+-- system is saturated with water
+
+   2000     200    1800      0      1800     0     /
+
+
+RPTRST
+        'BASIC=2' 'ALLPROPS' /
+
+SUMMARY  ===========================================================
+
+ALL
+
+--WXMF
+--'*' 1 /
+--'*' 2 /
+--/
+--WYMF
+--'*' 1 /
+--'*' 2 /
+--/
+--WZMF
+--'*' 1 /
+--'*' 2 /
+--/
+--WCGMR
+--'*' 1 /
+--'*' 2 /
+--/
+--WCOMR
+--'*' 1 /
+--'*' 2 /
+--/
+
+FWCD
+
+FGCDI
+
+FGCDM
+
+
+EXCEL
+RUNSUM
+SEPARATE
+RPTONLY
+
+SCHEDULE  ===============================================
+
+RPTRST
+	'BASIC=2' 'ALLPROPS'/
+
+WELLSTRE
+'C02STREAM' 1.0 0.0   /
+/
+
+WELSPECS
+--INJ1  FIELD 25 25 1*  GAS /
+INJ1 'G1' 25 25 1*  GAS /
+/
+ 
+COMPDAT 
+ INJ1  25 25   1 10 OPEN 2* 0.3 /
+/
+
+WINJGAS
+ INJ1 STREAM C02STREAM /
+/
+
+WCONINJE
+  INJ1 GAS OPEN RATE 1000 1* 300 / 
+/
+
+TSTEP
+10*18262.5 /
+
+END

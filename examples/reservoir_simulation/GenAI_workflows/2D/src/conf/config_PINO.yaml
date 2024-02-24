@@ -1,0 +1,61 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+cuda_graphs: false
+jit: false
+
+custom:
+  gradient_method: fdm
+  ntrain: 1998
+  nval: 1
+  ntest: 1
+
+
+ 
+network_dir : "ResSim"
+
+  
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+  
+optimizer:
+    weight_decay: 1e-4
+    lr: 1e-3
+
+training:
+  rec_results_freq : 10000
+  max_steps : 200000
+  rec_constraint_freq: 10000 
+
+loss:
+  weights:
+    pressure: 1.0
+    pressured: 1e-1
+    water_sat: 1.0
+    saturationd: 1e-1    
+
+batch_size:
+  grid: 1
+  validation: 1
+  test: 1

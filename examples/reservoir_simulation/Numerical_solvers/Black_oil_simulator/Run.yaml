@@ -1,0 +1,163 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#### ===================================================================== ####
+#                     INPUT DECK FOR RESERVOIR SIMULATOR
+#                      
+#### ===================================================================== ####
+# DATA PATHS
+# iglesisas 2 = 33,33,1
+#iglesias3 = 40,40,3
+#test.out = 40,60,5
+
+INCLUDE:
+    path_trueK: "data/iglesias3.out" # absolute permiability
+    
+    
+path_out: 'OUTPUTS' # where to save results
+
+# Simulation type
+#   2 = 2-phase flow
+#   3 = 3-phase flow
+N_components: 2
+
+
+#LINEAR SOLVER
+# 1 = GMRES 
+# 2 = spsolve
+# 3 = Conjugate Gradient
+# 4 = LSQR
+# 5 = CPR
+SOLVER:
+    solution_method: 5
+
+NSTACK:
+    n_substep: 10 # substep for implicit method. Recommended 3-20
+
+
+#ANIMATIONS 
+SUMMARY:
+    make_csv: 1 #(1=yes / 0=no)
+    make_animation: 1 #(1=yes / 0=no)
+    make_gassman: 1 #(1=yes /0=no)
+
+# GRID DIMENSIONS
+DIMENS:
+    nx: 40
+    ny: 40
+    nz: 3
+    
+GRID:
+    DX: 50
+    DY: 50
+    DZ: 20
+
+
+#PETROPHYSICAL PROPERTIES
+PROPS:
+    UW: 1.  # water viscosity in cP
+    UO: 2.5  # oil viscosity in cP
+    SWI: 0.1 # connate water saturation (lowes amount of saturation you can have)
+    SWR: 0.1 
+    CFW: 0.00001  # water compressibility in 1/psi
+    CFO: 0.00001  # oil compressibility in 1/psi
+    CT: 0.00002  # Total compressibility in 1/psi
+    S1: 0.2  # Initial water saturation
+    SG1: 0  # Initial gas saturation, if n_components == 3:
+    SO1: 0.8  # Initial oil saturation
+    P1: 3000  # Bubble point pressure psia
+    PB: 3000
+    BW: 1.  #Water formation volume factor
+    BO: 1.2  # Oil formation volume factor
+    PATM: 14.6959  #Atmospheric pressure in psi
+    isGravity: 1
+    RHOW: 1  # Density of water
+    RHOO: 1  # Density of Oil
+    RHOG: 1  # Density of Gas
+    # SWOW - matrix (Sw, Krow, Krw) hsbr it as a 3D matrix 
+    SWOW:
+    - [0.00, 1.0, 0.0]
+    - [0.30, 1.0, 0.0]
+    - [0.35, 0.59, 0.01]
+    - [0.40, 0.32, 0.02]
+    - [0.45, 0.18, 0.034]
+    - [0.50, 0.08, 0.046]
+    - [0.55, 0.03, 0.068]
+    - [0.60, 0.01, 0.09]
+    - [0.65, 0.001, 0.128]
+    - [0.70, 0.0001, 0.166]
+    - [0.75, 0.0, 0.2]
+    - [0.80, 0.0, 0.24]
+    - [1.00, 0.0, 0.24]
+    
+    # SG, Krog, Krg--SWOG
+    SWOG:
+    - [0.00, 1.0, 0.0]
+    - [0.03, 0.75, 0.0]
+    - [0.05, 0.59, 0.02]
+    - [0.10, 0.32, 0.09]
+    - [0.15, 0.18, 0.16]
+    - [0.20, 0.08, 0.24]
+    - [0.25, 0.03, 0.33]
+    - [0.30, 0.01, 0.43]
+    - [0.35, 0.001, 0.55]
+    - [0.40, 0.0, 0.67]
+    - [0.45, 0.0, 0.81]
+    - [0.50, 0.0, 1.0]
+    - [1.00, 0.0, 1.0]
+
+MULTIPLY:    
+    z_factor: 0.2 # reduction size of perm in z-dir with respect to x- y- dirs
+
+
+MPOR: 0.05 #minimum porosity
+HPOR: 0.3 # maximum porosity
+aay: 5 #minimum permeability 
+bby: 500 # maximum permeability
+
+
+#TIME INDEX
+REPORTING:
+    time_step: 100     # time step interval for simulation (days) - Advance the simulation
+    time_max: 2000    #the maximum time for simulation (days)
+    time_limit: 6000    #the maximum comprehensible time for simulation (days)
+    time_step_plot: 200 # plot every ...
+
+# Locations and amplitudes of injection wells 
+# (i, j, type, rate, rw (well-radius), sa (skin, how deformed the well is), pwf, direction)
+
+WELLSPECS:
+    injector_wells: 
+    - [1, 24, 1, 1000, 500, 0.0, 100, 1,'I1']
+    - [3, 3, 1, 1000, 500, 0.0, 100, 1,'I2']
+    - [31, 1, 1, 1000, 500, 0.0, 100, 1,'I3']
+    - [31, 31, 1, 1000, 500, 0.0, 100, 1,'I4']
+    
+    producer_wells:
+    - [7, 9, 1, -1, 100, 0.0, 100, 1,'P1']
+    - [14, 12, 1, -1, 100, 0.0, 100, 1,'P2']
+    - [28, 19, 1, -1, 100, 0.0, 100, 1,'P3']
+    - [14, 27, 1, -1, 100, 0.0, 100, 1,'p4']
+
+#WELL CONTROL
+# option 'last','all'
+SCHEDULE:
+    opennI: 'last' #inject water in last layer
+    opennP: 'all' # produce from all layer
+
+
+
+

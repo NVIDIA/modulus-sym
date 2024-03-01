@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -114,7 +113,7 @@ from tensorflow.keras.layers import Dense
 from shutil import rmtree
 from modulus.sym.models.fno import *
 from modulus.sym.key import Key
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, dump, load
 from collections import OrderedDict
 import os.path
 from numpy.linalg import inv
@@ -152,7 +151,9 @@ import matplotlib.colors
 from matplotlib import cm
 import yaml
 import gc
+from PyInstaller.utils.hooks import collect_dynamic_libs
 
+binaries = collect_dynamic_libs("nvidia.cuda_nvrtc", search_patterns=["lib*.so.*"])
 
 colors = [
     (0, 0, 0),
@@ -587,6 +588,7 @@ def Forward_model_ensemble(
     modelP1,
     modelW1,
     modelG1,
+    modelO1,
     device,
     modelP2,
     min_out_fcn,
@@ -597,6 +599,8 @@ def Forward_model_ensemble(
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 ):
 
     #### ===================================================================== ####
@@ -655,6 +659,7 @@ def Forward_model_ensemble(
     pressure = []
     Swater = []
     Sgas = []
+    Soil = []
 
     for clem in range(N):
         temp = {
@@ -669,21 +674,27 @@ def Forward_model_ensemble(
             ouut_p1 = modelP1(temp)["pressure"]
             ouut_s1 = modelW1(temp)["water_sat"]
             ouut_sg1 = modelG1(temp)["gas_sat"]
+            ouut_so1 = modelO1(temp)["oil_sat"]
 
         pressure.append(ouut_p1)
         Swater.append(ouut_s1)
         Sgas.append(ouut_sg1)
+        Soil.append(ouut_so1)
 
-        del temp, ouut_p1, ouut_s1, ouut_sg1
+        del temp, ouut_p1, ouut_s1, ouut_sg1, ouut_so1
         torch.cuda.empty_cache()
 
     pressure = torch.vstack(pressure).detach().cpu().numpy()
     pressure = Make_correct(pressure)
+
     Swater = torch.vstack(Swater).detach().cpu().numpy()
     Swater = Make_correct(Swater)
+
     Sgas = torch.vstack(Sgas).detach().cpu().numpy()
     Sgas = Make_correct(Sgas)
-    Soil = np.ones_like(Swater) - (Swater + Sgas)
+
+    Soil = torch.vstack(Soil).detach().cpu().numpy()
+    Soil = Make_correct(Soil)
 
     # The inputs are at the normal scale
 
@@ -760,11 +771,13 @@ def Forward_model_ensemble(
         presure_use = pressure[i, :, :, :, :]
         gas_use = Sgas[i, :, :, :, :]
         water_use = Swater[i, :, :, :, :]
+        oil_use = Soil[i, :, :, :, :]
         Time_usee = Time[i, :, :, :, :]
 
         a1 = np.zeros((steppi, 1))
         a2 = np.zeros((steppi, 22))
         a3 = np.zeros((steppi, 22))
+        a5 = np.zeros((steppi, 22))
         a4 = np.zeros((steppi, 1))
 
         for k in range(steppi):
@@ -822,11 +835,36 @@ def Forward_model_ensemble(
             a3[k, 20] = np.mean(permuse[12, 66, :])
             a3[k, 21] = np.mean(permuse[10, 27, :])
 
+            unieoil = oil_use[k, :, :, :]
+            permuse = unieoil
+            a5[k, 0] = np.mean(permuse[14, 30, :])
+            a5[k, 1] = np.mean(permuse[9, 31, :])
+            a5[k, 2] = np.mean(permuse[13, 33, :])
+            a5[k, 3] = np.mean(permuse[8, 36, :])
+            a5[k, 4] = np.mean(permuse[8, 45, :])
+            a5[k, 5] = np.mean(permuse[9, 28, :])
+            a5[k, 6] = np.mean(permuse[9, 23, :])
+            a5[k, 7] = np.mean(permuse[21, 21, :])
+            a5[k, 8] = np.mean(permuse[13, 27, :])
+            a5[k, 9] = np.mean(permuse[18, 37, :])
+            a5[k, 10] = np.mean(permuse[18, 53, :])
+            a5[k, 11] = np.mean(permuse[15, 65, :])
+            a5[k, 12] = np.mean(permuse[24, 36, :])
+            a5[k, 13] = np.mean(permuse[18, 54, :])
+            a5[k, 14] = np.mean(permuse[11, 71, :])
+            a5[k, 15] = np.mean(permuse[17, 67, :])
+            a5[k, 16] = np.mean(permuse[12, 66, :])
+            a5[k, 17] = np.mean(permuse[37, 97, :])
+            a5[k, 18] = np.mean(permuse[6, 63, :])
+            a5[k, 19] = np.mean(permuse[14, 75, :])
+            a5[k, 20] = np.mean(permuse[12, 66, :])
+            a5[k, 21] = np.mean(permuse[10, 27, :])
+
             unietime = Time_usee[k, :, :, :]
             permuse = unietime
             a4[k, 0] = permuse[0, 0, 0]
 
-        inn1 = np.hstack((permxx, a1, 1 - (a2 + a3), a2, a3, a4))
+        inn1 = np.hstack((permxx, a1, a5, a2, a3, a4))
 
         inn1 = fit_clement(inn1, target_min, target_max, min_inn_fcn, max_inn_fcn)
 
@@ -860,20 +898,8 @@ def Forward_model_ensemble(
         ouut_p[ouut_p <= 0] = 0
     else:
         innn = np.vstack(innn)
-        cluster_all = np.genfromtxt("../ML_MACHINE/clustersizescost.dat", dtype="float")
+        cluster_all = sio.loadmat("../ML_MACHINE/clustersizescost.mat")["cluster"]
         cluster_all = np.reshape(cluster_all, (-1, 1), "F")
-
-        # clemes = []
-        # for ib in range(66):
-        #     progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib-1, 66-1)
-        #     ShowBar(progressBar)
-        #     time.sleep(1)
-        #     see = PREDICTION_CCR__MACHINE(ib,int(cluster_all[ib,:]),innn,innn.shape[1],\
-        #                 "../ML_MACHINE",oldfolder,pred_type,3)
-        #     clemes.append(see)
-        # progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib, 66-1)
-        # ShowBar(progressBar)
-        # time.sleep(1)
 
         clemes = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
@@ -884,7 +910,8 @@ def Forward_model_ensemble(
                 "../ML_MACHINE",
                 oldfolder,
                 pred_type,
-                3,
+                degg,
+                experts,
             )
             for ib in range(66)
         )
@@ -930,39 +957,81 @@ def KalmanGain(G, params, Gamma, N, alpha):
     return K
 
 
+def predict_machine3(a0, deg, model, poly):
+    predicted = model.predict(poly.fit_transform(a0))
+    return predicted
+
+
 def PREDICTION_CCR__MACHINE(
-    ii, nclusters, inputtest, numcols, training_master, oldfolder, pred_type, deg
+    ii,
+    nclusters,
+    inputtest,
+    numcols,
+    training_master,
+    oldfolder,
+    pred_type,
+    deg,
+    experts,
 ):
-    # import numpy as np
-    # ii=0
-    # nclusters=2
-    # inputtest=X_test2
-    # print('Starting Prediction')
-    filename1 = "Classifier_%d.bin" % ii
+
     filenamex = "clfx_%d.asv" % ii
     filenamey = "clfy_%d.asv" % ii
+
     os.chdir(training_master)
-    loaded_model = xgb.Booster({"nthread": 4})  # init model
+    if experts == 1:
+        filename1 = "Classifier_%d.bin" % ii
+        loaded_model = xgb.Booster({"nthread": 4})  # init model
+        loaded_model.load_model(filename1)  # load data
+    else:
+        filename1 = "Classifier_%d.pkl" % ii
+        with open(filename1, "rb") as file:
+            loaded_model = pickle.load(file)
     clfx = pickle.load(open(filenamex, "rb"))
     clfy = pickle.load(open(filenamey, "rb"))
-    loaded_model.load_model(filename1)  # load data
     os.chdir(oldfolder)
+
     inputtest = clfx.transform(inputtest)
-    labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
-    if nclusters == 2:
-        labelDAX = 1 - labelDA
-        labelDA = np.reshape(labelDA, (-1, 1))
-        labelDAX = np.reshape(labelDAX, (-1, 1))
-        labelDA = np.concatenate((labelDAX, labelDA), axis=1)
+    if experts == 2:
+        labelDA = loaded_model.predict(inputtest)
+    else:
+        labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+        if nclusters == 2:
+            labelDAX = 1 - labelDA
+            labelDA = np.reshape(labelDA, (-1, 1))
+            labelDAX = np.reshape(labelDAX, (-1, 1))
+            labelDA = np.concatenate((labelDAX, labelDA), axis=1)
+            labelDA = np.argmax(labelDA, axis=-1)
+        else:
+            labelDA = np.argmax(labelDA, axis=-1)
+        labelDA = np.reshape(labelDA, (-1, 1), "F")
 
     numrowstest = len(inputtest)
     clementanswer = np.zeros((numrowstest, 1))
     # numcols=13
-    if pred_type == 1:  # Hard prediction
-        labelDA = np.argmax(labelDA, axis=-1)
-        labelDA = np.reshape(labelDA, (-1, 1), "F")
-        for i in range(nclusters):
-            # print('-- Predicting cluster: ' + str(i) + ' | ' + str(nclusters))
+    labelDA = np.reshape(labelDA, (-1, 1), "F")
+    for i in range(nclusters):
+        # print('-- Predicting cluster: ' + str(i+1) + ' | ' + str(nclusters))
+        if experts == 1:  # Polynomial regressor experts
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            filename2b = "polfeat_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            os.chdir(training_master)
+
+            with open(filename2, "rb") as file:
+                model0 = pickle.load(file)
+
+            with open(filename2b, "rb") as filex:
+                poly0 = pickle.load(filex)
+
+            os.chdir(oldfolder)
+            labelDA0 = (np.asarray(np.where(labelDA == i))).T
+            #    ##----------------------##------------------------##
+            a00 = inputtest[labelDA0[:, 0], :]
+            a00 = np.reshape(a00, (-1, numcols), "F")
+            if a00.shape[0] != 0:
+                clementanswer[labelDA0[:, 0], :] = np.reshape(
+                    predict_machine3(a00, deg, model0, poly0), (-1, 1)
+                )
+        else:  # XGBoost experts
             loaded_modelr = xgb.Booster({"nthread": 4})  # init model
             filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
 
@@ -970,6 +1039,7 @@ def PREDICTION_CCR__MACHINE(
             loaded_modelr.load_model(filename2)  # load data
 
             os.chdir(oldfolder)
+
             labelDA0 = (np.asarray(np.where(labelDA == i))).T
             #    ##----------------------##------------------------##
             a00 = inputtest[labelDA0[:, 0], :]
@@ -979,24 +1049,8 @@ def PREDICTION_CCR__MACHINE(
                     predict_machine11(a00, loaded_modelr), (-1, 1)
                 )
 
-        clementanswer = clfy.inverse_transform(clementanswer)
-    else:  # soft prediction
-        # deg=4
-        big_out = np.zeros((numrowstest, nclusters))
-        for i in range(nclusters):
-            # print('-- predicting cluster: ' + str(i+1) + ' | ' + str(nclusters))
-            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
-            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
-            os.chdir(training_master)
-            loaded_modelr.load_model(filename2)  # load data
-            os.chdir(oldfolder)
-            aa = np.reshape(predict_machine11(inputtest, loaded_modelr), (-1, 1))
-            aanew = np.multiply(aa, np.reshape(labelDA[:, i], (-1, 1)))
-            big_out[:, i] = np.ravel(aanew)
-        clementanswer = np.reshape(np.sum(big_out, axis=1), (-1, 1), "F")
-        # clementanswer=clfy.inverse_transform(clementanswer)
+    clementanswer = clfy.inverse_transform(clementanswer)
     return clementanswer
-    # print('Finished prediction')
 
 
 def predict_machine11(a0, model):
@@ -7591,9 +7645,11 @@ def remove_rows(matrix, indices_to_remove):
     - modified_matrix: NumPy array
       The modified array with specified rows removed.
     """
-    indices_to_remove = sorted(indices_to_remove, reverse=True)  # Sort in reverse order
-    for index in indices_to_remove:
-        matrix = np.delete(matrix, index, axis=0)
+
+    matrix = np.delete(matrix, indices_to_remove, axis=0)
+    # indices_to_remove = sorted(indices_to_remove, reverse=True)  # Sort in reverse order
+    # for index in indices_to_remove:
+    #     matrix = np.delete(matrix, index, axis=0)
     return matrix
 
 
@@ -7821,7 +7877,8 @@ os.chdir(oldfolder)
 cur_dir = oldfolder
 
 
-njobs = int((multiprocessing.cpu_count() // 4) - 1)
+# njobs = int((multiprocessing.cpu_count() // 4) - 1)
+njobs = 3
 num_cores = njobs
 
 print("------------------Download pre-trained models------------------------")
@@ -7867,7 +7924,8 @@ fname = "conf/config_PINO.yaml"
 
 sizq = 1e4
 
-
+exper = sio.loadmat("../PACKETS/exper.mat")
+experts = exper["expert"]
 mat = sio.loadmat("../PACKETS/conversions.mat")
 minK = mat["minK"]
 maxK = mat["maxK"]
@@ -8065,6 +8123,20 @@ modelG = FNOArch(
 )
 
 
+decoder5 = ConvFullyConnectedArch([Key("z", size=32)], [Key("oil_sat", size=steppi)])
+modelO = FNOArch(
+    [
+        Key("perm", size=1),
+        Key("Phi", size=1),
+        Key("Pini", size=1),
+        Key("Swini", size=1),
+        Key("fault", size=1),
+    ],
+    dimension=3,
+    decoder_net=decoder5,
+)
+
+
 decoder4 = ConvFullyConnectedArch([Key("z", size=32)], [Key("Y", size=66)])
 model_peacemann = FNOArch(
     [Key("X", size=90)],
@@ -8088,26 +8160,26 @@ print(" Surrogate model learned with PINO for dynamic properties pressure model"
 modelP.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
 modelP = modelP.to(device)
 modelP.eval()
-os.chdir(oldfolder)
 
 
-os.chdir("outputs/Forward_problem_PINO/ResSim")
 print(" Surrogate model learned with PINO for dynamic properties- water model")
 modelW.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
 modelW = modelW.to(device)
 modelW.eval()
-os.chdir(oldfolder)
 
 
-os.chdir("outputs/Forward_problem_PINO/ResSim")
 print(" Surrogate model learned with PINO for dynamic properties - Gas model")
 modelG.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
 modelG = modelG.to(device)
 modelG.eval()
-os.chdir(oldfolder)
 
 
-os.chdir("outputs/Forward_problem_PINO/ResSim")
+print(" Surrogate model learned with PINO for dynamic properties - Oil model")
+modelO.load_state_dict(torch.load("fno_forward_model_oil.0.pth"))
+modelO = modelO.to(device)
+modelO.eval()
+
+
 print(" Surrogate model learned with PINO for peacemann well model")
 model_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
 model_peacemann = model_peacemann.to(device)
@@ -8118,7 +8190,7 @@ print("********************Model Loaded*************************************")
 
 print("")
 if DEFAULT == 1:
-    Trainmoe = 2
+    Trainmoe = 1
     print("Inference peacemann with Mixture of Experts\n")
 else:
     Trainmoe = None
@@ -8166,7 +8238,6 @@ degg = 3
 
 
 rho = 1.05
-
 
 # True model
 Truee = True_K
@@ -8231,17 +8302,9 @@ print("---------------------------------------------------------------------")
 print("")
 print("--------------------Historical data Measurement----------------------")
 
-rows_to_remove = (
-    list(range(59, 69))
-    + list(range(189, 199))
-    + list(range(279, 289))
-    + list(range(409, 419))
-    + list(range(429, 439))
-    + list(range(499, 509))
-    + list(range(619, 639))
-    + list(range(649, 659))
-)
-# Ne=N_ens
+# rows_to_remove = list(range(59, 69)) + list(range(189, 199)) + list(range(279, 289))+ list(range(409, 419))\
+# + list(range(429, 439)) + list(range(499, 509)) + list(range(619, 639))+ list(range(649, 659))
+
 
 os.chdir("../NORNE")
 timestep = np.genfromtxt(("../NORNE/timestep.out"))
@@ -8269,6 +8332,10 @@ gasz = True_mat[:, 44:66] / scalei3
 True_data = np.hstack([Oilz, Watsz, gasz])
 # True_data = np.hstack([Oilz,Watsz])
 True_data = np.reshape(True_data, (-1, 1), "F")
+
+rows_to_remove = np.where(True_data <= 1e-4)[0]
+# matrix = np.delete(True_data, rows_to_remove, axis=0)
+
 True_data = remove_rows(True_data, rows_to_remove).reshape(-1, 1)
 True_yet = True_data
 
@@ -8296,11 +8363,24 @@ print("---------------------------------------------------------------------")
 print("")
 print("---------------------------------------------------------------------")
 
-# noise_level=float(input('Enter the masurement data noise level in % (1%-5%): '))
-# noise_level = 10
+
+noise_level = None
+while True:
+    noise_level = float(input("Enter the masurement data noise level in % (5%-25%): "))
+
+    if (noise_level > 25) or (noise_level < 5):
+        # raise SyntaxError('please select value between 1-2')
+        print("")
+        print("please try again and select value between 5%-25%")
+    else:
+
+        break
+
+
 print("")
+noise_level = noise_level / 100
 print("---------------------------------------------------------------------")
-noise_level = 0.01  # noise_level/100
+
 print("")
 
 choice = 2
@@ -8422,18 +8502,16 @@ TEMPLATEFILE["Iterations"] = Termm
 print("")
 
 if DEFAULT == 1:
-    Ne = 130
+    Ne = 150
 else:
     Ne = None
     while True:
-        Ne = int(
-            input("Number of realisations used for history matching (100-5000) : ")
-        )
+        Ne = int(input("Number of realisations used for history matching (100-300) : "))
         N_ens = Ne
-        if (Ne > 10000) or (Ne < 20):
+        if (Ne > 500) or (Ne < 20):
             # raise SyntaxError('please select value between 1-2')
             print("")
-            print("please try again and select value between 20-10000")
+            print("please try again and select value between 20-500")
         else:
             break
 
@@ -8760,6 +8838,7 @@ while snn < 1:
         modelP,
         modelW,
         modelG,
+        modelO,
         device,
         model_peacemann,
         min_out_fcn,
@@ -8770,6 +8849,8 @@ while snn < 1:
         num_cores,
         pred_type,
         oldfolder,
+        degg,
+        experts,
     )
 
     if ii == 0:
@@ -8779,7 +8860,7 @@ while snn < 1:
     else:
         pass
 
-    print("-----------------------------Read Historical data----------------")
+    # print('-----------------------------Read Historical data----------------')
     _, True_data1, True_mat = historydata(timestep, steppi, steppi_indices)
     True_mat[True_mat <= 0] = 0
     # True_mat = True_data1
@@ -9021,7 +9102,7 @@ while snn < 1:
 
         tinumeanprior = tinuke
         tinubestprior = tinukebest
-    if best_cost_best > tinukebest:
+    if best_cost_mean > tinuke:
         print("**********************************************************")
         print("Ensemble of permeability and porosity saved             ")
         print("Current best mean cost = " + str(best_cost_mean))
@@ -9201,6 +9282,7 @@ mazw = 0  # Dont smooth the presure field
     modelP,
     modelW,
     modelG,
+    modelO,
     device,
     model_peacemann,
     min_out_fcn,
@@ -9211,6 +9293,8 @@ mazw = 0  # Dont smooth the presure field
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 
 
@@ -9269,6 +9353,7 @@ mazw = 0  # Dont smooth the presure field
     modelP,
     modelW,
     modelG,
+    modelO,
     device,
     model_peacemann,
     min_out_fcn,
@@ -9279,11 +9364,13 @@ mazw = 0  # Dont smooth the presure field
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 
 os.chdir("../HM_RESULTS")
-Plot_RSM(predMatrix, True_mat, "Final.png", Ne, Time_unie1)
-Plot_RSM(predMatrixa, True_mat, "Final_cummulative_best.png", Ne, Time_unie1)
+# Plot_RSM(predMatrix,True_mat,"Final.png",Ne,Time_unie1)
+Plot_RSM(predMatrixa, True_mat, "Final.png", Ne, Time_unie1)
 os.chdir(oldfolder)
 
 
@@ -9360,6 +9447,7 @@ _, yycheck, pree, wats, oilss, gasss = Forward_model_ensemble(
     modelP,
     modelW,
     modelG,
+    modelO,
     device,
     model_peacemann,
     min_out_fcn,
@@ -9370,6 +9458,8 @@ _, yycheck, pree, wats, oilss, gasss = Forward_model_ensemble(
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 
 os.chdir("../HM_RESULTS/ADAPT_REKI")
@@ -9398,7 +9488,10 @@ for kk in range(steppi):
     Time_vector[kk] = current_time
 
 
-Parallel(n_jobs=num_cores)(
+folderrin = os.path.join(oldfolder, "..", "HM_RESULTS", "ADAPT_REKI")
+
+
+Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
     delayed(process_step)(
         kk,
         steppi,
@@ -9417,7 +9510,7 @@ Parallel(n_jobs=num_cores)(
         injectors,
         producers,
         gass,
-        "../HM_RESULTS/ADAPT_REKI",
+        folderrin,
         oldfolder,
     )
     for kk in range(steppi)
@@ -9539,6 +9632,7 @@ _, yycheck, preebest, watsbest, oilssbest, gasbest = Forward_model_ensemble(
     modelP,
     modelW,
     modelG,
+    modelO,
     device,
     model_peacemann,
     min_out_fcn,
@@ -9549,6 +9643,8 @@ _, yycheck, preebest, watsbest, oilssbest, gasbest = Forward_model_ensemble(
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 
 os.chdir("../HM_RESULTS/BEST_RESERVOIR_MODEL")
@@ -9570,7 +9666,9 @@ with gzip.open("BEST_RESERVOIR_MODEL.pkl.gz", "wb") as f1:
 
 os.chdir(oldfolder)
 
-Parallel(n_jobs=num_cores)(
+
+folderrin = os.path.join(oldfolder, "..", "HM_RESULTS", "BEST_RESERVOIR_MODEL")
+Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
     delayed(process_step)(
         kk,
         steppi,
@@ -9589,7 +9687,7 @@ Parallel(n_jobs=num_cores)(
         injectors,
         producers,
         gass,
-        "../HM_RESULTS/BEST_RESERVOIR_MODEL",
+        folderrin,
         oldfolder,
     )
     for kk in range(steppi)
@@ -9707,6 +9805,7 @@ _, yycheck, preebest, watsbest, oilssbest, gasbest = Forward_model_ensemble(
     modelP,
     modelW,
     modelG,
+    modelO,
     device,
     model_peacemann,
     min_out_fcn,
@@ -9717,6 +9816,8 @@ _, yycheck, preebest, watsbest, oilssbest, gasbest = Forward_model_ensemble(
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 
 os.chdir("../HM_RESULTS/MEAN_RESERVOIR_MODEL")
@@ -9738,7 +9839,9 @@ with gzip.open("MEAN_RESERVOIR_MODEL.pkl.gz", "wb") as f1:
 
 os.chdir(oldfolder)
 
-Parallel(n_jobs=num_cores)(
+
+folderrin = os.path.join(oldfolder, "..", "HM_RESULTS", "MEAN_RESERVOIR_MODEL")
+Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
     delayed(process_step)(
         kk,
         steppi,
@@ -9757,7 +9860,7 @@ Parallel(n_jobs=num_cores)(
         injectors,
         producers,
         gass,
-        "../HM_RESULTS/MEAN_RESERVOIR_MODEL",
+        folderrin,
         oldfolder,
     )
     for kk in range(steppi)
@@ -9921,6 +10024,7 @@ mazw = 0  # Dont smooth the presure field
     modelP,
     modelW,
     modelG,
+    modelO,
     device,
     model_peacemann,
     min_out_fcn,
@@ -9931,6 +10035,8 @@ mazw = 0  # Dont smooth the presure field
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 
 os.chdir("../HM_RESULTS/PERCENTILE")

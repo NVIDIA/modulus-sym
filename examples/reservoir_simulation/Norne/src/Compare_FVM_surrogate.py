@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +13,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+@Author : Clement Etienam
+"""
+from __future__ import print_function
+
+print(__doc__)
 print(".........................IMPORT SOME LIBRARIES.....................")
 import os
 import numpy as np
@@ -55,6 +63,8 @@ import os.path
 import torch
 
 torch.set_default_dtype(torch.float32)
+from struct import unpack
+import fnmatch
 from joblib import Parallel, delayed
 from scipy import interpolate
 import multiprocessing
@@ -73,12 +83,9 @@ from modulus.sym.hydra import to_absolute_path
 from modulus.sym.key import Key
 from modulus.sym.models.fno import *
 import pandas as pd
-from multiprocessing import Lock, Value
 from PIL import Image
 import requests
-import concurrent.futures
 import sys
-from copy import copy
 import xgboost as xgb
 from kneed import KneeLocator
 import numpy
@@ -99,7 +106,6 @@ import random
 from matplotlib.font_manager import FontProperties
 import os.path
 from datetime import timedelta
-from collections import namedtuple, defaultdict
 from skimage.transform import resize as rzz
 from mpl_toolkits.mplot3d import Axes3D
 import imp
@@ -2740,18 +2746,150 @@ def ensemble_pytorch(
     return inn
 
 
-def Geta_all(
-    folder,
-    nx,
-    ny,
-    nz,
-    effective,
-    oldfolder,
-    check,
-    string_Jesus,
-    steppi,
-    steppi_indices,
-):
+SUPPORTED_DATA_TYPES = {
+    "INTE": (4, "i", 1000),
+    "REAL": (4, "f", 1000),
+    "LOGI": (4, "i", 1000),
+    "DOUB": (8, "d", 1000),
+    "CHAR": (8, "8s", 105),
+    "MESS": (8, "8s", 105),
+    "C008": (8, "8s", 105),
+}
+
+
+def parse_egrid(path_to_result):
+
+    egrid_path = path_to_result
+    attrs = ("GRIDHEAD", "ACTNUM")
+    egrid = _parse_ech_bin(egrid_path, attrs)
+
+    return egrid
+
+
+def parse_unrst(path_to_result):
+
+    unrst_path = path_to_result
+    attrs = ("PRESSURE", "SGAS", "SWAT")
+    states = _parse_ech_bin(unrst_path, attrs)
+    return states
+
+
+def _check_and_fetch_type_info(data_type):
+    """Returns element size, format and element skip for the given data type.
+
+    Parameters
+    ----------
+    data_type: str
+        Should be a key from the SUPPORTED_DATA_TYPES
+
+    Returns
+    -------
+    type_info: tuple
+    """
+    try:
+        return SUPPORTED_DATA_TYPES[data_type]
+    except KeyError as exc:
+        raise ValueError("Unknown datatype %s." % data_type) from exc
+
+
+def _check_and_fetch_file(path, pattern, return_relative=False):
+
+    found = []
+    reg_expr = re.compile(fnmatch.translate(pattern), re.IGNORECASE)
+
+    # Listing files in the specified directory
+    for f in os.listdir(path):
+        # Check if the file matches the pattern
+        if re.match(reg_expr, f):
+            f_path = os.path.join(path, f)
+            if return_relative:
+                found.append(os.path.relpath(f_path, start=path))
+            else:
+                found.append(f_path)
+
+    return found
+
+
+def _parse_keywords(path, attrs=None):
+
+    sections_counter = {} if attrs is None else {attr: 0 for attr in attrs}
+
+    with open(path, "rb") as f:
+        header = f.read(4)
+        sections = dict()
+        while True:
+            try:
+                section_name = (
+                    unpack("8s", f.read(8))[0].decode("ascii").strip().upper()
+                )
+            except:
+                break
+            n_elements = unpack(">i", f.read(4))[0]
+            data_type = unpack("4s", f.read(4))[0].decode("ascii")
+            f.read(8)
+            element_size, fmt, element_skip = _check_and_fetch_type_info(data_type)
+            f.seek(f.tell() - 24)
+            binary_data = f.read(
+                24
+                + element_size * n_elements
+                + 8 * (math.floor((n_elements - 1) / element_skip) + 1)
+            )
+            if (attrs is None) or (section_name in attrs):
+                sections_counter[section_name] = (
+                    sections_counter.get(section_name, 0) + 1
+                )
+                if section_name not in sections:
+                    sections[section_name] = []
+                section = (
+                    n_elements,
+                    data_type,
+                    element_size,
+                    fmt,
+                    element_skip,
+                    binary_data,
+                )
+                section = _fetch_keyword_data(section)
+                sections[section_name].append(section)
+
+    return header, sections
+
+
+def _parse_ech_bin(path, attrs=None):
+
+    if attrs is None:
+        raise ValueError("Keyword attribute cannot be empty")
+
+    if isinstance(attrs, str):
+        attrs = [attrs]
+
+    attrs = [attr.strip().upper() for attr in attrs]
+    _, sections = _parse_keywords(path, attrs)
+
+    return sections
+
+
+def _fetch_keyword_data(section):
+
+    n_elements, data_type, element_size, fmt, element_skip, binary_data = section
+
+    n_skip = math.floor((n_elements - 1) / element_skip)
+    skip_elements = 8 // element_size
+    skip_elements_total = n_skip * skip_elements
+    data_format = fmt * (n_elements + skip_elements_total)
+    data_size = element_size * (n_elements + skip_elements_total)
+    if data_type in ["INTE", "REAL", "LOGI", "DOUB"]:
+        data_format = ">" + data_format
+    decoded_section = list(unpack(data_format, binary_data[24 : 24 + data_size]))
+    del_ind = np.repeat(np.arange(1, 1 + n_skip) * element_skip, skip_elements)
+    del_ind += np.arange(len(del_ind))
+    decoded_section = np.delete(decoded_section, del_ind)
+    if data_type in ["CHAR", "C008"]:
+        decoded_section = np.char.decode(decoded_section, encoding="ascii")
+    return decoded_section
+
+
+def Geta_all(folder, nx, ny, nz, effective, oldfolder, check, steppi, steppi_indices):
+
     os.chdir(folder)
 
     # os.system(string_Jesus)
@@ -2783,102 +2921,69 @@ def Geta_all(
         unie.append(aa)
     Time = np.stack(unie, axis=0)
 
-    indices = np.where(effective == 1)[0]
-    size1 = len(indices)
-
     pressure = []
     swat = []
     sgas = []
 
-    for ii in range(1, 247):
-        filename2 = f"FULLNORNE.A{str(ii).zfill(4)}"  # zfill pads the string with zeroes to reach a length of 4
-        os.remove(filename2)
+    attrs = ("GRIDHEAD", "ACTNUM")
+    egrid = _parse_ech_bin("FULLNORNE2.EGRID", attrs)
+    nx, ny, nz = egrid["GRIDHEAD"][0][1:4]
+    actnum = egrid["ACTNUM"][0]  # numpy array of size nx * ny * nz
 
-    steppi_indices = steppi_indices.flatten()
-    for i in steppi_indices:  # 248 because range's end is exclusive
-        filename = f"FULLNORNE.F{str(i).zfill(4)}"  # zfill pads the string with zeroes to reach a length of 4
+    states = parse_unrst("FULLNORNE2.UNRST")
+    pressuree = states["PRESSURE"]
+    swatt = states["SWAT"]
+    sgass = states["SGAS"]
+    # soils = states["SOIL"]
 
-        with open(filename, "r") as f:
-            pressure_flag = False
-            all_values = []
-            for line in f:
-                stripped_line = line.strip()  # Remove leading and trailing spaces
-                if "PRESSURE" in stripped_line and "REAL" in stripped_line:
-                    pressure_flag = True  # Start capturing pressure data
-                elif pressure_flag:  # We're in pressure data capture mode
-                    if stripped_line[
-                        0
-                    ].isdigit():  # If the stripped line starts with a digit
-                        values = list(map(float, stripped_line.split()))
-                        all_values.extend(values)  # Add values to the list
-                    else:
-                        break  # Stop capturing pressure data
+    active_index_array = np.where(actnum == 1)[0]
+    len_act_indx = len(active_index_array)
 
-        # Convert list to numpy array
-        np_array = np.array(all_values)
-        vector1 = np.zeros((nx * ny * nz, 1))
-        vector1[indices] = rzz(
-            np_array.reshape(-1, 1), (size1,), order=1, preserve_range=True
-        )
-        vector1 = np.reshape(vector1, (nx, ny, nz), "F")
-        pressure.append(vector1)
+    filtered_pressure = pressuree
+    filtered_swat = swatt
+    filtered_sgas = sgass
+    # filtered_soil = soils
 
-        with open(filename, "r") as f:
-            pressure_flag = False
-            all_values = []
-            for line in f:
-                stripped_line = line.strip()  # Remove leading and trailing spaces
-                if "SWAT" in stripped_line and "REAL" in stripped_line:
-                    pressure_flag = True  # Start capturing pressure data
-                elif pressure_flag:  # We're in pressure data capture mode
-                    if stripped_line[
-                        0
-                    ].isdigit():  # If the stripped line starts with a digit
-                        values = list(map(float, stripped_line.split()))
-                        all_values.extend(values)  # Add values to the list
-                    else:
-                        break  # Stop capturing swat data
+    # Active index array and its length
+    active_index_array = np.where(actnum == 1)[0]
+    len_act_indx = len(active_index_array)
 
-        # Convert list to numpy array
-        np_array = np.array(all_values)
-        vector1 = np.zeros((nx * ny * nz, 1))
-        vector1[indices] = rzz(
-            np_array.reshape(-1, 1), (size1,), order=1, preserve_range=True
-        )
-        vector1 = np.reshape(vector1, (nx, ny, nz), "F")
-        swat.append(vector1)
+    # Iterate over the filtered slices
+    for pr_slice, sw_slice, sg_slice in zip(
+        filtered_pressure, filtered_swat, filtered_sgas
+    ):
+        for state_var, all_slices in zip(
+            [pr_slice, sw_slice, sg_slice], [pressure, swat, sgas]
+        ):
+            # Initialize an array of zeros
+            resize_state_var = np.zeros((nx * ny * nz, 1))
 
-        with open(filename, "r") as f:
-            pressure_flag = False
-            all_values = []
-            for line in f:
-                stripped_line = line.strip()  # Remove leading and trailing spaces
-                if "SGAS" in stripped_line and "REAL" in stripped_line:
-                    pressure_flag = True  # Start capturing pressure data
-                elif pressure_flag:  # We're in pressure data capture mode
-                    if stripped_line[
-                        0
-                    ].isdigit():  # If the stripped line starts with a digit
-                        values = list(map(float, stripped_line.split()))
-                        all_values.extend(values)  # Add values to the list
-                    else:
-                        break  # Stop capturing sgas data
-        try:
-            os.remove(filename)
-        except OSError as e:
-            print(f"Error: {filename} : {e.strerror}")
-        # Convert list to numpy array
-        np_array = np.array(all_values)
-        vector1 = np.zeros((nx * ny * nz, 1))
-        vector1[indices] = rzz(
-            np_array.reshape(-1, 1), (size1,), order=1, preserve_range=True
-        )
-        vector1 = np.reshape(vector1, (nx, ny, nz), "F")
-        sgas.append(vector1)
+            # Resize and update the array at active indices
+            resize_state_var[active_index_array] = rzz(
+                state_var.reshape(-1, 1), (len_act_indx,), order=1, preserve_range=True
+            )
 
+            # Reshape to 3D grid
+            resize_state_var = np.reshape(resize_state_var, (nx, ny, nz), "F")
+
+            # Append to the corresponding list
+            all_slices.append(resize_state_var)
+
+    # Stack the lists to create 3D arrays for each variable
     sgas = np.stack(sgas, axis=0)
     pressure = np.stack(pressure, axis=0)
     swat = np.stack(swat, axis=0)
+    # soil = np.stack(soil, axis=0)
+
+    sgas = sgas[1:, :, :, :]
+    swat = swat[1:, :, :, :]
+    pressure = pressure[1:, :, :, :]
+    soil = 1 - abs(sgas + swat)
+
+    sgas = sgas[steppi_indices - 1, :, :, :]
+    swat = swat[steppi_indices - 1, :, :, :]
+    pressure = pressure[steppi_indices - 1, :, :, :]
+    soil = soil[steppi_indices - 1, :, :, :]
 
     """
     This section is for the FTM vaues
@@ -2958,7 +3063,7 @@ def Geta_all(
     Fault[30:37, 66:70, 0:] = floatts[51]  # G_09
     Fault[35:40, 64:69, 0:] = floatts[52]  # G_13
     os.chdir(oldfolder)
-    return pressure, swat, sgas, Time, Fault
+    return pressure, swat, sgas, soil, Time, Fault
 
 
 def Get_RSM_FLOW(oldfolder, N, steppi, steppi_indices):
@@ -3462,9 +3567,8 @@ def save_files(perm, poro, perm2, dest_dir, oldfolder):
     os.chdir(oldfolder)
 
 
-def Run_simulator(dest_dir, oldfolder, string_jesus, string_jesus2):
+def Run_simulator(dest_dir, oldfolder, string_jesus2):
     os.chdir(dest_dir)
-    os.system(string_jesus)
     os.system(string_jesus2)
     os.chdir(oldfolder)
 
@@ -3647,6 +3751,7 @@ def Forward_model_ensemble(
     modelP1,
     modelW1,
     modelG1,
+    modelO1,
     device,
     modelP2,
     min_out_fcn,
@@ -3657,6 +3762,8 @@ def Forward_model_ensemble(
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 ):
 
     #### ===================================================================== ####
@@ -3715,6 +3822,7 @@ def Forward_model_ensemble(
     pressure = []
     Swater = []
     Sgas = []
+    Soil = []
 
     for clem in range(N):
         temp = {
@@ -3729,21 +3837,27 @@ def Forward_model_ensemble(
             ouut_p1 = modelP1(temp)["pressure"]
             ouut_s1 = modelW1(temp)["water_sat"]
             ouut_sg1 = modelG1(temp)["gas_sat"]
+            ouut_so1 = modelO1(temp)["oil_sat"]
 
         pressure.append(ouut_p1)
         Swater.append(ouut_s1)
         Sgas.append(ouut_sg1)
+        Soil.append(ouut_so1)
 
-        del temp
+        del temp, ouut_p1, ouut_s1, ouut_sg1, ouut_so1
         torch.cuda.empty_cache()
 
     pressure = torch.vstack(pressure).detach().cpu().numpy()
     pressure = Make_correct(pressure)
+
     Swater = torch.vstack(Swater).detach().cpu().numpy()
     Swater = Make_correct(Swater)
+
     Sgas = torch.vstack(Sgas).detach().cpu().numpy()
     Sgas = Make_correct(Sgas)
-    Soil = np.ones_like(Swater) - (Swater + Sgas)
+
+    Soil = torch.vstack(Soil).detach().cpu().numpy()
+    Soil = Make_correct(Soil)
 
     # The inputs are at the normal scale
 
@@ -3761,7 +3875,9 @@ def Forward_model_ensemble(
         innn = np.zeros((N, steppi, 90))
 
     for i in range(N):
-
+        # progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i-1)
+        # ShowBar(progressBar)
+        # time.sleep(1)
         ##INPUTS
         permuse = perm[i, 0, :, :, :]
         # Permeability
@@ -3818,11 +3934,13 @@ def Forward_model_ensemble(
         presure_use = pressure[i, :, :, :, :]
         gas_use = Sgas[i, :, :, :, :]
         water_use = Swater[i, :, :, :, :]
-        Time_use = Time[i, :, :, :, :]
+        oil_use = Soil[i, :, :, :, :]
+        Time_usee = Time[i, :, :, :, :]
 
         a1 = np.zeros((steppi, 1))
         a2 = np.zeros((steppi, 22))
         a3 = np.zeros((steppi, 22))
+        a5 = np.zeros((steppi, 22))
         a4 = np.zeros((steppi, 1))
 
         for k in range(steppi):
@@ -3880,13 +3998,39 @@ def Forward_model_ensemble(
             a3[k, 20] = np.mean(permuse[12, 66, :])
             a3[k, 21] = np.mean(permuse[10, 27, :])
 
-            unietime = Time_use[k, :, :, :]
+            unieoil = oil_use[k, :, :, :]
+            permuse = unieoil
+            a5[k, 0] = np.mean(permuse[14, 30, :])
+            a5[k, 1] = np.mean(permuse[9, 31, :])
+            a5[k, 2] = np.mean(permuse[13, 33, :])
+            a5[k, 3] = np.mean(permuse[8, 36, :])
+            a5[k, 4] = np.mean(permuse[8, 45, :])
+            a5[k, 5] = np.mean(permuse[9, 28, :])
+            a5[k, 6] = np.mean(permuse[9, 23, :])
+            a5[k, 7] = np.mean(permuse[21, 21, :])
+            a5[k, 8] = np.mean(permuse[13, 27, :])
+            a5[k, 9] = np.mean(permuse[18, 37, :])
+            a5[k, 10] = np.mean(permuse[18, 53, :])
+            a5[k, 11] = np.mean(permuse[15, 65, :])
+            a5[k, 12] = np.mean(permuse[24, 36, :])
+            a5[k, 13] = np.mean(permuse[18, 54, :])
+            a5[k, 14] = np.mean(permuse[11, 71, :])
+            a5[k, 15] = np.mean(permuse[17, 67, :])
+            a5[k, 16] = np.mean(permuse[12, 66, :])
+            a5[k, 17] = np.mean(permuse[37, 97, :])
+            a5[k, 18] = np.mean(permuse[6, 63, :])
+            a5[k, 19] = np.mean(permuse[14, 75, :])
+            a5[k, 20] = np.mean(permuse[12, 66, :])
+            a5[k, 21] = np.mean(permuse[10, 27, :])
+
+            unietime = Time_usee[k, :, :, :]
             permuse = unietime
             a4[k, 0] = permuse[0, 0, 0]
 
-        inn1 = np.hstack((permxx, a1, 1 - (a2 + a3), a2, a3, a4))
+        inn1 = np.hstack((permxx, a1, a5, a2, a3, a4))
 
         inn1 = fit_clement(inn1, target_min, target_max, min_inn_fcn, max_inn_fcn)
+
         if Trainmoe == 1:
             innn[i, :, :] = inn1.T
         else:
@@ -3914,22 +4058,11 @@ def Forward_model_ensemble(
             torch.cuda.empty_cache()
         ouut_p = np.vstack(ouut_p)
         ouut_p = np.transpose(ouut_p, (0, 2, 1))
+        ouut_p[ouut_p <= 0] = 0
     else:
         innn = np.vstack(innn)
-        cluster_all = np.genfromtxt("../ML_MACHINE/clustersizescost.dat", dtype="float")
+        cluster_all = sio.loadmat("../ML_MACHINE/clustersizescost.mat")["cluster"]
         cluster_all = np.reshape(cluster_all, (-1, 1), "F")
-
-        # clemes = []
-        # for ib in range(66):
-        #     progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib-1, 66-1)
-        #     ShowBar(progressBar)
-        #     time.sleep(1)
-        #     see = PREDICTION_CCR__MACHINE(ib,int(cluster_all[ib,:]),innn,innn.shape[1],\
-        #                 "../ML_MACHINE",oldfolder,pred_type,3)
-        #     clemes.append(see)
-        # progressBar = "\rInference(CCR) - Peaceman well model: " + ProgressBar(66-1, ib, 66-1)
-        # ShowBar(progressBar)
-        # time.sleep(1)
 
         clemes = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
             delayed(PREDICTION_CCR__MACHINE)(
@@ -3940,21 +4073,30 @@ def Forward_model_ensemble(
                 "../ML_MACHINE",
                 oldfolder,
                 pred_type,
-                3,
+                degg,
+                experts,
             )
             for ib in range(66)
         )
 
         ouut_p = np.array(Split_Matrix(np.hstack(clemes), N))
         ouut_p = convert_back(ouut_p, target_min, target_max, min_out_fcn, max_out_fcn)
+        ouut_p[ouut_p <= 0] = 0
 
-    ouut_p[ouut_p <= 0] = 0
     sim = []
     for zz in range(ouut_p.shape[0]):
-        use = np.reshape(ouut_p[zz, :, :66], (-1, 1), "F")
-        use[use < 0] = 0
+        Oilz = ouut_p[zz, :, :22]
+        Watsz = ouut_p[zz, :, 22:44]
+        gasz = ouut_p[zz, :, 44:66]
+        spit = np.hstack([Oilz, Watsz, gasz])
+        spit = np.reshape(spit, (-1, 1), "F")
+        use = np.reshape(spit, (-1, 1), "F")
+
         sim.append(use)
     sim = np.hstack(sim)
+    # progressBar = "\rEnsemble Forwarding: " + ProgressBar2(N-1, i)
+    # ShowBar(progressBar)
+    # time.sleep(1)
     return sim, ouut_p, pressure, Swater, Sgas, Soil
 
 
@@ -3964,7 +4106,7 @@ def Split_Matrix(matrix, sizee):
 
 
 def Get_data_FFNN(
-    oldfolder, N, pressure, Sgas, Swater, perm, Time, steppi, steppi_indices
+    oldfolder, N, pressure, Sgas, Swater, Soil, perm, Time, steppi, steppi_indices
 ):
 
     ouut = np.zeros((N, steppi, 66))
@@ -4252,38 +4394,18 @@ def Get_data_FFNN(
         presure_use = pressure[i, :, :, :, :]
         gas_use = Sgas[i, :, :, :, :]
         water_use = Swater[i, :, :, :, :]
+        oil_use = Soil[i, :, :, :, :]
         Time_use = Time[i, :, :, :, :]
 
         a1 = np.zeros((steppi, 1))
         a2 = np.zeros((steppi, 22))
         a3 = np.zeros((steppi, 22))
+        a5 = np.zeros((steppi, 22))
         a4 = np.zeros((steppi, 1))
 
         for k in range(steppi):
             uniep = presure_use[k, :, :, :]
             permuse = uniep
-            # a1[k,0] = np.mean(permuse[14, 30,:])
-            # a1[k,1] = np.mean(permuse[9, 31, :])
-            # a1[k,2] = np.mean(permuse[13, 33,:])
-            # a1[k,3] = np.mean(permuse[8, 36, :])
-            # a1[k,4] = np.mean(permuse[8, 45, :])
-            # a1[k,5] = np.mean(permuse[9, 28,:])
-            # a1[k,6] = np.mean(permuse[9, 23, :])
-            # a1[k,7] = np.mean(permuse[21, 21, :])
-            # a1[k,8] = np.mean(permuse[13, 27, :])
-            # a1[k,9] = np.mean(permuse[18, 37, :])
-            # a1[k,10] = np.mean(permuse[18, 53, :])
-            # a1[k,11] = np.mean(permuse[15, 65, :])
-            # a1[k,12] = np.mean(permuse[24, 36, :])
-            # a1[k,13] = np.mean(permuse[18, 54, :])
-            # a1[k,14] = np.mean(permuse[11, 71, :])
-            # a1[k,15] = np.mean(permuse[17, 67, :])
-            # a1[k,16] = np.mean(permuse[12, 66, :])
-            # a1[k,17] = np.mean(permuse[37, 97, :])
-            # a1[k,18] = np.mean(permuse[6, 63, :])
-            # a1[k,19] = np.mean(permuse[14, 75, :])
-            # a1[k,20] = np.mean(permuse[12, 66, :])
-            # a1[k,21] = np.mean(permuse[10, 27, :])
 
             a1[k, 0] = np.mean(permuse)
 
@@ -4337,11 +4459,36 @@ def Get_data_FFNN(
             a3[k, 20] = np.mean(permuse[12, 66, :])
             a3[k, 21] = np.mean(permuse[10, 27, :])
 
+            unieoil = oil_use[k, :, :, :]
+            permuse = unieoil
+            a5[k, 0] = np.mean(permuse[14, 30, :])
+            a5[k, 1] = np.mean(permuse[9, 31, :])
+            a5[k, 2] = np.mean(permuse[13, 33, :])
+            a5[k, 3] = np.mean(permuse[8, 36, :])
+            a5[k, 4] = np.mean(permuse[8, 45, :])
+            a5[k, 5] = np.mean(permuse[9, 28, :])
+            a5[k, 6] = np.mean(permuse[9, 23, :])
+            a5[k, 7] = np.mean(permuse[21, 21, :])
+            a5[k, 8] = np.mean(permuse[13, 27, :])
+            a5[k, 9] = np.mean(permuse[18, 37, :])
+            a5[k, 10] = np.mean(permuse[18, 53, :])
+            a5[k, 11] = np.mean(permuse[15, 65, :])
+            a5[k, 12] = np.mean(permuse[24, 36, :])
+            a5[k, 13] = np.mean(permuse[18, 54, :])
+            a5[k, 14] = np.mean(permuse[11, 71, :])
+            a5[k, 15] = np.mean(permuse[17, 67, :])
+            a5[k, 16] = np.mean(permuse[12, 66, :])
+            a5[k, 17] = np.mean(permuse[37, 97, :])
+            a5[k, 18] = np.mean(permuse[6, 63, :])
+            a5[k, 19] = np.mean(permuse[14, 75, :])
+            a5[k, 20] = np.mean(permuse[12, 66, :])
+            a5[k, 21] = np.mean(permuse[10, 27, :])
+
             unietime = Time_use[k, :, :, :]
             permuse = unietime
             a4[k, 0] = permuse[0, 0, 0]
 
-        inn1 = np.hstack((permxx, a1, 1 - (a2 + a3), a2, a3, a4))
+        inn1 = np.hstack((permxx, a1, a5, a2, a3, a4))
 
         innn[i, :, :] = inn1
 
@@ -4350,7 +4497,17 @@ def Get_data_FFNN(
 
 
 def Get_data_FFNN1(
-    folder, oldfolder, N, pressure, Sgas, Swater, perm, Time, steppi, steppi_indices
+    folder,
+    oldfolder,
+    N,
+    pressure,
+    Sgas,
+    Swater,
+    Soil,
+    perm,
+    Time,
+    steppi,
+    steppi_indices,
 ):
 
     ouut = np.zeros((N, steppi, 66))
@@ -4637,11 +4794,13 @@ def Get_data_FFNN1(
         presure_use = pressure[0, :, :, :, :]
         gas_use = Sgas[0, :, :, :, :]
         water_use = Swater[0, :, :, :, :]
+        oil_use = Soil[0, :, :, :, :]
         Time_use = Time[0, :, :, :, :]
 
         a1 = np.zeros((steppi, 1))
         a2 = np.zeros((steppi, 22))
         a3 = np.zeros((steppi, 22))
+        a5 = np.zeros((steppi, 22))
         a4 = np.zeros((steppi, 1))
 
         for k in range(steppi):
@@ -4699,11 +4858,36 @@ def Get_data_FFNN1(
             a3[k, 20] = np.mean(permuse[12, 66, :])
             a3[k, 21] = np.mean(permuse[10, 27, :])
 
+            unieoil = oil_use[k, :, :, :]
+            permuse = unieoil
+            a5[k, 0] = np.mean(permuse[14, 30, :])
+            a5[k, 1] = np.mean(permuse[9, 31, :])
+            a5[k, 2] = np.mean(permuse[13, 33, :])
+            a5[k, 3] = np.mean(permuse[8, 36, :])
+            a5[k, 4] = np.mean(permuse[8, 45, :])
+            a5[k, 5] = np.mean(permuse[9, 28, :])
+            a5[k, 6] = np.mean(permuse[9, 23, :])
+            a5[k, 7] = np.mean(permuse[21, 21, :])
+            a5[k, 8] = np.mean(permuse[13, 27, :])
+            a5[k, 9] = np.mean(permuse[18, 37, :])
+            a5[k, 10] = np.mean(permuse[18, 53, :])
+            a5[k, 11] = np.mean(permuse[15, 65, :])
+            a5[k, 12] = np.mean(permuse[24, 36, :])
+            a5[k, 13] = np.mean(permuse[18, 54, :])
+            a5[k, 14] = np.mean(permuse[11, 71, :])
+            a5[k, 15] = np.mean(permuse[17, 67, :])
+            a5[k, 16] = np.mean(permuse[12, 66, :])
+            a5[k, 17] = np.mean(permuse[37, 97, :])
+            a5[k, 18] = np.mean(permuse[6, 63, :])
+            a5[k, 19] = np.mean(permuse[14, 75, :])
+            a5[k, 20] = np.mean(permuse[12, 66, :])
+            a5[k, 21] = np.mean(permuse[10, 27, :])
+
             unietime = Time_use[k, :, :, :]
             permuse = unietime
             a4[k, 0] = permuse[0, 0, 0]
 
-        inn1 = np.hstack((permxx, a1, 1 - (a2 + a3), a2, a3, a4))
+        inn1 = np.hstack((permxx, a1, a5, a2, a3, a4))
 
         innn[0, :, :] = inn1
 
@@ -5811,17 +5995,6 @@ def preprocess_FNO_mat(path):
             )  # note h5 files larger than .mat because no compression used
 
 
-def gaussianizeit(input1):
-    numrows1 = len(input1)
-    numcols = len(input1[0])
-    newbig = np.zeros((numrows1, numcols))
-    for i in range(numcols):
-        input11 = input1[:, i]
-        newX = norm.ppf(rankdata(input11) / (len(input11) + 1))
-        newbig[:, i] = newX.T
-    return newbig
-
-
 def interpolatebetween(xtrain, cdftrain, xnew):
     numrows1 = len(xnew)
     numcols = len(xnew[0])
@@ -5833,70 +6006,15 @@ def interpolatebetween(xtrain, cdftrain, xnew):
     return norm_cdftest2
 
 
-def getoptimumkk(X, i, training_master, oldfolder):
-    distortions = []
-    Kss = range(1, 10)
-
-    for k in Kss:
-        kmeanModel = MiniBatchKMeans(n_clusters=k).fit(X)
-        kmeanModel.fit(X)
-        distortions.append(
-            sum(np.min(cdist(X, kmeanModel.cluster_centers_, "euclidean"), axis=1))
-            / X.shape[0]
-        )
-
-    myarray = np.array(distortions)
-
-    knn = KneeLocator(
-        Kss, myarray, curve="convex", direction="decreasing", interp_method="interp1d"
-    )
-    kuse = knn.knee
-
-    # Plot the elbow
-    plt.figure(figsize=(10, 10))
-    plt.plot(Kss, distortions, "bx-")
-    plt.xlabel("cluster size")
-    plt.ylabel("Distortion")
-    plt.title("Elbow Method showing the optimal n_clusters for machine %d" % (i))
-    os.chdir(training_master)
-    plt.savefig("machine_%d.jpg" % (i + 1))
-    os.chdir(oldfolder)
-    # plt.show()
-    plt.close()
-    plt.clf()
-    return kuse
-
-
-def getoptimumkcost(X, i, training_master, oldfolder):
-    distortions = []
-    Kss = range(1, 10)
-
-    for k in Kss:
-        kmeanModel = MiniBatchKMeans(n_clusters=k).fit(X)
-        kmeanModel.fit(X)
-        distortions.append(
-            sum(np.min(cdist(X, kmeanModel.cluster_centers_, "euclidean"), axis=1))
-            / X.shape[0]
-        )
-
-    myarray = np.array(distortions)
-
-    knn = KneeLocator(
-        Kss, myarray, curve="convex", direction="decreasing", interp_method="interp1d"
-    )
-    kuse = knn.knee
-
-    # Plot the elbow
-    plt.figure(figsize=(10, 10))
-    plt.plot(Kss, distortions, "bx-")
-    plt.xlabel("cluster size")
-    plt.ylabel("Distortion")
-    plt.title("Elbow Method showing the optimal n_clusters for machine %d" % (i))
-    os.chdir(training_master)
-    plt.savefig("machine_Energy__%d.jpg" % (i + 1))
-    os.chdir(oldfolder)
-    plt.show()
-    return kuse
+def gaussianizeit(input1):
+    numrows1 = len(input1)
+    numcols = len(input1[0])
+    newbig = np.zeros((numrows1, numcols))
+    for i in range(numcols):
+        input11 = input1[:, i]
+        newX = norm.ppf(rankdata(input11) / (len(input11) + 1))
+        newbig[:, i] = newX.T
+    return newbig
 
 
 def best_fit(X, Y):
@@ -5911,6 +6029,9 @@ def best_fit(X, Y):
 
     print("best fit line:\ny = {:.2f} + {:.2f}x".format(a, b))
     return a, b
+
+
+from copy import copy
 
 
 def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
@@ -5944,9 +6065,9 @@ def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
 
         jk = jj + 1
         plt.subplot(9, 9, jk)
-        # palette = copy(plt.get_cmap('inferno_r'))
-        # palette.set_under('white')  # 1.0 represents not transparent
-        # palette.set_over('black')  # 1.0 represents not transparent
+        palette = copy(plt.get_cmap("inferno_r"))
+        palette.set_under("white")  # 1.0 represents not transparent
+        palette.set_over("black")  # 1.0 represents not transparent
         vmin = min(np.ravel(outputtest2))
         vmax = max(np.ravel(outputtest2))
         sc = plt.scatter(
@@ -5956,7 +6077,7 @@ def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
             vmin=vmin,
             vmax=vmax,
             s=35,
-            cmap="inferno_r",
+            cmap=palette,
         )
         plt.colorbar(sc)
         plt.title("Energy_" + str(jj), fontsize=9)
@@ -5985,59 +6106,18 @@ def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
     return CoDoverall, R2overall, CoDview, R2view
 
 
-def run_model(model, inn, ouut, i, training_master, oldfolder):
-    model.fit(inn, ouut)
-    filename = "Classifier_%d.bin" % i
-    os.chdir(training_master)
-    model.save_model(filename)
-    os.chdir(oldfolder)
-    return model
-
-
-def run_modelcost(model, inn, ouut, i, training_master, oldfolder):
-    model.fit(inn, ouut)
-    filename = "Classifiercost_%d.bin" % i
-    os.chdir(training_master)
-    model.save_model(filename)
-    os.chdir(oldfolder)
-    return model
-
-
-def startit(i, outpuut2, inpuut2, training_master, oldfolder, degg):
-    print("")
-    print("Starting CCR training machine %d" % (i + 1))
-    useeo = outpuut2[:, i]
-    useeo = np.reshape(useeo, (-1, 1), "F")
-
-    usein = inpuut2
-    usein = np.reshape(usein, (-1, 90), "F")  # 9+4
-
-    clust = CCR_Machine(usein, useeo, i, training_master, oldfolder, degg)
-
-    bigs = clust
-    return bigs
-    print("")
-    print("Finished training machine %d" % (i + 1))
-
-
-def endit(i, testt, training_master, oldfolder, pred_type, degg, big):
+def endit(i, testt, training_master, oldfolder, pred_type, degg, big, experts):
     print("")
     print("Starting prediction from machine %d" % (i + 1))
 
     numcols = len(testt[0])
     clemzz = PREDICTION_CCR__MACHINE(
-        i, big, testt, numcols, training_master, oldfolder, pred_type, degg
+        i, big, testt, numcols, training_master, oldfolder, pred_type, degg, experts
     )
 
     print("")
     print("Finished Prediction from machine %d" % (i + 1))
     return clemzz
-
-
-def fit_machine(a0, b0):
-    model = xgb.XGBRegressor(n_estimators=4000)
-    model.fit(a0, b0)
-    return model
 
 
 def predict_machine(a0, model):
@@ -6046,109 +6126,81 @@ def predict_machine(a0, model):
     return ynew
 
 
-def CCR_Machine(inpuutj, outputtj, ii, training_master, oldfolder, degg):
-    # print('Starting CCR')
-    model = xgb.XGBClassifier(n_estimators=5000)
-    # import numpy as np
-    # import pickle
-    X = inpuutj
-    y = outputtj
-    numruth = len(X[0])
-
-    y_traind = y
-    scaler1a = MinMaxScaler(feature_range=(0, 1))
-    (scaler1a.fit(X))
-    X = scaler1a.transform(X)
-    scaler2a = MinMaxScaler(feature_range=(0, 1))
-    (scaler2a.fit(y))
-    y = scaler2a.transform(y)
-    yruth = y
-    os.chdir(training_master)
-    filenamex = "clfx_%d.asv" % ii
-    filenamey = "clfy_%d.asv" % ii
-    pickle.dump(scaler1a, open(filenamex, "wb"))
-    pickle.dump(scaler2a, open(filenamey, "wb"))
-    os.chdir(oldfolder)
-    y_traind = numruth * 100 * y
-    matrix = np.concatenate((X, y_traind), axis=1)
-    k = getoptimumk(matrix, ii, training_master, oldfolder)
-    nclusters = k
-    # nclusters=3
-    print("Optimal k is: ", nclusters)
-    kmeans = MiniBatchKMeans(n_clusters=nclusters, max_iter=2000).fit(matrix)
-    filename = "Clustering_%d.asv" % ii
-    os.chdir(training_master)
-    pickle.dump(kmeans, open(filename, "wb"))
-    os.chdir(oldfolder)
-    dd = kmeans.labels_
-    dd = dd.T
-    dd = np.reshape(dd, (-1, 1))
-    # -------------------#---------------------------------#
-    inputtrainclass = X
-    outputtrainclass = np.reshape(dd, (-1, 1))
-    run_model(model, inputtrainclass, outputtrainclass, ii, training_master, oldfolder)
-    # print('Split for classifier problem')
-    X_train = X
-    y_train = dd
-    # -------------------Regression----------------#
-    # print('Learn regression of the clusters with different labels from k-means ' )
-
-    for i in range(nclusters):
-        print("-- Learning cluster: " + str(i + 1) + " | " + str(nclusters))
-        label0 = (np.asarray(np.where(y_train == i))).T
-        # model0=xgb.XGBRegressor(n_estimators=2000)
-        # model0=np.empty([1,2],dtype=object)
-
-        a0 = X_train[label0[:, 0], :]
-        a0 = np.reshape(a0, (-1, numruth), "F")
-        b0 = yruth[label0[:, 0], :]
-        b0 = np.reshape(b0, (-1, 1), "F")
-        if a0.shape[0] != 0 and b0.shape[0] != 0:
-            # model0.fit(a0, b0,verbose=False)
-            theta = fit_machine(a0, b0)
-
-        filename = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
-        os.chdir(training_master)
-        # sio.savemat(filename, {'model0':model0})
-        theta.save_model(filename)
-        os.chdir(oldfolder)
-    return nclusters
-    # print('Finished CCR')
+def predict_machine3(a0, deg, model, poly):
+    predicted = model.predict(poly.fit_transform(a0))
+    return predicted
 
 
 def PREDICTION_CCR__MACHINE(
-    ii, nclusters, inputtest, numcols, training_master, oldfolder, pred_type, deg
+    ii,
+    nclusters,
+    inputtest,
+    numcols,
+    training_master,
+    oldfolder,
+    pred_type,
+    deg,
+    experts,
 ):
-    # import numpy as np
-    # ii=0
-    # nclusters=2
-    # inputtest=X_test2
-    print("Starting Prediction")
-    filename1 = "Classifier_%d.bin" % ii
+
     filenamex = "clfx_%d.asv" % ii
     filenamey = "clfy_%d.asv" % ii
+
     os.chdir(training_master)
-    loaded_model = xgb.Booster({"nthread": 4})  # init model
+    if experts == 1:
+        filename1 = "Classifier_%d.bin" % ii
+        loaded_model = xgb.Booster({"nthread": 4})  # init model
+        loaded_model.load_model(filename1)  # load data
+    else:
+        filename1 = "Classifier_%d.pkl" % ii
+        with open(filename1, "rb") as file:
+            loaded_model = pickle.load(file)
     clfx = pickle.load(open(filenamex, "rb"))
     clfy = pickle.load(open(filenamey, "rb"))
-    loaded_model.load_model(filename1)  # load data
     os.chdir(oldfolder)
+
     inputtest = clfx.transform(inputtest)
-    labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
-    if nclusters == 2:
-        labelDAX = 1 - labelDA
-        labelDA = np.reshape(labelDA, (-1, 1))
-        labelDAX = np.reshape(labelDAX, (-1, 1))
-        labelDA = np.concatenate((labelDAX, labelDA), axis=1)
+    if experts == 2:
+        labelDA = loaded_model.predict(inputtest)
+    else:
+        labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
+        if nclusters == 2:
+            labelDAX = 1 - labelDA
+            labelDA = np.reshape(labelDA, (-1, 1))
+            labelDAX = np.reshape(labelDAX, (-1, 1))
+            labelDA = np.concatenate((labelDAX, labelDA), axis=1)
+            labelDA = np.argmax(labelDA, axis=-1)
+        else:
+            labelDA = np.argmax(labelDA, axis=-1)
+        labelDA = np.reshape(labelDA, (-1, 1), "F")
 
     numrowstest = len(inputtest)
     clementanswer = np.zeros((numrowstest, 1))
     # numcols=13
-    if pred_type == 1:  # Hard prediction
-        labelDA = np.argmax(labelDA, axis=-1)
-        labelDA = np.reshape(labelDA, (-1, 1), "F")
-        for i in range(nclusters):
-            print("-- Predicting cluster: " + str(i) + " | " + str(nclusters))
+    labelDA = np.reshape(labelDA, (-1, 1), "F")
+    for i in range(nclusters):
+        print("-- Predicting cluster: " + str(i + 1) + " | " + str(nclusters))
+        if experts == 1:  # Polynomial regressor experts
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            filename2b = "polfeat_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            os.chdir(training_master)
+
+            with open(filename2, "rb") as file:
+                model0 = pickle.load(file)
+
+            with open(filename2b, "rb") as filex:
+                poly0 = pickle.load(filex)
+
+            os.chdir(oldfolder)
+            labelDA0 = (np.asarray(np.where(labelDA == i))).T
+            #    ##----------------------##------------------------##
+            a00 = inputtest[labelDA0[:, 0], :]
+            a00 = np.reshape(a00, (-1, numcols), "F")
+            if a00.shape[0] != 0:
+                clementanswer[labelDA0[:, 0], :] = np.reshape(
+                    predict_machine3(a00, deg, model0, poly0), (-1, 1)
+                )
+        else:  # XGBoost experts
             loaded_modelr = xgb.Booster({"nthread": 4})  # init model
             filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
 
@@ -6156,6 +6208,7 @@ def PREDICTION_CCR__MACHINE(
             loaded_modelr.load_model(filename2)  # load data
 
             os.chdir(oldfolder)
+
             labelDA0 = (np.asarray(np.where(labelDA == i))).T
             #    ##----------------------##------------------------##
             a00 = inputtest[labelDA0[:, 0], :]
@@ -6165,24 +6218,8 @@ def PREDICTION_CCR__MACHINE(
                     predict_machine(a00, loaded_modelr), (-1, 1)
                 )
 
-        clementanswer = clfy.inverse_transform(clementanswer)
-    else:  # soft prediction
-        # deg=4
-        big_out = np.zeros((numrowstest, nclusters))
-        for i in range(nclusters):
-            print("-- predicting cluster: " + str(i + 1) + " | " + str(nclusters))
-            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
-            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
-            os.chdir(training_master)
-            loaded_modelr.load_model(filename2)  # load data
-            os.chdir(oldfolder)
-            aa = np.reshape(predict_machine(inputtest, loaded_modelr), (-1, 1))
-            aanew = np.multiply(aa, np.reshape(labelDA[:, i], (-1, 1)))
-            big_out[:, i] = np.ravel(aanew)
-        clementanswer = np.reshape(np.sum(big_out, axis=1), (-1, 1), "F")
-        # clementanswer=clfy.inverse_transform(clementanswer)
+    clementanswer = clfy.inverse_transform(clementanswer)
     return clementanswer
-    # print('Finished prediction')
 
 
 def download_file_from_google_drive(id, destination):
@@ -6242,6 +6279,7 @@ def process_step(
     fol,
     fol1,
 ):
+
     os.chdir(fol)
     progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, kk - 1, steppi - 1)
     ShowBar(progressBar)
@@ -6510,7 +6548,13 @@ print("-----------------------------------------------------------------------")
 # pred_type=int(input('Choose: 1=Hard Prediction, 2= Soft Prediction: '))
 pred_type = 1
 
-folderr = "../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION"
+# folderr = '../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION'
+
+folderr = os.path.join(
+    oldfolder, "..", "COMPARE_RESULTS", "PINO", "PEACEMANN_CCR", "HARD_PREDICTION"
+)
+
+
 if not os.path.exists("../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION"):
     os.makedirs("../COMPARE_RESULTS/PINO/PEACEMANN_CCR/HARD_PREDICTION")
 else:
@@ -6522,12 +6566,16 @@ degg = 3
 num_cores = multiprocessing.cpu_count()
 njobs = (num_cores // 4) - 1
 num_cores = njobs
+# num_cores = 2
+# njobs= 2
 print("")
 
 
 fname = "conf/config_PINO.yaml"
 
 
+exper = sio.loadmat("../PACKETS/exper.mat")
+experts = exper["expert"]
 mat = sio.loadmat("../PACKETS/conversions.mat")
 minK = mat["minK"]
 maxK = mat["maxK"]
@@ -6599,7 +6647,7 @@ print("|                 RUN FLOW SIMULATOR                              |")
 print("|-----------------------------------------------------------------|")
 print("")
 start_time_plots1 = time.time()
-Run_simulator(path_out, oldfolder2, string_Jesus, string_Jesus2)
+Run_simulator(path_out, oldfolder2, string_Jesus2)
 elapsed_time_secs = (time.time() - start_time_plots1) / 2
 msg = "Reservoir simulation with FLOW  took: %s secs (Wall clock time)" % timedelta(
     seconds=round(elapsed_time_secs)
@@ -6617,6 +6665,7 @@ check = np.ones((nx, ny, nz), dtype=np.float16)
 pressure = []
 Sgas = []
 Swater = []
+Soil = []
 Time = []
 
 permeability = np.zeros((N, 1, nx, ny, nz))
@@ -6625,21 +6674,13 @@ actnumm = np.zeros((N, 1, nx, ny, nz))
 
 
 folder = path_out
-Pr, sw, sg, tt, _ = Geta_all(
-    folder,
-    nx,
-    ny,
-    nz,
-    effective,
-    oldfolder2,
-    check,
-    string_Jesus,
-    steppi,
-    steppi_indices,
+Pr, sw, sg, so, tt, _ = Geta_all(
+    folder, nx, ny, nz, effective, oldfolder2, check, steppi, steppi_indices
 )
 pressure.append(Pr)
 Sgas.append(sg)
 Swater.append(sw)
+Soil.append(so)
 Time.append(tt)
 
 permeability[0, 0, :, :, :] = np.reshape(perm_ensemble[:, index], (nx, ny, nz), "F")
@@ -6650,7 +6691,7 @@ actnumm[0, 0, :, :, :] = np.reshape(effective, (nx, ny, nz), "F")
 pressure_true = np.stack(pressure, axis=0)
 Sgas_true = np.stack(Sgas, axis=0)
 Swater_true = np.stack(Swater, axis=0)
-Soil_true = 1 - (Sgas_true + Swater_true)
+Soil_true = np.stack(Soil, axis=0)
 Time = np.stack(Time, axis=0)
 
 
@@ -6666,6 +6707,7 @@ _, out_fcn_true = Get_data_FFNN1(
     pressure_true,
     Sgas_true,
     Swater_true,
+    Soil_true,
     permeability,
     Time,
     steppi,
@@ -6770,6 +6812,18 @@ fno_gas = FNOArch(
     decoder_net=decoder3,
 )
 
+decoder5 = ConvFullyConnectedArch([Key("z", size=32)], [Key("oil_sat", size=steppi)])
+fno_oil = FNOArch(
+    [
+        Key("perm", size=1),
+        Key("Phi", size=1),
+        Key("Pini", size=1),
+        Key("Swini", size=1),
+        Key("fault", size=1),
+    ],
+    dimension=3,
+    decoder_net=decoder5,
+)
 
 decoder4 = ConvFullyConnectedArch([Key("z", size=32)], [Key("Y", size=66)])
 fno_peacemann = FNOArch(
@@ -6794,26 +6848,27 @@ print(" Surrogate model learned with PINO for dynamic properties pressure model"
 fno_pressure.load_state_dict(torch.load("fno_forward_model_pressure.0.pth"))
 fno_pressure = fno_pressure.to(device)
 fno_pressure.eval()
-os.chdir(oldfolder)
 
 
-os.chdir("outputs/Forward_problem_PINO/ResSim")
 print(" Surrogate model learned with PINO for dynamic properties- water model")
 fno_water.load_state_dict(torch.load("fno_forward_model_water.0.pth"))
 fno_water = fno_water.to(device)
 fno_water.eval()
-os.chdir(oldfolder)
 
 
-os.chdir("outputs/Forward_problem_PINO/ResSim")
 print(" Surrogate model learned with PINO for dynamic properties - Gas model")
 fno_gas.load_state_dict(torch.load("fno_forward_model_gas.0.pth"))
 fno_gas = fno_gas.to(device)
 fno_gas.eval()
-os.chdir(oldfolder)
 
 
-os.chdir("outputs/Forward_problem_PINO/ResSim")
+print(" Surrogate model learned with PINO for dynamic properties - OIl model")
+fno_oil.load_state_dict(torch.load("fno_forward_model_oil.0.pth"))
+fno_oil = fno_oil.to(device)
+fno_oil.eval()
+# os.chdir(oldfolder)
+
+
 print(" Surrogate model learned with PINO for peacemann well model")
 fno_peacemann.load_state_dict(torch.load("fno_forward_model_peacemann.0.pth"))
 fno_peacemann = fno_peacemann.to(device)
@@ -6859,6 +6914,7 @@ _, ouut_peacemann, pressure, Swater, Sgas, Soil = Forward_model_ensemble(
     fno_pressure,
     fno_water,
     fno_gas,
+    fno_oil,
     device,
     fno_peacemann,
     min_out_fcn,
@@ -6869,6 +6925,8 @@ _, ouut_peacemann, pressure, Swater, Sgas, Soil = Forward_model_ensemble(
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 elapsed_time_secs2 = time.time() - start_time_plots2
 msg = (
@@ -7012,7 +7070,7 @@ Accuracy_water = np.zeros((steppi, 2))
 Accuracy_gas = np.zeros((steppi, 2))
 
 
-results = Parallel(n_jobs=num_cores)(
+results = Parallel(n_jobs=num_cores, backend="loky", verbose=10)(
     delayed(process_step)(
         kk,
         steppi,
@@ -7040,6 +7098,7 @@ results = Parallel(n_jobs=num_cores)(
     )
     for kk in range(steppi)
 )
+os.chdir(oldfolder)
 
 progressBar = "\rPlotting Progress: " + ProgressBar(steppi - 1, steppi - 1, steppi - 1)
 ShowBar(progressBar)
@@ -7322,6 +7381,7 @@ _, ouut_peacemann, pressure, Swater, Sgas, Soil = Forward_model_ensemble(
     fno_pressure,
     fno_water,
     fno_gas,
+    fno_oil,
     device,
     fno_peacemann,
     min_out_fcn,
@@ -7332,6 +7392,8 @@ _, ouut_peacemann, pressure, Swater, Sgas, Soil = Forward_model_ensemble(
     num_cores,
     pred_type,
     oldfolder,
+    degg,
+    experts,
 )
 elapsed_time_secs2 = time.time() - start_time_plots2
 msg = (

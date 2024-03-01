@@ -2,7 +2,6 @@
   "copyright_file": "copyright.txt",
   "dir": "../../",
   "exclude-dir": [
-      "../../build/",
       "../../docs/",
       "../../deps/"
     ],

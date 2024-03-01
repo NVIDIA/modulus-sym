@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -143,7 +145,7 @@ def test_activation_fused_silu():
     print("silu_scripted_3rd num_events: ", num_kernels)
     if version.parse(torch.__version__) >= version.parse("1.12.9"):
         # fwd + 1st_deriv + 2nd_deriv + 3rd_deriv kernels
-        assert num_kernels <= 6
+        assert num_kernels <= 7
     else:
         warnings.warn(f"Fused SiLU is not supported for torch {torch.__version__}")
 

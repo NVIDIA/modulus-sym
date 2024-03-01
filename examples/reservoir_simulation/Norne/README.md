@@ -220,7 +220,7 @@ Using a mixed residual loss formulation, the pressure equation loss ansatz is ex
 V(F,u;T)=\int_{Ω}[(F-T∇u)^2 + (- ∇ ·F-Q)^2 ]
 \end{equation}
 ``` 
-Ω ⊂ R^n  (n = 2, 3). The discretised pressure, water saturation and gas saturation equation loss then becomes.
+$`\Omega \subset \mathbb{R}^n \quad (n = 2, 3)`$. The discretised pressure, water saturation and gas saturation equation loss then become.
 
 ```math
 \begin{equation} 

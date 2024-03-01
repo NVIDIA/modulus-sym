@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +13,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+@Author : Clement Etienam
+"""
 print(".........................IMPORT SOME LIBRARIES.....................")
 import os
 import numpy as np
@@ -59,7 +61,7 @@ import torch
 from torch.utils.data import DataLoader
 
 torch.set_default_dtype(torch.float32)
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, dump, load
 from scipy import interpolate
 import multiprocessing
 import mpslib as mps
@@ -5990,7 +5992,10 @@ def Performance_plot_cost(CCR, Trued, stringg, training_master, oldfolder):
     return CoDoverall, R2overall, CoDview, R2view
 
 
-def run_model(model, inn, ouut, i, training_master, oldfolder):
+def run_model(inn, ouut, i, training_master, oldfolder, nclus):
+    model = xgb.XGBClassifier(
+        n_estimators=4000, objective="multi:softmax", num_class=nclus, max_depth=100
+    )
     model.fit(inn, ouut)
     filename = "Classifier_%d.bin" % i
     os.chdir(training_master)
@@ -6040,7 +6045,9 @@ def endit(i, testt, training_master, oldfolder, pred_type, degg, big):
 
 
 def fit_machine(a0, b0):
-    model = xgb.XGBRegressor(n_estimators=4000)
+    model = xgb.XGBRegressor(
+        n_estimators=400, objective="reg:squarederror", learning_rate=0.1
+    )
     model.fit(a0, b0)
     return model
 
@@ -6051,11 +6058,20 @@ def predict_machine(a0, model):
     return ynew
 
 
+def fit_machine3(a0, b0, deg):
+    polynomial_features = PolynomialFeatures(degree=deg, include_bias=False)
+    x_poly = polynomial_features.fit_transform(a0)
+    model = LinearRegression()
+    model.fit(x_poly, b0)
+    return model, polynomial_features
+
+
+def predict_machine3(a0, deg, model, poly):
+    predicted = model.predict(poly.fit_transform(a0))
+    return predicted
+
+
 def CCR_Machine(inpuutj, outputtj, ii, training_master, oldfolder, degg):
-    # print('Starting CCR')
-    model = xgb.XGBClassifier(n_estimators=5000)
-    # import numpy as np
-    # import pickle
     X = inpuutj
     y = outputtj
     numruth = len(X[0])
@@ -6076,6 +6092,7 @@ def CCR_Machine(inpuutj, outputtj, ii, training_master, oldfolder, degg):
     os.chdir(oldfolder)
     y_traind = numruth * 100 * y
     matrix = np.concatenate((X, y_traind), axis=1)
+    # matrix=y
     k = getoptimumk(matrix, ii, training_master, oldfolder)
     nclusters = k
     # nclusters=3
@@ -6088,47 +6105,79 @@ def CCR_Machine(inpuutj, outputtj, ii, training_master, oldfolder, degg):
     dd = kmeans.labels_
     dd = dd.T
     dd = np.reshape(dd, (-1, 1))
+    dd1 = dd
     # -------------------#---------------------------------#
     inputtrainclass = X
     outputtrainclass = np.reshape(dd, (-1, 1))
-    run_model(model, inputtrainclass, outputtrainclass, ii, training_master, oldfolder)
+    run_model(
+        inputtrainclass, outputtrainclass, ii, training_master, oldfolder, nclusters
+    )
     # print('Split for classifier problem')
+
+    print("Starting Prediction")
+    filename1 = "Classifier_%d.bin" % ii
+    os.chdir(training_master)
+    loaded_model = xgb.Booster({"nthread": 4})  # init model
+    loaded_model.load_model(filename1)  # load data
+    os.chdir(oldfolder)
+
+    labelDA = loaded_model.predict(xgb.DMatrix(X))
+    labelDA = np.reshape((labelDA), (-1, 1), "F")
+
+    # y_train = labelDA
+    y_train = dd1
+
     X_train = X
-    y_train = dd
+
     # -------------------Regression----------------#
     # print('Learn regression of the clusters with different labels from k-means ' )
-
     for i in range(nclusters):
         print("-- Learning cluster: " + str(i + 1) + " | " + str(nclusters))
         label0 = (np.asarray(np.where(y_train == i))).T
-        # model0=xgb.XGBRegressor(n_estimators=2000)
-        # model0=np.empty([1,2],dtype=object)
-
         a0 = X_train[label0[:, 0], :]
         a0 = np.reshape(a0, (-1, numruth), "F")
         b0 = yruth[label0[:, 0], :]
         b0 = np.reshape(b0, (-1, 1), "F")
-        if a0.shape[0] != 0 and b0.shape[0] != 0:
-            # model0.fit(a0, b0,verbose=False)
-            theta = fit_machine(a0, b0)
+        if (a0.shape[0] != 0) and (b0.shape[0] != 0):
+            if experts == 1:  # Polynomial regressor experts
+                theta, con1 = fit_machine3(a0, b0, degg)
+                filename = (
+                    "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+                )
+                filename2 = "polfeat_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+                os.chdir(training_master)
+                # dump(theta, filename)
+                # dump(con1, filename2)
+                with open(filename, "wb") as file:
+                    pickle.dump(theta, file)
 
-        filename = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
-        os.chdir(training_master)
-        # sio.savemat(filename, {'model0':model0})
-        theta.save_model(filename)
-        os.chdir(oldfolder)
+                with open(filename2, "wb") as fileb:
+                    pickle.dump(con1, fileb)
+
+                os.chdir(oldfolder)
+            else:  # XGBoost experts
+                theta = fit_machine(a0, b0)
+                filename = (
+                    "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
+                )
+                os.chdir(training_master)
+                # sio.savemat(filename, {'model0':model0})
+                theta.save_model(filename)
+                os.chdir(oldfolder)
     return nclusters
-    # print('Finished CCR')
 
 
 def PREDICTION_CCR__MACHINE(
-    ii, nclusters, inputtest, numcols, training_master, oldfolder, pred_type, deg
+    ii,
+    nclusters,
+    inputtest,
+    numcols,
+    training_master,
+    oldfolder,
+    pred_type,
+    deg,
+    experts,
 ):
-    # import numpy as np
-    # ii=0
-    # nclusters=2
-    # inputtest=X_test2
-    print("Starting Prediction")
     filename1 = "Classifier_%d.bin" % ii
     filenamex = "clfx_%d.asv" % ii
     filenamey = "clfy_%d.asv" % ii
@@ -6140,20 +6189,34 @@ def PREDICTION_CCR__MACHINE(
     os.chdir(oldfolder)
     inputtest = clfx.transform(inputtest)
     labelDA = loaded_model.predict(xgb.DMatrix(inputtest))
-    if nclusters == 2:
-        labelDAX = 1 - labelDA
-        labelDA = np.reshape(labelDA, (-1, 1))
-        labelDAX = np.reshape(labelDAX, (-1, 1))
-        labelDA = np.concatenate((labelDAX, labelDA), axis=1)
 
     numrowstest = len(inputtest)
     clementanswer = np.zeros((numrowstest, 1))
     # numcols=13
-    if pred_type == 1:  # Hard prediction
-        labelDA = np.argmax(labelDA, axis=-1)
-        labelDA = np.reshape(labelDA, (-1, 1), "F")
-        for i in range(nclusters):
-            print("-- Predicting cluster: " + str(i) + " | " + str(nclusters))
+    labelDA = np.reshape(labelDA, (-1, 1), "F")
+    for i in range(nclusters):
+        print("-- Predicting cluster: " + str(i + 1) + " | " + str(nclusters))
+        if experts == 1:  # Polynomial regressor experts
+            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            filename2b = "polfeat_" + str(ii) + "_Cluster_" + str(i) + ".pkl"
+            os.chdir(training_master)
+
+            with open(filename2, "rb") as file:
+                model0 = pickle.load(file)
+
+            with open(filename2b, "rb") as filex:
+                poly0 = pickle.load(filex)
+
+            os.chdir(oldfolder)
+            labelDA0 = (np.asarray(np.where(labelDA == i))).T
+            #    ##----------------------##------------------------##
+            a00 = inputtest[labelDA0[:, 0], :]
+            a00 = np.reshape(a00, (-1, numcols), "F")
+            if a00.shape[0] != 0:
+                clementanswer[labelDA0[:, 0], :] = np.reshape(
+                    predict_machine3(a00, deg, model0, poly0), (-1, 1)
+                )
+        else:  # XGBoost experts
             loaded_modelr = xgb.Booster({"nthread": 4})  # init model
             filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
 
@@ -6161,6 +6224,7 @@ def PREDICTION_CCR__MACHINE(
             loaded_modelr.load_model(filename2)  # load data
 
             os.chdir(oldfolder)
+
             labelDA0 = (np.asarray(np.where(labelDA == i))).T
             #    ##----------------------##------------------------##
             a00 = inputtest[labelDA0[:, 0], :]
@@ -6170,21 +6234,5 @@ def PREDICTION_CCR__MACHINE(
                     predict_machine(a00, loaded_modelr), (-1, 1)
                 )
 
-        clementanswer = clfy.inverse_transform(clementanswer)
-    else:  # soft prediction
-        # deg=4
-        big_out = np.zeros((numrowstest, nclusters))
-        for i in range(nclusters):
-            print("-- predicting cluster: " + str(i + 1) + " | " + str(nclusters))
-            loaded_modelr = xgb.Booster({"nthread": 4})  # init model
-            filename2 = "Regressor_Machine_" + str(ii) + "_Cluster_" + str(i) + ".bin"
-            os.chdir(training_master)
-            loaded_modelr.load_model(filename2)  # load data
-            os.chdir(oldfolder)
-            aa = np.reshape(predict_machine(inputtest, loaded_modelr), (-1, 1))
-            aanew = np.multiply(aa, np.reshape(labelDA[:, i], (-1, 1)))
-            big_out[:, i] = np.ravel(aanew)
-        clementanswer = np.reshape(np.sum(big_out, axis=1), (-1, 1), "F")
-        # clementanswer=clfy.inverse_transform(clementanswer)
+    clementanswer = clfy.inverse_transform(clementanswer)
     return clementanswer
-    # print('Finished prediction')

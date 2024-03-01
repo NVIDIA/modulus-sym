@@ -1,4 +1,6 @@
-# Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -146,11 +148,15 @@ training:
 loss:
   weights:
     pressure: 40.0
-    pressured: 1e-4
+    pressured: 1e-6
+    oild: 1e-6
     water_sat: 1.0
-    saturationd: 1e-4  
+    oil_sat: 1.0
+    saturationd: 1e-6
+    waterd: 1e-6  
     gas_sat: 20.0
-    saturationdg: 1e-4
+    saturationdg: 1e-6
+    gasd: 1e-6
     Y: 1.0
     peacemanned: 1e-5
 batch_size:

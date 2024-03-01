@@ -1,0 +1,116 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+defaults :
+  - modulus_default
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+
+cuda_graphs: false
+jit: False
+
+
+custom:
+  epochs: 1000
+  pde_weighting: 1
+  data_weighting: 1
+  gradient_method: fdm
+  ntrain: 498
+  nval: 1
+  ntest: 1
+  WELLSPECS:
+
+
+    gas_injector_wells: 
+    - [24, 24, 1, 1000, 500, 0.0, 100, 1,'INJ1']
+
+
+    
+  PROPS:
+    UW: 1.  
+    UO: 2.5  
+    SWI: 0.1 
+    SWR: 0.1 
+    CFW: 0.00001  
+    CFO: 0.00001 
+    CT: 0.00002  
+    S1: 0.2  
+    SG1: 0  
+    SO1: 0.8  
+    P1: 200  
+    PB: 200
+    BW: 1.  
+    BO: 1.2  
+    PATM: 14.6959  
+    isGravity: 1
+    RHOW: 1  
+    RHOO: 1  
+    RHOG: 1
+    nx: 50
+    ny: 50
+    nz: 10 
+    minn: 50
+    maxx: 200
+    minnp: 0.05
+    maxxp: 0.4
+    Pc: 73.8
+    Tc: 30.98
+    a1: 8.99288497e-2
+    a2: -4.94783127e-1
+    a3: 4.77922245e-2
+    a4: 1.03808883e-2
+    a5: -2.82516861e-2
+    a6: 9.49887563e-2
+    a7: 5.20600880e-4
+    a8: -2.93540971e-4
+    a9: -1.77265112e-3
+    a10: -2.51101973e-5
+    a11: 8.93353441e-5
+    a12: 7.88998563e-5
+    a13: -1.66727022e-2
+    a14: 1.39800000e0
+    a15: 2.96000000e-2
+ 
+network_dir : "CCUS"
+
+  
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 1000
+  
+optimizer:
+    weight_decay: 1e-4
+    lr: 1e-3
+
+training:
+  rec_results_freq : 10000
+  max_steps : 100000
+  rec_constraint_freq: 10000 
+
+loss:
+  weights:
+    pressure: 10.0
+    water_sat: 10.0 
+    gas_sat: 20.0
+
+       
+batch_size:
+  grid: 4
+  labelled: 4
+  validation: 1
+  test: 1

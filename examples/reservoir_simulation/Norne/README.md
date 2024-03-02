@@ -502,8 +502,8 @@ cd **work folder**
 ##### Bare Metal
 ```bash
 conda activate MDLO 
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
@@ -515,8 +515,8 @@ conda deactivate
 
 ##### Docker
 ```bash
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
@@ -535,8 +535,8 @@ cd ..
 ##### Bare Metal
 ```bash
 conda activate MDLO
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
@@ -547,8 +547,8 @@ conda deactivate
 
 ##### Docker
 ```bash
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
@@ -564,8 +564,8 @@ cd ..
 ##### Bare Metal
 ```bash
 conda activate MDLO
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src
@@ -576,8 +576,8 @@ conda deactivate
 
 ##### Docker
 ```bash
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
 unzip modulus_reservoir_simulation_norne_supplemental_material.zip
 cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
 cd src

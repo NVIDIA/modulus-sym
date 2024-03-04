@@ -413,6 +413,7 @@ More Troubleshooting can be found at [link](https://docs.nvidia.com/datacenter/c
 ```bash
 # enable shell script execution.
 sudo chmod +x ./scripts/docker/docker-build.sh
+sudo chmod +x set_env.sh
 # Build docker image
 ./scripts/docker/docker-build.sh
 

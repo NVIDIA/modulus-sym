@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # General info about new container / image
-CONTAINER_NAME=modulus/ressim
-CONTAINER_SHORTCUT_NAME=ressim
+CONTAINER_NAME=modulus/ccusressim
+CONTAINER_SHORTCUT_NAME=ccusressim
 SUBDIR_NAME=project
 PORT_HOST=8890
 TAG=latest
@@ -16,15 +16,12 @@ TAG=latest
 docker run \
     -it \
     --rm \
-    --runtime=nvidia \
-    --privileged \
+    --shm-size=1g \
+    --ulimit memlock=-1 \
+    --ulimit stack=67108864 \
+    --runtime nvidia \
     --gpus all \
-    --env="DISPLAY" \
-    --env="QT_X11_NO_MITSHM=1" \
-    --volume="$HOME/.Xauthority:/home/developer/.Xauthority:rw" \
-    --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-    -v /dev:/dev \
     -p ${PORT_HOST}:8888 \
     -v ${PWD}:/workspace/${SUBDIR_NAME} \
     --name ${CONTAINER_SHORTCUT_NAME} \
-    ${CONTAINER_NAME}:${TAG}
+    ${CONTAINER_NAME}:${TAG} bash

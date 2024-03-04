@@ -1,39 +1,31 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Use the NVIDIA Modulus image as the base image
-FROM nvcr.io/nvidia/modulus/modulus:23.09
-
-# Set user and group arguments
-ARG MYUSER=user
-ARG MYUID=1000
-ARG MYGID=1000
-ARG PROCS=8
-
-# Set build type argument and configure environment
-ARG BUILD_TYPE=Release
-ENV DEBIAN_FRONTEND noninteractive
-
-# Install cmake, add user, and other dependencies
-RUN cd /workspace && \
-    if [ -f /usr/bin/yum ]; then yum install -y make wget; fi && \
-    if [ -f /usr/bin/apt-get ]; then apt-get update && apt-get install -y apt-utils make wget vim; fi && \
-    wget -q https://github.com/Kitware/CMake/releases/download/v3.23.0/cmake-3.23.0-linux-x86_64.tar.gz && \
-    tar xf cmake-3.23.0-linux-x86_64.tar.gz && rm cmake-3.23.0-linux-x86_64.tar.gz && \
-    groupadd -f -g ${MYGID} ${MYUSER} && \
-    useradd -rm -u $MYUID -g $MYUSER -p "" $MYUSER && \
-    chown ${MYUSER}:${MYGID} /workspace
+FROM nvcr.io/nvidia/modulus/modulus:24.01
 
 # Clone and build MPSlib
-RUN cd /workspace && git clone https://github.com/ergosimulation/mpslib.git MPSlib && cd MPSlib && make -j ${PROCS}
-
-# Install Flow OPM simulator
-RUN apt-get update && apt-get install -y software-properties-common
-RUN add-apt-repository ppa:opm/ppa && apt-get update
-RUN apt-get install -y opm-simulators
+RUN cd /workspace && git clone https://github.com/ergosimulation/mpslib.git MPSlib && cd MPSlib && make -j 
 
 # Install Python packages
-RUN pip3 install tensorflow==2.9.1 scikit-mps kneed pyDOE FyeldGenerator py-cpuinfo gdown gstools scikit-image ema-pytorch accelerate loky xgboost scikit-learn pandas
+RUN pip3 install tensorflow==2.9.1 xlsxwriter PyWavelets scikit-mps kneed pyDOE FyeldGenerator py-cpuinfo gdown gstools scikit-image ema-pytorch accelerate loky xgboost scikit-learn pandas xlsxwriter openpyxl
 
 # Set the working directory
 WORKDIR /workspace/project
 
-# Define the CMD or ENTRYPOINT as needed for your application
-# CMD /workspace/compile_amgx.sh
+COPY set_env.sh /opt/nvidia/set_env.sh
+
+ENTRYPOINT ["/opt/nvidia/set_env.sh"]

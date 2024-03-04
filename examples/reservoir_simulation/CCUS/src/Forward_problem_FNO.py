@@ -106,7 +106,6 @@ import numpy.linalg
 from scipy.fftpack.realtransforms import idct
 import numpy.ma as ma
 import logging
-from imresize import *
 import warnings
 
 warnings.filterwarnings("ignore")

@@ -46,7 +46,7 @@ such models can help solve real world problems.
 |[FPGA Heatsink](./fpga/)| Multiple Models (including Fourier Feature MLP PINN, SIRENS, etc.) |Advanced|Steady state, Multi-Node|
 |[Limerock Industrial Heatsink](./limerock/)| Fourier Feature MLP PINN |Advanced|Steady state, Multi-Node|
 
-## Geophyscis
+## Geophysics
 
 |Use case|Model|Level|Attributes|
 | --- | --- | --- | --- |

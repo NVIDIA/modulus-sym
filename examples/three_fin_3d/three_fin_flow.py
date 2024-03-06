@@ -167,7 +167,7 @@ def run(cfg: ModulusConfig) -> None:
         nodes=flow_nodes,
         geometry=geo.geo,
         outvar={"continuity": 0, "momentum_x": 0, "momentum_z": 0, "momentum_y": 0},
-        batch_size=cfg.batch_size.InteriorLR,
+        batch_size=cfg.batch_size.InteriorHR,
         lambda_weighting={
             "continuity": Symbol("sdf"),
             "momentum_x": Symbol("sdf"),

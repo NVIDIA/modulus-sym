@@ -447,10 +447,10 @@ cd **work folder**
 ##### Bare Metal
 ```bash
 conda activate MDLO 
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_norne_supplemental_material.zip
-cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_ccus_supplemental_material.zip
+cp -r modulus_reservoir_simulation_ccus_supplemental_material/* .
 cd src
 python Forward_problem_PINO.py
 python Forward_problem_FNO.py
@@ -461,10 +461,10 @@ conda deactivate
 
 ##### Docker
 ```bash
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_norne_supplemental_material.zip
-cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_ccus_supplemental_material.zip
+cp -r modulus_reservoir_simulation_ccus_supplemental_material/* .
 cd src
 python Forward_problem_PINO.py
 python Forward_problem_FNO.py
@@ -482,10 +482,10 @@ cd ..
 ##### Bare Metal
 ```bash
 conda activate MDLO
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_norne_supplemental_material.zip
-cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_ccus_supplemental_material.zip
+cp -r modulus_reservoir_simulation_ccus_supplemental_material/* .
 cd src
 python Compare_FVM_Surrogate.py
 cd ..
@@ -494,10 +494,10 @@ conda deactivate
 
 ##### Docker
 ```bash
-wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/latest/zip -O modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_supplemental_material_latest.zip
-unzip modulus_reservoir_simulation_norne_supplemental_material.zip
-cp -r modulus_reservoir_simulation_norne_supplemental_material/* .
+wget --content-disposition https://api.ngc.nvidia.com/v2/resources/nvidia/modulus/modulus_reservoir_simulation_supplemental_material/versions/0.1/zip -O modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_supplemental_material_0.1.zip
+unzip modulus_reservoir_simulation_ccus_supplemental_material.zip
+cp -r modulus_reservoir_simulation_ccus_supplemental_material/* .
 cd src
 python Compare_FVM_Surrogate.py
 cd ..

@@ -392,7 +392,10 @@ class NavierStokesIncompressible(PDE):
 
         u = Function("u")(*input_variables)
         v = Function("v")(*input_variables)
-        w = Function("w")(*input_variables)
+        if self.dim == 3:
+            w = Function("w")(*input_variables)
+        else:
+            w = Number(0)
 
 
 
@@ -418,7 +421,9 @@ class NavierStokesIncompressible(PDE):
             w.diff(t) +u * w.diff(x) + v * w.diff(y) + w * w.diff(z) + 1 / rho * p.diff(z)
             - nu * (w.diff(x).diff(x) + w.diff(y).diff(y) + w.diff(z).diff(z))
         )
-
+        
+        if self.dim == 2:
+            self.equations.pop("momentum_z")
 
 class Curl(PDE):
     """

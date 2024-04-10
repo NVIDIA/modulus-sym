@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added reservoir examples using GenAI and CCUS workflows.
+
 ### Changed
 
 ### Deprecated
@@ -19,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+- Update OpenCV and Pillow versions to fix security
 
 ### Dependencies
 

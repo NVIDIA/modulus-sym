@@ -83,9 +83,6 @@ class LinearElasticity(PDE):
         input_variables = {"x": x, "y": y, "z": z, "t": t}
         if self.dim == 2:
             input_variables.pop("z")
-        elif self.dim == 1:
-            input_variables.pop("y")
-            input_variables.pop("z")
         if not self.time:
             input_variables.pop("t")
 
@@ -100,22 +97,14 @@ class LinearElasticity(PDE):
             sigma_zz = Function("sigma_zz")(*input_variables)
             sigma_xz = Function("sigma_xz")(*input_variables)
             sigma_yz = Function("sigma_yz")(*input_variables)
-        elif self.dim == 2:
-            w = Number(0)
-            sigma_zz = Number(0)
-            sigma_xz = Number(0)
-            sigma_yz = Number(0)
         else:
-            v = Number(0)
             w = Number(0)
-            sigma_yy = Number(0)
             sigma_zz = Number(0)
-            sigma_xy = Number(0)
             sigma_xz = Number(0)
             sigma_yz = Number(0)
 
         # material properties
-        if lambda_ is None and self.dim != 1:
+        if lambda_ is None:
             if isinstance(nu, str):
                 nu = Function(nu)(*input_variables)
             elif isinstance(nu, (float, int)):
@@ -126,7 +115,7 @@ class LinearElasticity(PDE):
                 E = Number(E)
             lambda_ = nu * E / ((1 + nu) * (1 - 2 * nu))
             mu = E / (2 * (1 + nu))
-        elif lambda_ is not None and self.dim != 1:
+        else:
             if isinstance(lambda_, str):
                 lambda_ = Function(lambda_)(*input_variables)
             elif isinstance(lambda_, (float, int)):
@@ -135,13 +124,6 @@ class LinearElasticity(PDE):
                 mu = Function(mu)(*input_variables)
             elif isinstance(mu, (float, int)):
                 mu = Number(mu)
-        else:
-            if isinstance(E, str):
-                E = Function(E)(*input_variables)
-            elif isinstance(E, (float, int)):
-                E = Number(E)
-            else:
-                raise NotImplementedError("E is needed for dim=1")
         if isinstance(rho, str):
             rho = Function(rho)(*input_variables)
         elif isinstance(rho, (float, int)):
@@ -150,96 +132,72 @@ class LinearElasticity(PDE):
         # set equations
         self.equations = {}
 
-        if self.dim == 2 or self.dim == 3:
-            # Stress equations
-            self.equations["stress_disp_xx"] = (
-                lambda_ * (u.diff(x) + v.diff(y) + w.diff(z))
-                + 2 * mu * u.diff(x)
-                - sigma_xx
-            )
-            self.equations["stress_disp_yy"] = (
-                lambda_ * (u.diff(x) + v.diff(y) + w.diff(z))
-                + 2 * mu * v.diff(y)
-                - sigma_yy
-            )
-            self.equations["stress_disp_zz"] = (
-                lambda_ * (u.diff(x) + v.diff(y) + w.diff(z))
-                + 2 * mu * w.diff(z)
-                - sigma_zz
-            )
-            self.equations["stress_disp_xy"] = mu * (u.diff(y) + v.diff(x)) - sigma_xy
-            self.equations["stress_disp_xz"] = mu * (u.diff(z) + w.diff(x)) - sigma_xz
-            self.equations["stress_disp_yz"] = mu * (v.diff(z) + w.diff(y)) - sigma_yz
+        # Stress equations
+        self.equations["stress_disp_xx"] = (
+            lambda_ * (u.diff(x) + v.diff(y) + w.diff(z))
+            + 2 * mu * u.diff(x)
+            - sigma_xx
+        )
+        self.equations["stress_disp_yy"] = (
+            lambda_ * (u.diff(x) + v.diff(y) + w.diff(z))
+            + 2 * mu * v.diff(y)
+            - sigma_yy
+        )
+        self.equations["stress_disp_zz"] = (
+            lambda_ * (u.diff(x) + v.diff(y) + w.diff(z))
+            + 2 * mu * w.diff(z)
+            - sigma_zz
+        )
+        self.equations["stress_disp_xy"] = mu * (u.diff(y) + v.diff(x)) - sigma_xy
+        self.equations["stress_disp_xz"] = mu * (u.diff(z) + w.diff(x)) - sigma_xz
+        self.equations["stress_disp_yz"] = mu * (v.diff(z) + w.diff(y)) - sigma_yz
 
-            # Equations of equilibrium
-            self.equations["equilibrium_x"] = rho * ((u.diff(t)).diff(t)) - (
-                sigma_xx.diff(x) + sigma_xy.diff(y) + sigma_xz.diff(z)
-            )
-            self.equations["equilibrium_y"] = rho * ((v.diff(t)).diff(t)) - (
-                sigma_xy.diff(x) + sigma_yy.diff(y) + sigma_yz.diff(z)
-            )
-            self.equations["equilibrium_z"] = rho * ((w.diff(t)).diff(t)) - (
-                sigma_xz.diff(x) + sigma_yz.diff(y) + sigma_zz.diff(z)
-            )
+        # Equations of equilibrium
+        self.equations["equilibrium_x"] = rho * ((u.diff(t)).diff(t)) - (
+            sigma_xx.diff(x) + sigma_xy.diff(y) + sigma_xz.diff(z)
+        )
+        self.equations["equilibrium_y"] = rho * ((v.diff(t)).diff(t)) - (
+            sigma_xy.diff(x) + sigma_yy.diff(y) + sigma_yz.diff(z)
+        )
+        self.equations["equilibrium_z"] = rho * ((w.diff(t)).diff(t)) - (
+            sigma_xz.diff(x) + sigma_yz.diff(y) + sigma_zz.diff(z)
+        )
 
-            # Traction equations
-            self.equations["traction_x"] = (
-                normal_x * sigma_xx + normal_y * sigma_xy + normal_z * sigma_xz
-            )
-            self.equations["traction_y"] = (
-                normal_x * sigma_xy + normal_y * sigma_yy + normal_z * sigma_yz
-            )
-            self.equations["traction_z"] = (
-                normal_x * sigma_xz + normal_y * sigma_yz + normal_z * sigma_zz
-            )
+        # Traction equations
+        self.equations["traction_x"] = (
+            normal_x * sigma_xx + normal_y * sigma_xy + normal_z * sigma_xz
+        )
+        self.equations["traction_y"] = (
+            normal_x * sigma_xy + normal_y * sigma_yy + normal_z * sigma_yz
+        )
+        self.equations["traction_z"] = (
+            normal_x * sigma_xz + normal_y * sigma_yz + normal_z * sigma_zz
+        )
 
-            # Navier equations
-            self.equations["navier_x"] = (
-                rho * ((u.diff(t)).diff(t))
-                - (lambda_ + mu) * (u.diff(x) + v.diff(y) + w.diff(z)).diff(x)
-                - mu * ((u.diff(x)).diff(x) + (u.diff(y)).diff(y) + (u.diff(z)).diff(z))
-            )
-            self.equations["navier_y"] = (
-                rho * ((v.diff(t)).diff(t))
-                - (lambda_ + mu) * (u.diff(x) + v.diff(y) + w.diff(z)).diff(y)
-                - mu * ((v.diff(x)).diff(x) + (v.diff(y)).diff(y) + (v.diff(z)).diff(z))
-            )
-            self.equations["navier_z"] = (
-                rho * ((w.diff(t)).diff(t))
-                - (lambda_ + mu) * (u.diff(x) + v.diff(y) + w.diff(z)).diff(z)
-                - mu * ((w.diff(x)).diff(x) + (w.diff(y)).diff(y) + (w.diff(z)).diff(z))
-            )
+        # Navier equations
+        self.equations["navier_x"] = (
+            rho * ((u.diff(t)).diff(t))
+            - (lambda_ + mu) * (u.diff(x) + v.diff(y) + w.diff(z)).diff(x)
+            - mu * ((u.diff(x)).diff(x) + (u.diff(y)).diff(y) + (u.diff(z)).diff(z))
+        )
+        self.equations["navier_y"] = (
+            rho * ((v.diff(t)).diff(t))
+            - (lambda_ + mu) * (u.diff(x) + v.diff(y) + w.diff(z)).diff(y)
+            - mu * ((v.diff(x)).diff(x) + (v.diff(y)).diff(y) + (v.diff(z)).diff(z))
+        )
+        self.equations["navier_z"] = (
+            rho * ((w.diff(t)).diff(t))
+            - (lambda_ + mu) * (u.diff(x) + v.diff(y) + w.diff(z)).diff(z)
+            - mu * ((w.diff(x)).diff(x) + (w.diff(y)).diff(y) + (w.diff(z)).diff(z))
+        )
 
-            if self.dim == 2:
-                self.equations.pop("navier_z")
-                self.equations.pop("stress_disp_zz")
-                self.equations.pop("stress_disp_xz")
-                self.equations.pop("stress_disp_yz")
-                self.equations.pop("equilibrium_z")
-                self.equations.pop("traction_z")
-
-        elif self.dim == 1:
-            # Stress equations
-            self.equations["stress_disp_xx"] = (
-                E * u.diff(x) - sigma_xx
-            )
-
-            # Equations of equilibrium
-            self.equations["equilibrium_x"] = rho * ((u.diff(t)).diff(t)) - (
-                sigma_xx.diff(x)
-            )
-
-            # Traction equations
-            self.equations["traction_x"] = (
-                normal_x * sigma_xx
-            )
-
-            # Navier equations
-            self.equations["navier_x"] = (
-                rho * ((u.diff(t)).diff(t)) - E * ((u.diff(x)).diff(x))
-            )
-        else:
-            raise NotImplementedError("Only dim=1,2,3 is supported!")
+        if self.dim == 2:
+            self.equations.pop("navier_z")
+            self.equations.pop("stress_disp_zz")
+            self.equations.pop("stress_disp_xz")
+            self.equations.pop("stress_disp_yz")
+            self.equations.pop("equilibrium_z")
+            self.equations.pop("traction_z")
 
 
 class LinearElasticityPlaneStress(PDE):

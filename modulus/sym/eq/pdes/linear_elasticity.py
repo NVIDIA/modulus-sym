@@ -230,9 +230,9 @@ class LinearElasticity(PDE):
             # Traction equations
             self.equations["traction_x"] = normal_x * sigma_xx
 
-            # Navier equations
-            self.equations["navier_x"] = rho * ((u.diff(t)).diff(t)) - E * (
-                (u.diff(x)).diff(x)
+            # Navier equations (inhomogeneous E)
+            self.equations["navier_x"] = rho * ((u.diff(t)).diff(t)) - (
+                ((E.diff(x)) * (u.diff(x))) + (E * ((u.diff(x)).diff(x)))
             )
         else:
             raise NotImplementedError("Only dim=1,2,3 is supported!")

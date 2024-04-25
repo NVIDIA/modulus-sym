@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.0a0] - 2024-03-XX
+## [1.6.0a0] - 2024-07-XX
 
 ### Added
 
@@ -23,6 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 ### Dependencies
+
+## [1.5.0] - 2024-04-17
+
+### Added
+
+- Added reservoir examples using GenAI and CCUS workflows.
+
+### Security
+
+- Update OpenCV and Pillow versions to fix security
 
 ## [1.4.0] - 2024-01-25
 

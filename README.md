@@ -1,10 +1,10 @@
+<!-- markdownlint-disable -->
 # Modulus Symbolic (Beta)
 
-<!-- markdownlint-disable -->
+
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![GitHub](https://img.shields.io/github/license/NVIDIA/modulus-sym)](https://github.com/NVIDIA/modulus-sym/blob/master/LICENSE.txt)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-<!-- markdownlint-enable -->
 
 Modulus Symbolic (Modulus Sym) provides pythonic APIs, algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes symbolic APIs for PDEs, domain sampling and PDE-based residuals.  
 
@@ -49,7 +49,7 @@ pip install "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.2
 The recommended Modulus docker image can be pulled from the [NVIDIA Container Registry](https://catalog.ngc.nvidia.com/orgs/nvidia/teams/modulus/containers/modulus):
 
 ```bash
-docker pull nvcr.io/nvidia/modulus/modulus:24.01
+docker pull nvcr.io/nvidia/modulus/modulus:24.04
 ```
 
 ## From Source

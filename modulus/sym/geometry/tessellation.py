@@ -22,19 +22,85 @@ import numpy as np
 import csv
 from stl import mesh as np_mesh
 from sympy import Symbol
+import trimesh
+import threading
+
+
+from mesh_to_sdf import mesh_to_sdf
+
+#from pysdf import SDF
+from copy import copy
+
+
 
 try:
     import pysdf.sdf as pysdf
 except:
-    print(
-        "Error importing pysdf. Make sure 'libsdf.so' is in LD_LIBRARY_PATH and pysdf is installed"
-    )
-    raise
+    print("sdf derivatives are not implemented yet for mesh_to_sdf")
 
 from .geometry import Geometry
 from .parameterization import Parameterization, Bounds, Parameter
 from .curve import Curve
 from modulus.sym.constants import diff_str
+
+
+def calc_sdf_test(store_triangles, points):
+    global worked_thread
+    worked_thread = False
+    try:
+        sdf_field, sdf_derivative = libc.signed_distance_field(
+                        store_triangles, points, include_hit_points=True
+                    )
+    except Exception as e:
+        print(f'pysdf doesn\'t work becayse {e}')
+
+    else:
+        worked_thread = True
+
+
+
+def test_pysdf(triangles, invar, airtight):
+    '''test if PySDF is working and if not uses mesh_to_sdf'''
+
+    if not airtight:
+        return
+
+
+    points = np.stack([invar["x"], invar["y"], invar["z"]], axis=1)
+
+    # normalize triangles and points
+    store_triangles = np.array(triangles, dtype=np.float64)
+    minx, maxx, miny, maxy, minz, maxz = _find_mins_maxs(points)
+    max_dis = max(max((maxx - minx), (maxy - miny)), (maxz - minz))
+    minx, maxx, miny, maxy, minz, maxz = _find_mins_maxs(points)
+    max_dis = max(max((maxx - minx), (maxy - miny)), (maxz - minz))
+    store_triangles = np.array(triangles, dtype=np.float64)
+    store_triangles[:, :, 0] -= minx
+    store_triangles[:, :, 1] -= miny
+    store_triangles[:, :, 2] -= minz
+    store_triangles *= 1 / max_dis
+    store_triangles = store_triangles.flatten()
+    
+
+    points[:, 0] -= minx
+    points[:, 1] -= miny
+    points[:, 2] -= minz
+    points *= 1 / max_dis
+    points = points.astype(np.float64).flatten()
+
+
+    
+  
+    # Create a separate thread to cath C++ execption
+    thread = threading.Thread(target=calc_sdf_test, args=(store_triangles, points))
+
+    # Start the separate thread
+    thread.start()
+
+    # Wait for the separate thread to complete
+    thread.join()
+
+    return worked_thread
 
 
 class Tessellation(Geometry):
@@ -53,6 +119,15 @@ class Tessellation(Geometry):
     """
 
     def __init__(self, mesh, airtight=True, parameterization=Parameterization()):
+
+
+        #test if can import PySdf
+        try:
+            import pysdf.sdf as pysdf
+        except:
+            self.pysdf_avalible = False
+        else:
+            self.pysdf_avalible = True
 
         # make curves
         def _sample(mesh):
@@ -113,11 +188,16 @@ class Tessellation(Geometry):
                 invar["normal_z"] = np.concatenate(invar["normal_z"], axis=0)
                 invar["area"] = np.concatenate(invar["area"], axis=0)
 
+                #test pysdf avalibilyty and if not use 
+                self.pysdf_avalible = test_pysdf(mesh.vectors, invar, airtight)
+
                 # sample from the param ranges
                 params = parameterization.sample(nr_points, quasirandom=quasirandom)
                 return invar, params
 
             return sample
+
+        
 
         curves = [Curve(_sample(mesh), dims=3, parameterization=parameterization)]
 
@@ -128,33 +208,55 @@ class Tessellation(Geometry):
                 points = np.stack([invar["x"], invar["y"], invar["z"]], axis=1)
 
                 # normalize triangles and points
+                store_triangles = np.array(triangles, dtype=np.float64)
                 minx, maxx, miny, maxy, minz, maxz = _find_mins_maxs(points)
                 max_dis = max(max((maxx - minx), (maxy - miny)), (maxz - minz))
-                store_triangles = np.array(triangles, dtype=np.float64)
-                store_triangles[:, :, 0] -= minx
-                store_triangles[:, :, 1] -= miny
-                store_triangles[:, :, 2] -= minz
-                store_triangles *= 1 / max_dis
-                store_triangles = store_triangles.flatten()
-                points[:, 0] -= minx
-                points[:, 1] -= miny
-                points[:, 2] -= minz
-                points *= 1 / max_dis
-                points = points.astype(np.float64).flatten()
+                if self.pysdf_avalible:
+                    minx, maxx, miny, maxy, minz, maxz = _find_mins_maxs(points)
+                    max_dis = max(max((maxx - minx), (maxy - miny)), (maxz - minz))
+                    store_triangles = np.array(triangles, dtype=np.float64)
+                    store_triangles[:, :, 0] -= minx
+                    store_triangles[:, :, 1] -= miny
+                    store_triangles[:, :, 2] -= minz
+                    store_triangles *= 1 / max_dis
+                    store_triangles = store_triangles.flatten()
+                    
+
+                    points[:, 0] -= minx
+                    points[:, 1] -= miny
+                    points[:, 2] -= minz
+                    points *= 1 / max_dis
+                    points = points.astype(np.float64).flatten()
+
+
 
                 # compute sdf values
                 outputs = {}
+                mesh_new = copy(mesh)
+                mesh_new.vectors = store_triangles
                 if airtight:
-                    sdf_field, sdf_derivative = pysdf.signed_distance_field(
-                        store_triangles, points, include_hit_points=True
-                    )
-                    sdf_field = -np.expand_dims(max_dis * sdf_field, axis=1)
+                    if self.pysdf_avalible:
+                        sdf_field, sdf_derivative = pysdf.signed_distance_field(
+                            store_triangles, points, include_hit_points=True
+                        )
+                    else:
+
+                        # compute sdf values with mesh_to_sdf
+                        vertices = mesh_new.vectors.reshape(-1, 3)
+                        faces = np.arange(len(vertices)).reshape(-1, 3)
+
+                        trimesh_new = trimesh.Trimesh(vertices=vertices,
+                        faces=faces)
+                        sdf_field = mesh_to_sdf(trimesh_new, np.squeeze(points),surface_point_method='sample')
+                        sdf_field = -np.expand_dims( sdf_field, axis=1)
                 else:
                     sdf_field = np.zeros_like(invar["x"])
                 outputs["sdf"] = sdf_field
-
+                print('finished testelation')
                 # get sdf derivatives
                 if compute_sdf_derivatives:
+                    if not self.pysdf_avalible:
+                        raise Exception("sdf derivatives only curently work with pysdf")
                     sdf_derivative = -(sdf_derivative - points)
                     sdf_derivative = np.reshape(
                         sdf_derivative, (sdf_derivative.shape[0] // 3, 3)

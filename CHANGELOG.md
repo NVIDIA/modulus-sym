@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
+- Update `timm` dependency
+
 ## [1.5.0] - 2024-04-17
 
 ### Added

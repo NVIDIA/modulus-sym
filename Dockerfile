@@ -68,43 +68,44 @@ FROM builder as pysdf-install
 
 ARG TARGETPLATFORM
 
-COPY . /modulus-sym/
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh /modulus-sym/ && \
-	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh --skip-license --include-subdir --prefix=/root && \
-	cd /root && \
-	wget  https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-aarch64.tar.gz && \
-	tar xvfz cmake-3.24.1-linux-aarch64.tar.gz && \
-	cp -r /modulus-sym/deps/external /external/ && \
-	mkdir /external/pysdf/build/ && \
-	cd /external/pysdf/build && \
-	/root/cmake-3.24.1-linux-aarch64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64 -DCUDA_CUDA_LIBRARY="" && \
-	make -j && \
-	mkdir /external/lib && \
-	cp libpysdf.so /external/lib/ && \
-	cd /external/pysdf && pip install . ; \
-    elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
-	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh /modulus-sym/ && \
-	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh --skip-license --include-subdir --prefix=/root && \
-	cd /root && \
-	wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
-	tar xvfz cmake-3.24.1-linux-x86_64.tar.gz && \
-	cp -r /modulus-sym/deps/external /external/ && \
-	mkdir /external/pysdf/build/ && \
-	cd /external/pysdf/build && \
-	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64 -DCUDA_CUDA_LIBRARY="" && \
-	make -j && \
-	mkdir /external/lib && \
-	cp libpysdf.so /external/lib/ && \
-	cd /external/pysdf && pip install . ; \
-    fi
+RUN echo "Skipping pysdf install"
+# COPY . /modulus-sym/
+# RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+# 	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh /modulus-sym/ && \
+# 	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh --skip-license --include-subdir --prefix=/root && \
+# 	cd /root && \
+# 	wget  https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-aarch64.tar.gz && \
+# 	tar xvfz cmake-3.24.1-linux-aarch64.tar.gz && \
+# 	cp -r /modulus-sym/deps/external /external/ && \
+# 	mkdir /external/pysdf/build/ && \
+# 	cd /external/pysdf/build && \
+# 	/root/cmake-3.24.1-linux-aarch64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64 -DCUDA_CUDA_LIBRARY="" && \
+# 	make -j && \
+# 	mkdir /external/lib && \
+# 	cp libpysdf.so /external/lib/ && \
+# 	cd /external/pysdf && pip install . ; \
+#     elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
+# 	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh /modulus-sym/ && \
+# 	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh --skip-license --include-subdir --prefix=/root && \
+# 	cd /root && \
+# 	wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
+# 	tar xvfz cmake-3.24.1-linux-x86_64.tar.gz && \
+# 	cp -r /modulus-sym/deps/external /external/ && \
+# 	mkdir /external/pysdf/build/ && \
+# 	cd /external/pysdf/build && \
+# 	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64 -DCUDA_CUDA_LIBRARY="" && \
+# 	make -j && \
+# 	mkdir /external/lib && \
+# 	cp libpysdf.so /external/lib/ && \
+# 	cd /external/pysdf && pip install . ; \
+#     fi
 
 # Cleanup
-RUN rm -rf /root/NVIDIA-OptiX-SDK* /root/cmake* /external/pysdf
+# RUN rm -rf /root/NVIDIA-OptiX-SDK* /root/cmake* /external/pysdf
 
-ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
-     NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,video \
-    _CUDA_COMPAT_TIMEOUT=90
+# ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
+#      NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,video \
+#     _CUDA_COMPAT_TIMEOUT=90
 
 # CI Image
 FROM pysdf-install as ci

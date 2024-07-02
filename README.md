@@ -67,36 +67,11 @@ pip install .
 
 ### Source Container
 
-To build release image, you will need to do the below preliminary steps:
-
-Clone this repo, and download the Optix SDK from
-<https://developer.nvidia.com/designworks/optix/downloads/legacy>.
-
-```bash
-git clone https://github.com/NVIDIA/modulus-sym.git
-cd modulus-sym/ && mkdir deps
-```
-
-Currently Modulus supports v7.0. Place the Optix file in the deps directory and make it
-executable. Also clone the pysdf library in the deps folder (NVIDIA Internal)
-
-```bash
-chmod +x deps/NVIDIA-OptiX-SDK-7.0.0-linux64.sh 
-git clone <internal pysdf repo>
-```
-
-Then to build the image, insert next tag and run below:
+To build release image insert next tag and run below:
 
 ```bash
 docker build -t modulus-sym:deploy \
     --build-arg TARGETPLATFORM=linux/amd64 --target deploy -f Dockerfile .
-```
-
-Alternatively, if you want to skip pysdf installation, you can run the following:
-
-```bash
-docker build -t modulus-sym:deploy \
-    --build-arg TARGETPLATFORM=linux/amd64 --target no-pysdf -f Dockerfile .
 ```
 
 Currently only `linux/amd64` and `linux/arm64` platforms are supported.

@@ -45,7 +45,7 @@ exclude_patterns = [
 ]
 
 # Fake imports
-autodoc_mock_imports = ["pysdf", "quadpy", "functorch"]
+autodoc_mock_imports = ["quadpy", "functorch"]
 
 extensions = [
     "recommonmark",

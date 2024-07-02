@@ -22,6 +22,7 @@ from torch.utils.tensorboard import SummaryWriter
 import itertools
 import os
 
+from modulus.sym.amp import DerivScalers
 from modulus.sym.domain.validator import Validator
 from modulus.sym.domain.inferencer import Inferencer
 from modulus.sym.domain.monitor import Monitor
@@ -290,6 +291,20 @@ class Domain:
     def add_ntk(self, ntk: NTK):
         self.ntk = ntk
         self.ntk_weights = {}
+
+    def setup_deriv_scaler(self, deriv_scalers: DerivScalers):
+        """
+        Setup derivative scalers.
+
+        Iterate over all constraints and their graphs to setup derivative scalers.
+        Specifically, we are looking for Derivative node and FuncArch node in the
+        graph to do this setup.
+        We don't use Autocast for inferencers, validators, and monitors, because
+        they only run once per thousands steps and Autocast might lower the evaluated
+        accuracy for the model trained from AMP.
+        """
+        for constraint in self.constraints.values():
+            constraint.model.setup_deriv_scaler(deriv_scalers, name="constraint")
 
     @staticmethod
     def _iterate_name(input_name, default_name, current_names):

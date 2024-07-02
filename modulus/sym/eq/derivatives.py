@@ -20,6 +20,7 @@ import numpy as np
 import logging
 from torch.autograd import Function
 
+from modulus.sym.amp import DerivScaler, DerivScalers, AmpManager, AmpMode
 from modulus.sym.constants import diff
 from modulus.sym.key import Key
 from modulus.sym.node import Node
@@ -81,6 +82,9 @@ class Derivative(torch.nn.Module):
         }
         self.nvtx_str: str = f"Auto-Diff Node: {list(self.gradient_dict.keys())}"
 
+        self.scaler_enabled: bool = False
+        self.deriv_scalers: Dict[str, DerivScaler] = {}
+
     @staticmethod
     def prepare_input(
         input_variables: Dict[str, torch.Tensor], mask: List[str]
@@ -93,12 +97,38 @@ class Derivative(torch.nn.Module):
     ) -> Dict[str, torch.Tensor]:
         return {diff(var_name, name): output_tensors[i] for i, name in enumerate(sizes)}
 
+    # GradScaler and DerivScalers are shared python objects which could/should not
+    # be torchscripted.
+    @torch.jit.ignore
+    def _scale(self, var: torch.Tensor, var_name: str) -> torch.Tensor:
+        return self.deriv_scalers[var_name].scale(var)
+
+    @torch.jit.ignore
+    def _unscale(self, grad: List[torch.Tensor], var_name: str) -> List[torch.Tensor]:
+        return self.deriv_scalers[var_name].unscale_deriv(grad)
+
     def forward(self, input_var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         output_var = {}
         for var_name, grad_sizes in self.gradient_dict.items():
             var = input_var[var_name]
             grad_var = self.prepare_input(input_var, grad_sizes.keys())
-            grad = gradient(var, grad_var)
+
+            if self.scaler_enabled:
+                var = self._scale(var, var_name)
+
+            # Calculate gradient using Autodiff.
+            with torch.cuda.amp.autocast(enabled=False):
+                # Autograd within the autocast region is not recommended and could
+                # have unpredicted behavior. Autocast has thread-local configurations.
+                # Because Autograd runs in a different thread, so it could have
+                # different/default AMP dtype from the one we specified in the forward
+                # thread. Disabling autocast here will allow Autograd to run the same
+                # dtype as the forward pass.
+                grad = gradient(var, grad_var)
+
+            if self.scaler_enabled:
+                grad = self._unscale(grad, var_name)
+
             grad_dict = {
                 name: grad[i] for i, name in enumerate(self.gradient_names[var_name])
             }
@@ -106,7 +136,7 @@ class Derivative(torch.nn.Module):
         return output_var
 
     @classmethod
-    def make_node(cls, inputs: List[Key], derivatives: List[Key], name=None, jit=True):
+    def make_node(cls, inputs: List[Key], derivatives: List[Key], name=None, jit=False):
         derivatives = [d for d in derivatives if d not in inputs]
         bwd_derivative_dict = _derivative_dict(inputs, derivatives, forward=False)
         output_derivatives = []
@@ -127,6 +157,28 @@ class Derivative(torch.nn.Module):
             name=(nvtx_str if name is None else str(name)),
         )
         return derivative_node
+
+    def setup_deriv_scaler(self, deriv_scalers: DerivScalers):
+        self.scaler_enabled = True
+        amp_manager = AmpManager()
+
+        # Set scaler for each term, they could share and map to the same scaler.
+        if amp_manager.mode == AmpMode.PER_ORDER_SCALER:
+            # Use the maximum derivative order for this node. For example if we
+            # have gradient_dict as {"u__x", "nu"} to calculate u__x__x and
+            # nu__x, then order is 2.
+            order = max(len(g.split("__")) for g in self.gradient_dict)
+            for var_name in self.gradient_dict:
+                # use a separate scaler if it is in special_terms
+                if var_name in amp_manager.special_terms:
+                    self.deriv_scalers[var_name] = deriv_scalers.get_scaler(var_name)
+                else:
+                    self.deriv_scalers[var_name] = deriv_scalers.get_scaler(order)
+        elif amp_manager.mode == AmpMode.PER_TERM_SCALER:
+            for var_name in self.gradient_dict:
+                self.deriv_scalers[var_name] = deriv_scalers.get_scaler(var_name)
+        else:
+            raise ValueError(f"amp_manager.mode has wrong type: {amp_manager.mode}")
 
 
 def _derivative_dict(var, derivatives, forward=False):

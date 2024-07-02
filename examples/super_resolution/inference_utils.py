@@ -21,27 +21,22 @@ from typing import Tuple
 from modulus.sym.eq.pdes.navier_stokes import NavierStokes
 
 
-def compute_p_q_r(
-    field: torch.Tensor, dx: float = None
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def compute_velocity_grad(velocity: torch.Tensor, dx: float = None) -> torch.Tensor:
     """
-    Compute the P, Q and R invariants of the velocity gradient tensor.
-    The Q and R are normalized. Uses Finite Difference to compute the gradients.
-
+    Compute the Velocity gradient using finite difference
     Args:
-        field (torch.Tensor): 3D Velocity tensor (N, 3, nx, ny, nz)
+        velocity (torch.Tensor): 3D Velocity tensor (N, 3, nx, ny, nz)
         dx (float, optional): The spacing of the grid. Defaults to None, in which case, the
         spacing is computed asuming bounds of 2*pi.
 
     Returns:
-        Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Computed P, Q and R.
+        torch.Tensor: Computed velocity gradient tensor (N, 9, nx, ny, nz)
     """
-
     if dx == None:
-        dx = 2 * np.pi / field.shape[-1]
+        dx = 2 * np.pi / velocity.shape[-1]
 
-    ops = FlowOps().to(field.device)
-    vel_grad_dict = ops.get_velocity_grad(field, dx, dx, dx)
+    ops = FlowOps().to(velocity.device)
+    vel_grad_dict = ops.get_velocity_grad(velocity, dx, dx, dx)
     u_vel_grad = torch.cat(
         (
             vel_grad_dict["u__x"],
@@ -68,8 +63,27 @@ def compute_p_q_r(
     )
 
     vel_grad_tensor = torch.stack((u_vel_grad, v_vel_grad, w_vel_grad), axis=2)
-    bs = vel_grad_tensor.shape[0]
-    J = vel_grad_tensor.permute(0, 3, 4, 5, 1, 2).reshape(bs, -1, 3, 3)
+
+    return vel_grad_tensor
+
+
+def compute_p_q_r(
+    velocity_grad: torch.Tensor,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """
+    Compute the P, Q and R invariants of the velocity gradient tensor.
+    The Q and R are normalized. Uses Finite Difference to compute the gradients.
+
+    Args:
+        velocity_grad (torch.Tensor): 3D Velocity gradient tensor (N, 9, nx, ny, nz)
+        spacing is computed asuming bounds of 2*pi.
+
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Computed P, Q and R.
+    """
+
+    bs = velocity_grad.shape[0]
+    J = velocity_grad.permute(0, 3, 4, 5, 1, 2).reshape(bs, -1, 3, 3)
     strain = 0.5 * (J + torch.permute(J, (0, 1, 3, 2)))
 
     # Combine the points across all batches
@@ -82,6 +96,7 @@ def compute_p_q_r(
     strain2 = torch.bmm(strain, strain)
 
     # Reshape back to have batch dimension
+    J = J.reshape(bs, -1, 3, 3)
     J2 = J2.reshape(bs, -1, 3, 3)
     J3 = J3.reshape(bs, -1, 3, 3)
     strain2 = strain2.reshape(bs, -1, 3, 3)
@@ -97,7 +112,8 @@ def compute_p_q_r(
     Q = -0.5 * trace_J2
     R = -1 / 3 * trace_J3
 
-    # Normalize Q and R
+    # Normalize P, Q and R
+    P = P / torch.mean(trace_strain2**0.5, dim=-1, keepdim=True)
     Q = Q / torch.mean(trace_strain2, dim=-1, keepdim=True)
     R = R / torch.mean(trace_strain2**1.5, dim=-1, keepdim=True)
 

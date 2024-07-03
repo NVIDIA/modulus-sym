@@ -23,7 +23,10 @@ from torch.utils.cpp_extension import CUDAExtension, BuildExtension
 
 def cuda_extension():
     cuda_version = float(torch.version.cuda)
-    nvcc_args = []
+    nvcc_args = [
+        "-gencode=arch=compute_70,code=sm_70",
+        "-gencode=arch=compute_75,code=sm_75",
+    ]
     if cuda_version >= 11:
         nvcc_args.append("-gencode=arch=compute_80,code=sm_80")
     if cuda_version >= 11.1:

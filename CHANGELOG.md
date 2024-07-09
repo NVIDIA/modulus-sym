@@ -10,8 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added inference notebook for Turbulence Super-resolution example.
-
 ### Changed
 
 ### Deprecated
@@ -27,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.6.0] - 2024-07-XX
 
 ### Added
+
+- Added inference notebook for Turbulence Super-resolution example.
 
 ### Changed
 

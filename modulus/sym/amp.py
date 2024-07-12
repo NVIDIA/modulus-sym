@@ -349,7 +349,8 @@ class DerivScaler(GradScaler):
         DerivScaler based on the GradScaler.
 
         The main difference between DerivScaler and GradScaler is that GradScaler unscales
-        the optimizer's weight gradients, while DerivScaler unscales the derivative tensors.
+        the weight gradients (maintained by the optimizer), while DerivScaler unscales the
+        data gradients (higher order derivatives).
 
         Parameters
         ---
@@ -470,13 +471,13 @@ class DerivScaler(GradScaler):
         """
         Updates the scale factor.
 
-        If self._found_inf > 0, the scale is multiplied by ``backoff_factor`` to reduce it.
-        If ``growth_interval`` unskipped iterations occurred consecutively, the scale is
+        If self._found_inf > 0, the scale is multiplied by ``backoff_factor`` to decrease it.
+        If there are ``growth_interval`` consecutive unskipped iterations, the scale is
         multiplied by ``growth_factor`` to increase it.
         If the scaling factor is less or equal to the recover_threshold, it will grow more
         frequently (using the recover_growth_interval) to avoid decreasing too small and
         stopping the training process.
-        The max_scale defins a upper bound for the scaling factor.
+        The max_scale defines an upper bound for the scaling factor.
 
         .. warning::
             :meth:`update` should only be called at the end of the iteration.

@@ -296,7 +296,7 @@ class Domain:
         """
         Setup derivative scalers.
 
-        Iterate over all constraints and their graphs to setup derivative scalers.
+        Iterate over all constraints and their corresponding graphs to set up derivative scalers.
         Specifically, we are looking for Derivative node and FuncArch node in the
         graph to do this setup.
         We don't use Autocast for inferencers, validators, and monitors, because

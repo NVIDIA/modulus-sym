@@ -118,12 +118,11 @@ class Derivative(torch.nn.Module):
 
             # Calculate gradient using Autodiff.
             with torch.cuda.amp.autocast(enabled=False):
-                # Autograd within the autocast region is not recommended and could
-                # have unpredicted behavior. Autocast has thread-local configurations.
-                # Because Autograd runs in a different thread, so it could have
-                # different/default AMP dtype from the one we specified in the forward
-                # thread. Disabling autocast here will allow Autograd to run the same
-                # dtype as the forward pass.
+                # Autocast needs to be disabled because using Autograd within the autocast region
+                # is not recommended and could have unpredictable behavior. Autocast relies on
+                # thread-local configurations, and since Autograd runs in a different thread, it
+                # could use a different/default AMP dtype than the one specified in the forward thread.
+                # Disabling autocast here will allow Autograd to run the same dtype as the forward pass.
                 grad = gradient(var, grad_var)
 
             if self.scaler_enabled:

@@ -1,28 +1,31 @@
+# Modulus Symbolic
+
 <!-- markdownlint-disable -->
-# Modulus Symbolic (Beta)
-
-
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![GitHub](https://img.shields.io/github/license/NVIDIA/modulus-sym)](https://github.com/NVIDIA/modulus-sym/blob/master/LICENSE.txt)
+[![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![GitHub](https://img.shields.io/github/license/NVIDIA/modulus)](https://github.com/NVIDIA/modulus/blob/master/LICENSE.txt)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+<!-- markdownlint-enable -->
+[**Getting Started**](#getting-started)
+| [**Install guide**](#installation)
+| [**Contributing Guidelines**](#contributing-to-modulus)
+| [**Resources**](#resources)
+| [**Communication**](#communication)
 
-Modulus Symbolic (Modulus Sym) provides pythonic APIs, algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes symbolic APIs for PDEs, domain sampling and PDE-based residuals.  
+## What is Modulus Symbolic?
+Modulus Symbolic (Modulus Sym) repository is part of Modulus SDK and it provides algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes utilities for explicitly integrating symbolic PDEs, domain sampling and computing PDE-based residuals using various finite difference schemes.  
 
 It also provides higher level abstraction to compose a training loop from specification of the geometry, PDEs and constraints like boundary conditions using simple symbolic APIs. 
 Please refer to the [Lid Driven cavity](https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/basics/lid_driven_cavity_flow.html) that illustrates the concept.
 Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
 
+Please refer to the [Modulus SDK](https://github.com/NVIDIA/modulus/blob/main/README.md) to learn more about the full stack.
+
+### Hello world
+
+
 Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html)
 for updating to the latest version.
 
-## Modulus Packages
-
-- [Modulus (Beta)](https://github.com/NVIDIA/modulus): Open-source deep-learning framework for building, training, and fine-tuning deep learning models using state-of-the-art Physics-ML methods.
-- [Modulus Symbolic (Beta)](https://github.com/NVIDIA/modulus-sym): Framework providing pythonic APIs, algorithms and utilities to be used with Modulus core to physics inform model training as well as higher level abstraction for domain experts.
-
-### Domain Specific Packages
-
-- [Earth-2 MIP (Beta)](https://github.com/NVIDIA/earth2mip): Python framework to enable climate researchers and scientists to explore and experiment with AI models for weather and climate.
 
 ## Installation
 
@@ -76,19 +79,33 @@ docker build -t modulus-sym:deploy \
 
 Currently only `linux/amd64` and `linux/arm64` platforms are supported.
 
-## Contributing
+## Contributing to Modulus
 
-For guidance on making a contribution to Modulus, see the [contributing guidelines](https://github.com/NVIDIA/modulus-sym/blob/main/CONTRIBUTING.md).
+Modulus is an open source collaboration and its success is rooted in community
+contribution to further the field of Physics-ML. Thank you for contributing to the
+project so others can build on top of your contribution.
+
+For guidance on contributing to Modulus, please refer to the
+[contributing guidelines](CONTRIBUTING.md).
+
+## Cite Modulus
+
+If Modulus helped your research and you would like to cite it, please refer to the [guidelines](https://github.com/NVIDIA/modulus/blob/main/CITATION.cff)
 
 ## Communication
 
-- Github Discussions: Discuss architectures, implementations, Physics-ML research, etc.
+- Github Discussions: Discuss new architectures, implementations, Physics-ML research, etc.
 - GitHub Issues: Bug reports, feature requests, install issues, etc.
 - Modulus Forum: The [Modulus Forum](https://forums.developer.nvidia.com/c/physics-simulation/modulus-physics-ml-model-framework)
-hosts an audience of new to moderate level users and developers for general chat, online
+hosts an audience of new to moderate-level users and developers for general chat, online
 discussions, collaboration, etc.
+
+## Feedback
+
+Want to suggest some improvements to Modulus? Use our feedback form
+[here](https://docs.google.com/forms/d/e/1FAIpQLSfX4zZ0Lp7MMxzi3xqvzX4IQDdWbkNh5H_a_clzIhclE2oSBQ/viewform?usp=sf_link).
 
 ## License
 
-Modulus Symbolic is provided under the Apache License 2.0, please see
-[LICENSE.txt](./LICENSE.txt) for full license text.
+Modulus is provided under the Apache License 2.0, please see [LICENSE.txt](./LICENSE.txt)
+for full license text.

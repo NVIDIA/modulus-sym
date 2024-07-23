@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools", "setuptools-scm", "torch"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -45,7 +45,7 @@ dynamic = ["version"]
 version = {attr = "modulus.sym.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["modulus.*"] 
+include = ["modulus.*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml"]

@@ -24,7 +24,6 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
-from torch.cuda.amp import GradScaler
 import torch.nn as nn
 import torch.cuda.profiler as profiler
 import torch.distributed as dist
@@ -39,6 +38,7 @@ from typing import Dict, List, Optional
 import logging
 from contextlib import ExitStack
 
+from .amp import DerivScalers, GradScaler, AmpManager
 from .domain.constraint import Constraint
 from .domain import Domain
 from .loss.aggregator import Sum
@@ -70,7 +70,9 @@ class AdamMixin:
 
         for agg_step in range(self.grad_agg_freq):
             with torch.autocast(
-                self.device_amp, enabled=self.amp, dtype=self.amp_dtype
+                self.manager.device.type,
+                enabled=self.amp_manager.enabled,
+                dtype=self.amp_manager.dtype,
             ):
                 if agg_step != 0:  # load new data for subsequent steps
                     self.load_data()
@@ -93,8 +95,28 @@ class AdamMixin:
         return loss, dict(losses)
 
     def adam_apply_gradients(self):
-        self.scaler.step(self.optimizer)
-        self.scaler.update()
+        if not self.deriv_scalers.found_inf:
+            # using unscale_() to enable clipping of unscaled gradients:
+            self.scaler.unscale_(self.optimizer)
+            # gradient clipping
+            torch.nn.utils.clip_grad_norm_(
+                list(self.global_optimizer_model.parameters()),
+                max_norm=self.grad_clip_max_norm,
+            )
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+        else:
+            msg = colored(
+                " deriv_scalers found infs, {scale: %s, growth_tracker: %s, max_scale: %s}",
+                "yellow",
+            )
+            self.log.info(
+                self.step_str + msg,
+                self.deriv_scalers.get_scale(),
+                self.deriv_scalers._get_growth_tracker(),
+                self.deriv_scalers.get_max_scale(),
+            )
+        self.deriv_scalers.update()
 
 
 class AdaHessianMixin:
@@ -103,7 +125,7 @@ class AdaHessianMixin:
     def adahess_compute_gradients(
         self, aggregator: nn.Module, global_optimizer_model: nn.Module, step: int
     ):
-        if self.amp:
+        if self.amp_manager.enabled:
             raise NotImplementedError("AMP is not supported for this optimizer.")
         # With data hessian we need to keep grad graph on back-prop to approximate
         # the hessian with. The suggested PyTorch way is to use torch.grad instead
@@ -148,7 +170,7 @@ class BFGSMixin:
     ):
         # Dummy functioned used entirely just for logging purposes and storing
         # objects for internal BFGS updates. Gradients are not calc'd here for BFGS
-        if self.amp:
+        if self.amp_manager.enabled:
             raise NotImplementedError("AMP is not supported for this optimizer.")
         if self.max_steps != 0:
             self.log.warning("lbfgs optimizer selected. Setting max_steps to 0")
@@ -208,7 +230,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         self.save_network_freq = self.cfg.training.save_network_freq
         self.print_stats_freq = self.cfg.training.print_stats_freq
         self.summary_freq = self.cfg.training.summary_freq
-        self.amp = self.cfg.training.amp
+        self.grad_clip_max_norm = self.cfg.training.grad_clip_max_norm
+        self.monitor_grad_clip = self.cfg.training.monitor_grad_clip
         self.stop_criterion_metric = self.cfg.stop_criterion.metric
         self.stop_criterion_min_delta = self.cfg.stop_criterion.min_delta
         self.stop_criterion_patience = self.cfg.stop_criterion.patience
@@ -227,20 +250,21 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
         # Set distributed manager
         self.manager = DistributedManager()
+        self.amp_manager = AmpManager()
 
         # set device
         self.device = self.manager.device
-        self.device_amp = "cuda" if self.manager.cuda else "cpu"
 
-        # set amp dtype
-        if self.cfg.training.amp_dtype == "bfloat16" or self.device_amp == "cpu":
-            self.amp_dtype = torch.bfloat16
-            if self.device_amp == "cpu" and self.amp:
-                self.log.warning(
-                    "Switching amp_dtype to bfloat16, AutocastCPU only supports bfloat16"
-                )
-        else:
-            self.amp_dtype = torch.float16
+        # force setting amp dtype as bfloat16 if on cpu
+        if (
+            self.amp_manager.enabled
+            and self.amp_manager.dtype == torch.float16
+            and self.manager.device.type == "cpu"
+        ):
+            self.amp_manager.dtype = "bfloat16"
+            self.log.warning(
+                "Switching amp_dtype to bfloat16, AutocastCPU only supports bfloat16"
+            )
 
     def compute_losses(self, step: int):
         raise NotImplementedError("Subclass of Constraint needs to implement this")
@@ -261,6 +285,9 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         raise NotImplementedError("Subclass of Constraint needs to implement this")
 
     def save_checkpoint(self):
+        raise NotImplementedError("Subclass of Constraint needs to implement this")
+
+    def setup_deriv_scaler(self, deriv_scalers: DerivScalers):
         raise NotImplementedError("Subclass of Constraint needs to implement this")
 
     def record_constraints(self):
@@ -337,31 +364,91 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             self.manager.group_rank("data_parallel") if self.manager.distributed else 0
         )
         if data_parallel_rank == 0:
-            rec_monitor_start = time.time()
-            self.monitor_outvar = self.record_monitors(step)
-            self.log.debug(
-                f"{self.step_str} saved monitor results to {self.network_dir}"
-            )
+            if self.has_monitors:
+                rec_monitor_start = time.time()
+                self.monitor_outvar = self.record_monitors(step)
+                self.log.debug(
+                    f"{self.step_str} saved monitor results to {self.network_dir}"
+                )
 
             # write parameter histograms to tensorboard
-            if self.summary_histograms:
+            if self.summary_histograms != "off":
                 for (
                     name,
                     parameter,
                 ) in self.global_optimizer_model.named_parameters():
                     name = name.split(".")
                     name = ".".join(name[:-1]) + "/" + ".".join(name[-1:])
-                    self.writer.add_histogram(name, parameter.detach().flatten(), step)
-                    if parameter.grad is not None:
+
+                    if self.summary_histograms == "linear":
                         self.writer.add_histogram(
-                            name + "_gradient",
-                            parameter.grad.detach().flatten(),
+                            name, parameter.detach().flatten(), step
+                        )
+                        if parameter.grad is not None:
+                            # skip if grads contain infs/NaNs
+                            if torch.any(
+                                torch.logical_not(torch.isfinite(parameter.grad))
+                            ).item():
+                                continue
+                            self.writer.add_histogram(
+                                name + "_gradient",
+                                parameter.grad.detach().flatten(),
+                                step,
+                            )
+                    elif self.summary_histograms == "log2":
+                        self.writer.add_histogram(
+                            name + "_log2",
+                            (parameter.detach().flatten().abs() + 1e-30).log2(),
                             step,
                         )
+                        if parameter.grad is not None:
+                            # skip if grads contain infs/NaNs
+                            if torch.any(
+                                torch.logical_not(torch.isfinite(parameter.grad))
+                            ).item():
+                                continue
+                            self.writer.add_histogram(
+                                name + "_gradient_log2",
+                                (
+                                    parameter.grad.detach().flatten().abs() + 1e-30
+                                ).log2(),
+                                step,
+                            )
 
-            self.log.info(
-                f"{self.step_str} record monitor time: {time.time()-rec_monitor_start:10.3e}s"
-            )
+            # monitoring total gradient norm and max gradient
+            if self.monitor_grad_clip:
+                parameters = [
+                    p
+                    for p in self.global_optimizer_model.parameters()
+                    if p.grad is not None
+                ]
+                max_grad = torch.max(
+                    torch.stack([p.grad.detach().max() for p in parameters])
+                )
+                # total_norm: code from torch.nn.utils.clip_grad_norm_
+                # https://github.com/pytorch/pytorch/blob/da764f92244985b6b9dacd68e65a4ed9b1de2e78/torch/nn/utils/clip_grad.py#L42
+                total_norm = torch.norm(
+                    torch.stack(
+                        [
+                            torch.norm(p.grad.detach(), 2.0).to(
+                                parameters[0].grad.device
+                            )
+                            for p in parameters
+                        ]
+                    ),
+                    2.0,
+                )
+                self.writer.add_scalar(
+                    "Monitors/grad_max", max_grad.item(), step, new_style=True
+                )
+                self.writer.add_scalar(
+                    "Monitors/grad_norm", total_norm.item(), step, new_style=True
+                )
+
+            if self.has_monitors:
+                self.log.info(
+                    f"{self.step_str} record monitor time: {time.time()-rec_monitor_start:10.3e}s"
+                )
 
     # check if stopping criterion is met
     def _check_stopping_criterion(self, loss, losses, step):
@@ -438,7 +525,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 )
 
             self.aggregator = torch.jit.script(self.aggregator)
-            if self.amp:
+            if self.amp_manager.enabled:
                 torch._C._jit_set_autocast_mode(True)
 
         if len(list(self.aggregator.parameters())) > 0:
@@ -447,10 +534,25 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 {"params": list(self.aggregator.parameters())}
             )
 
-        # create grad scalar for AMP
-        # grad scaler is only available for float16 dtype on cuda device
-        enable_scaler = self.amp and self.amp_dtype == torch.float16
-        self.scaler = GradScaler(enabled=enable_scaler)
+        # AMP scalars and deriv_scalers are only enabled when amp dtype is float16
+        scaler_enabled = self.amp_manager.scaler_enabled
+        self.scaler = GradScaler(
+            enabled=scaler_enabled,
+            growth_interval=1000,
+            recover_threshold=2**7,
+            recover_growth_interval=100,
+            growth_factor=2.0,
+        )
+        self.deriv_scalers = DerivScalers(
+            enabled=scaler_enabled,
+            init_scale=2**0,
+            max_scale=self.amp_manager.default_max_scale,  # default as 1
+            growth_interval=1000,
+            recover_threshold=2**-6,
+            recover_growth_interval=100,
+        )
+        if scaler_enabled:
+            self.setup_deriv_scaler(self.deriv_scalers)
 
         # make stop criterion
         if self.stop_criterion_metric is not None:
@@ -538,6 +640,8 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
 
                 torch.cuda.nvtx.range_push("Training iteration")
 
+                self.step_str = f"[step: {step:10d}]"
+
                 if self.cfg.cuda_graphs:
                     # If cuda graphs statically load it into defined allocations
                     self.load_data(static=True)
@@ -560,12 +664,13 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     # take scheduler step
                     self.scheduler.step()
 
-                # check for nans in loss
-                if torch.isnan(loss):
-                    self.log.error("loss went to Nans")
-                    break
-
-                self.step_str = f"[step: {step:10d}]"
+                # check for infs/NaNs in loss
+                if not torch.isfinite(loss):
+                    if self.amp_manager.enabled:
+                        self.log.warn(f"{self.step_str} loss went to INFs/NaNs")
+                    else:
+                        self.log.error(f"{self.step_str} loss went to INFs/NaNs")
+                        break
 
                 # write train loss / learning rate tensorboard summaries
                 if step % self.summary_freq == 0:
@@ -608,6 +713,32 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                                 new_style=True,
                             )
 
+                        # track scaler and deriv_scalers states
+                        if self.scaler.is_enabled():
+                            self.log.info(
+                                self.step_str
+                                + " scaler {scale: %s, growth_tracker: %s} | "
+                                "deriv_scalers {scale: %s, growth_tracker: %s, max_scale: %s}",
+                                self.scaler.get_scale(),
+                                self.scaler._get_growth_tracker(),
+                                self.deriv_scalers.get_scale(),
+                                self.deriv_scalers._get_growth_tracker(),
+                                self.deriv_scalers.get_max_scale(),
+                            )
+                            self.writer.add_scalar(
+                                "AMP/grad_scaler_log2",
+                                np.log2(self.scaler.get_scale()),
+                                step,
+                                new_style=True,
+                            )
+                            for key, scale in self.deriv_scalers.get_scale().items():
+                                self.writer.add_scalar(
+                                    f"AMP/deriv_scaler_{key}_log2",
+                                    np.log2(scale),
+                                    step,
+                                    new_style=True,
+                                )
+
                     if self.manager.distributed:
                         barrier_flag = True
 
@@ -628,9 +759,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                     barrier_flag = True
                     self._record_inferencers(step)
 
-                if (step % self.cfg.training.rec_monitor_freq == 0) and (
-                    self.has_monitors
-                ):
+                if step % self.cfg.training.rec_monitor_freq == 0:
                     barrier_flag = True
                     self._record_monitors(step)
 
@@ -846,6 +975,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         aggregator: nn.Module,
         scheduler: _LRScheduler,
         scaler: GradScaler,
+        deriv_scalers: DerivScalers,
         log: logging.Logger,
         manager: DistributedManager,
         device: Optional[torch.device] = None,
@@ -861,6 +991,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
             aggregator,
             scheduler,
             scaler,
+            deriv_scalers,
             log,
             device,
         )
@@ -883,6 +1014,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         aggregator: nn.Module,
         scheduler: _LRScheduler,
         scaler: GradScaler,
+        deriv_scalers: DerivScalers,
         log: logging.Logger,
         device: torch.device,
     ):
@@ -903,6 +1035,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 aggregator.load_state_dict(checkpoint["aggregator_state_dict"])
                 scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
                 scaler.load_state_dict(checkpoint["scaler_state_dict"])
+                deriv_scalers.load_state_dict(checkpoint["deriv_scalers_state_dict"])
                 step = checkpoint["step"]
                 success = colored("Success loading optimizer: ", "green")
                 log.info(success + add_hydra_run_path(optimizer_checkpoint_file))
@@ -1013,6 +1146,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
         aggregator: nn.Module,
         scheduler: _LRScheduler,
         scaler: GradScaler,
+        deriv_scalers: DerivScalers,
         step: int,
     ):
         # Get model parallel rank so all processes in the first model parallel group
@@ -1035,6 +1169,7 @@ class Trainer(AdamMixin, AdaHessianMixin, BFGSMixin):
                 "aggregator_state_dict": aggregator.state_dict(),
                 "scheduler_state_dict": scheduler.state_dict(),
                 "scaler_state_dict": scaler.state_dict(),
+                "deriv_scalers_state_dict": deriv_scalers.state_dict(),
             },
             network_dir + f"/optim_checkpoint.{model_parallel_rank}.pth",
         )

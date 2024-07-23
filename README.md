@@ -26,7 +26,22 @@ Please refer to the [Modulus SDK](https://github.com/NVIDIA/modulus/blob/main/RE
 Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html)
 for updating to the latest version.
 
+## Getting started
 
+The following resources will help you in learning how to use Modulus. The best way is to
+start with a reference sample and then update it for your own use case.
+
+- [Using Modulus Sym with your PyTorch model](?)
+- [Using Modulus Sym to construct computational graph](https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/basics/modulus_overview.html) 
+- [Reference Samples](https://github.com/NVIDIA/modulus-sym/blob/main/examples/README.md)
+- [User guide Documentation](https://docs.nvidia.com/deeplearning/modulus/modulus-sym/index.html)
+
+## Resources
+
+- [Getting started Webinar](https://www.nvidia.com/en-us/on-demand/session/gtc24-dlit61460/?playlistId=playList-bd07f4dc-1397-4783-a959-65cec79aa985)
+- [AI4Science Modulus Bootcamp](https://github.com/openhackathons-org/End-to-End-AI-for-Science)
+
+  
 ## Installation
 
 ### PyPi

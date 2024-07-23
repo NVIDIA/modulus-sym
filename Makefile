@@ -1,6 +1,6 @@
 install:
 	pip install --upgrade pip && \
-		pip install -e .
+		pip install -e . --no-build-isolation
 
 setup-ci:
 	pip install pre-commit && \
@@ -17,7 +17,7 @@ lint:
 	# pre-commit run markdownlint -a
 	echo "Lint CI stage not currently implemented"
 
-license: 
+license:
 	pre-commit run license -a
 
 doctest:
@@ -27,7 +27,7 @@ doctest:
 	# 	--doctest-modules modulus/ --ignore-glob=*internal*
 	echo "Doctest CI stage not currently implemented"
 
-pytest: 
+pytest:
 	coverage run \
 		--rcfile='test/coverage.pytest.rc' \
 		-m pytest test/
@@ -60,4 +60,3 @@ container-ci:
 
 container-docs:
 	docker build -t modulus-sym:docs --build-arg TARGETPLATFORM=${TARGETPLATFORM} --target docs -f Dockerfile .
-

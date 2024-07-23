@@ -23,6 +23,7 @@ from typing import List, Union, Tuple, Callable
 from omegaconf import DictConfig
 import warnings
 
+from modulus.sym.amp import DerivScalers
 from modulus.sym.trainer import Trainer
 from modulus.sym.domain import Domain
 from modulus.sym.loss.aggregator import NTK
@@ -85,6 +86,7 @@ class Solver(Trainer):
             self.aggregator,
             self.scheduler,
             self.scaler,
+            self.deriv_scalers,
             self.log,
             self.manager,
             self.device,
@@ -97,6 +99,7 @@ class Solver(Trainer):
             self.aggregator,
             self.scheduler,
             self.scaler,
+            self.deriv_scalers,
             self.log,
             self.device,
         )
@@ -125,6 +128,7 @@ class Solver(Trainer):
             self.aggregator,
             self.scheduler,
             self.scaler,
+            self.deriv_scalers,
             step,
         )
 
@@ -169,6 +173,9 @@ class Solver(Trainer):
 
     def get_num_losses(self):
         return self.domain.get_num_losses()
+
+    def setup_deriv_scaler(self, deriv_scalers: DerivScalers):
+        self.domain.setup_deriv_scaler(deriv_scalers)
 
     def solve(self, sigterm_handler=None):
         if self.cfg.run_mode == "train":

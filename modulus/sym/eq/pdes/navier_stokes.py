@@ -19,6 +19,7 @@
 
 from sympy import Symbol, Function, Number
 
+from modulus.sym.amp import AmpManager
 from modulus.sym.eq.pde import PDE
 from modulus.sym.node import Node
 
@@ -99,6 +100,12 @@ class NavierStokes(PDE):
         # kinematic viscosity
         if isinstance(nu, str):
             nu = Function(nu)(*input_variables)
+            # When AMP scalers are enabled, and we are using zero equation
+            # models with explicit nu expressions, we have to use a separate
+            # derivative scaler for nu because the dynamic range of nu is
+            # much smaller than the other second-order derivatives.
+            if AmpManager().scaler_enabled:
+                AmpManager().register_special_term(nu, max_scale=2**20)
         elif isinstance(nu, (float, int)):
             nu = Number(nu)
 

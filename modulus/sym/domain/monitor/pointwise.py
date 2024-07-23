@@ -44,11 +44,23 @@ class PointwiseMonitor(Monitor):
         to `metrics` will be used to label the metrics in tensorboard/csv outputs.
     nodes : List[Node]
         List of Modulus Nodes to unroll graph with.
+    summary_histograms : str = "off"
+        The histograms of all outputs and intermediate results will be monitored
+        and added to tensorboard. Choices are: "off", "linear" and "log2",
+        default is "off".
     requires_grad : bool = False
         If automatic differentiation is needed for computing results.
     """
 
-    def __init__(self, invar, output_names, metrics, nodes, requires_grad=False):
+    def __init__(
+        self,
+        invar,
+        output_names,
+        metrics,
+        nodes,
+        summary_histograms="off",
+        requires_grad=False,
+    ):
 
         # construct model from nodes
         self.requires_grad = requires_grad
@@ -65,6 +77,21 @@ class PointwiseMonitor(Monitor):
 
         # set invar
         self.invar = Constraint._set_device(invar, device=self.device)
+
+        # set summary_histograms
+        supported_histogram_options = set(
+            [
+                "off",
+                "linear",
+                "log2",
+            ]
+        )
+        if summary_histograms not in supported_histogram_options:
+            raise ValueError(
+                f"summary_histograms should be one of {supported_histogram_options}, "
+                f"got {summary_histograms}"
+            )
+        self.summary_histograms = summary_histograms
 
     def save_results(self, name, writer, step, data_dir):
 
@@ -103,4 +130,16 @@ class PointwiseMonitor(Monitor):
                     )
                 }
             dict_to_csv(self.monitor_outvar_store[k], filename=data_dir + k + ".csv")
+
+        # summary_histograms of all outputs and intermediate results
+        if self.summary_histograms != "off":
+            for k, v in invar.items():
+                hname = f"histograms/{name}/{k}"
+                value = v.detach().flatten()
+                if self.summary_histograms == "log2":
+                    hname += "_log2"
+                    value = (value.abs() + 1e-30).log2()
+
+                writer.add_histogram(hname, value, step)
+
         return metrics

@@ -22,6 +22,8 @@ import logging
 import copy
 import pprint
 
+import matplotlib.pyplot
+
 from termcolor import colored
 from pathlib import Path
 from omegaconf import DictConfig, OmegaConf, MISSING
@@ -35,6 +37,7 @@ from modulus.sym.models.arch import Arch
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.models.utils import ModulusModels
 
+from .amp import register_amp_configs
 from .arch import ModelConf
 from .config import register_modulus_configs, ModulusConfig
 from .hydra import register_hydra_configs
@@ -51,6 +54,8 @@ from .graph import register_graph_configs
 
 
 logger = logging.getLogger(__name__)
+# disable matplotlib logging in debug mode
+matplotlib.pyplot.set_loglevel("info")
 
 
 def main(config_path: str, config_name: str = "config"):
@@ -74,6 +79,7 @@ def main(config_path: str, config_name: str = "config"):
             register_scheduler_configs()
             register_training_configs()
             register_modulus_configs()
+            register_amp_configs()
             register_graph_configs()
 
             # Set number of intraop torch CPU threads

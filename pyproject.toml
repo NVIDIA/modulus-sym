@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools", "setuptools-scm", "torch"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -9,7 +9,7 @@ authors = [
 ]
 description = "A deep learning framework for AI-driven multi-physics systems"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "Apache 2.0"}
 dependencies = [
     "nvidia-modulus>=0.2.0",
@@ -45,7 +45,7 @@ dynamic = ["version"]
 version = {attr = "modulus.sym.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["modulus.*"] 
+include = ["modulus.*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml"]

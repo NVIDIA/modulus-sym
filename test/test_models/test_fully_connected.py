@@ -14,12 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from modulus.sym.models.fully_connected import FullyConnectedArch
-import torch
-import numpy as np
 from pathlib import Path
-from modulus.sym.key import Key
+
+import numpy as np
 import pytest
+import torch
+
+from modulus.sym.key import Key
+from modulus.sym.models.fully_connected import FullyConnectedArch
+
 from .model_test_utils import validate_func_arch_net
 
 dir_path = Path(__file__).parent

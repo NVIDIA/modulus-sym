@@ -24,6 +24,7 @@ import ast
 from termcolor import colored
 from inspect import signature, _empty
 from typing import Optional, Callable, List, Dict, Union, Tuple
+from modulus.sym.amp import DerivScaler, DerivScalers, AmpManager
 from modulus.sym.constants import NO_OP_SCALE
 from modulus.sym.key import Key
 from modulus.sym.node import Node
@@ -637,6 +638,9 @@ class FuncArch(nn.Module):
                 f"{self.max_order}th order derivative"
             )
 
+        self.scaler_enabled: bool = False
+        self.deriv_scalers: Dict[int, DerivScaler] = {}
+
     def forward(self, in_vars: Dict[str, Tensor]) -> Dict[str, Tensor]:
         x = self.arch.concat_input(
             in_vars,
@@ -651,9 +655,12 @@ class FuncArch(nn.Module):
             hessian = None
         elif self.max_order == 1:
             pred, jacobian = self._tensor_forward(x)
+            (jacobian,) = self._unscale([jacobian], 1)
             hessian = None
         elif self.max_order == 2:
             pred, jacobian, hessian = self._tensor_forward(x)
+            jacobian, hessian = self._unscale([jacobian, hessian], 1)
+            (hessian,) = self._unscale([hessian], 2)
         else:
             raise ValueError(
                 "FuncArch currently does not support "
@@ -779,7 +786,7 @@ class FuncArch(nn.Module):
             return vjpfunc(v)[0], pred
 
         def get_jacobian(x):
-            I_N = self.I_N
+            I_N = self._scale(self.I_N, 1)
             jacobian, pred = torch.vmap(
                 torch.vmap(jacobian_func, in_dims=(None, 0)), in_dims=(0, None)
             )(x, I_N)
@@ -804,8 +811,8 @@ class FuncArch(nn.Module):
             return hessian, jacobian, pred
 
         def get_hessian(x):
-            I_N1 = self.I_N1  # used to slice hessian rows
-            I_N2 = self.I_N2  # used to slice hessian columns
+            I_N1 = self._scale(self.I_N1, 1)  # used to slice hessian rows
+            I_N2 = self._scale(self.I_N2, 2)  # used to slice hessian columns
             hessian, jacobian, pred = torch.vmap(
                 torch.vmap(
                     torch.vmap(hessian_func, in_dims=(None, None, 0)),  # I_N2
@@ -818,6 +825,31 @@ class FuncArch(nn.Module):
             return pred, jacobian, hessian
 
         return get_hessian
+
+    @torch.jit.ignore
+    def _scale(self, I_N: torch.Tensor, order: int) -> torch.Tensor:
+        """
+        It is a no-op if amp is not enabled.
+        """
+        if self.scaler_enabled:
+            return self.deriv_scalers[order].scale(I_N)
+        else:
+            return I_N
+
+    @torch.jit.ignore
+    def _unscale(self, grad: List[torch.Tensor], order: int) -> List[torch.Tensor]:
+        """
+        It is a no-op if amp is not enabled.
+        """
+        if self.scaler_enabled:
+            return self.deriv_scalers[order].unscale_deriv(grad)
+        else:
+            return grad
+
+    def setup_deriv_scaler(self, deriv_scalers: DerivScalers):
+        self.scaler_enabled = True
+        self.deriv_scalers[1] = deriv_scalers.get_scaler("func_1")
+        self.deriv_scalers[2] = deriv_scalers.get_scaler("func_2")
 
     @staticmethod
     def prepare_jacobian(

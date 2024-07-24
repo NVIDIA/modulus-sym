@@ -9,6 +9,6 @@ gstools
 scikit-image
 ema-pytorch
 accelerate
-tensorflow==2.9.1
+tensorflow
 joblib
 pyvista

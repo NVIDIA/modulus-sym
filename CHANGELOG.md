@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- AMP for derivatives.
+
 ### Changed
 
 ### Deprecated
@@ -22,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
-## [1.6.0] - 2024-07-XX
+## [1.6.0] - 2024-07-23
 
 ### Added
 
@@ -32,17 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Warp based backed for STL geometry handling
 
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ### Dependencies
 
 - Update `timm` dependency
+- Update minimum python version to 3.10
 
 ## [1.5.0] - 2024-04-17
 

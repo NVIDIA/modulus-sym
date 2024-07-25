@@ -47,7 +47,7 @@ class ModulusConfig:
     network_dir: str = "."
     initialization_network_dir: str = ""
     save_filetypes: str = "vtk"
-    summary_histograms: bool = False
+    summary_histograms: str = "off"
     jit: bool = version.parse(torch.__version__) >= version.parse(JIT_PYTORCH_VERSION)
     jit_use_nvfuser: bool = True
     jit_arch_mode: str = "only_activation"
@@ -83,6 +83,7 @@ class ModulusConfig:
 
 default_defaults = [
     {"training": "default_training"},
+    {"amp": "default"},
     {"graph": "default"},
     {"stop_criterion": "default_stop_criterion"},
     {"profiler": "nvtx"},
@@ -103,6 +104,7 @@ class DefaultModulusConfig(ModulusConfig):
 # Modulus config for debugging
 debug_defaults = [
     {"training": "default_training"},
+    {"amp": "default"},
     {"graph": "default"},
     {"stop_criterion": "default_stop_criterion"},
     {"profiler": "nvtx"},
@@ -124,6 +126,7 @@ class DebugModulusConfig(ModulusConfig):
 # Modulus config with experimental features (use caution)
 experimental_defaults = [
     {"training": "default_training"},
+    {"amp": "default"},
     {"graph": "default"},
     {"stop_criterion": "default_stop_criterion"},
     {"profiler": "nvtx"},

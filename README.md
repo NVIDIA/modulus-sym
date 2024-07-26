@@ -5,7 +5,7 @@
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![GitHub](https://img.shields.io/github/license/NVIDIA/modulus-sym)](https://github.com/NVIDIA/modulus-sym/blob/master/LICENSE.txt)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
+ 
 Modulus Symbolic (Modulus Sym) provides pythonic APIs, algorithms and utilities to be used with Modulus core, to explicitly physics inform the model training. This includes symbolic APIs for PDEs, domain sampling and PDE-based residuals. 
 
 It also provides higher level abstraction to compose a training loop from specification of the geometry, PDEs and constraints like boundary conditions using simple symbolic APIs. 

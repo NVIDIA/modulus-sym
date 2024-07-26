@@ -4,8 +4,6 @@ Table of Contents
 
 * Getting Started
 
-    * :ref:`Installation`
-    * :ref:`Release Notes`
     * :ref:`Table of Contents`
 
 * Learn the Basics

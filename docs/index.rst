@@ -1,5 +1,5 @@
 ********************************************
-Modulus Sym User Guide
+NVIDIA Modulus Sym (Latest Release)
 ********************************************
 ..
    TODO: add conf.py and root_doc
@@ -42,8 +42,6 @@ Check out the following tutorials to get started.
    :name: Getting Started
    :hidden:
 
-   Installation <user_guide/getting_started/installation.rst>
-   Release Notes <user_guide/getting_started/release_notes.rst>
    Table of Contents <user_guide/getting_started/toc.rst>
 
 .. toctree::
@@ -54,7 +52,6 @@ Check out the following tutorials to get started.
 
    Overview <user_guide/basics/modulus_overview.rst>
    Introductory Example <user_guide/basics/lid_driven_cavity_flow.rst>
-   Jupyter Notebook <user_guide/notebook/notebook.ipynb>
 
 .. toctree::
    :maxdepth: 1

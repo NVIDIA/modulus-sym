@@ -80,7 +80,7 @@ FROM builder as deploy
 
 # Install modulus sym
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install --no-cache-dir . --no-deps
+RUN cd /modulus-sym/ && pip install --no-cache-dir . --no-deps --no-build-isolation
 RUN rm -rf /modulus-sym/
 
 # Set Git Hash as a environment variable

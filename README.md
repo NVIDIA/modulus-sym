@@ -13,7 +13,7 @@ Please refer to the [Lid Driven cavity](https://docs.nvidia.com/deeplearning/mod
 Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
 
 Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html)
-for updating to the latest version.
+for updating to the latest version. 
 
 ## Modulus Packages
 

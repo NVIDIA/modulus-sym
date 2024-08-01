@@ -10,7 +10,7 @@ Modulus Symbolic (Modulus Sym) provides pythonic APIs, algorithms and utilities 
 It also provides higher level abstraction to compose a training loop from specification of the geometry, PDEs and constraints like boundary conditions using simple symbolic APIs. 
 Please refer to the [Lid Driven cavity](https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/basics/lid_driven_cavity_flow.html) that illustrates the concept.
 Additional information can be found in the [Modulus documentation](https://docs.nvidia.com/modulus/index.html#sym).
-
+ 
 Users of Modulus versions older than 23.05 can refer to the [migration guide](https://docs.nvidia.com/deeplearning/modulus/migration-guide/index.html)
 for updating to the latest version.
  

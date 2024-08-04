@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+defaults:
+  - modulus_default
+  - arch: modified_fourier
+  - scheduler: tf_exponential_lr
+  - optimizer: adam
+  - loss: sum
+  - _self_
+scheduler:
+  decay_rate: 0.95
+  decay_steps: 4000
+
+hydra:
+  run:
+    dir: '${oc.env:BOX_OUTPUT_PATH, "."}/${now:%Y-%m-%d}/${now:%H-%M-%S}'
+
+jit: true
+training:
+  rec_results_freq: 500
+  rec_validation_freq: 500
+  rec_inference_freq: 500
+  rec_monitor_freq: 500
+  rec_constraint_freq: 500
+  summary_freq: 500
+  save_network_freq: 2000
+  max_steps: 30000
+
+optimizer:
+  lr: 0.001
+
+batch_size: 100
+
+graph:
+  func_arch: true
+
+custom:
+  seed: 0
+  integral_batch_size: 10
+  # Initial guess for eigenvalue. Also used in L_drive (if l_drive_weight > 0)
+  e_const: 30
+  # Orthogonal modes to be used in the loss function.
+  # Learned solutions will be penalized if they are not orthogonal to these modes.
+  orthogonal_modes: [1, 2]
+  l_drive_weight: -1

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - AMP for derivatives.
+- Added a new example solving eigenfunctions and eigenvalues for Schrödinger equation
+of a 1D particle in a box.
 
 ### Changed
 

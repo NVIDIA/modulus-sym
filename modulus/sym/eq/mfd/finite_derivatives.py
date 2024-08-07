@@ -17,7 +17,6 @@
 import torch
 import numpy as np
 
-from .functions import *
 from modulus.sym.key import Key
 from typing import Dict, List, Set, Optional, Union, Callable
 
@@ -36,10 +35,10 @@ class FirstDerivO2(torch.nn.Module):
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
-        outputs[self.out_name] = FirstDerivO2_f.apply(
-            inputs[f"{self.var}>>{self.indep_var}::1"],
-            inputs[f"{self.var}>>{self.indep_var}::-1"],
-            dx,
+        # [0.5, -0.5]
+        outputs[self.out_name] = (
+            (0.5 / dx) * inputs[f"{self.var}>>{self.indep_var}::1"]
+            + (-0.5 / dx) * inputs[f"{self.var}>>{self.indep_var}::-1"]
         )
         return outputs
 
@@ -56,12 +55,12 @@ class FirstDerivO4(torch.nn.Module):
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
-        outputs[self.out_name] = FirstDerivO4_f.apply(
-            inputs[f"{self.var}>>{self.indep_var}::2"],
-            inputs[f"{self.var}>>{self.indep_var}::1"],
-            inputs[f"{self.var}>>{self.indep_var}::-1"],
-            inputs[f"{self.var}>>{self.indep_var}::-2"],
-            dx,
+        # [-1.0 / 12.0, 8.0 / 12.0, -8.0 / 12.0, 1.0 / 12.0]
+        outputs[self.out_name] = (
+            (-1.0 / (dx * 12.0)) * inputs[f"{self.var}>>{self.indep_var}::2"]
+            + (8.0 / (dx * 12.0)) * inputs[f"{self.var}>>{self.indep_var}::1"]
+            + (-8.0 / (dx * 12.0)) * inputs[f"{self.var}>>{self.indep_var}::-1"]
+            + (1.0 / (dx * 12.0)) * inputs[f"{self.var}>>{self.indep_var}::-2"]
         )
         return outputs
 
@@ -81,11 +80,11 @@ class SecondDerivO2(torch.nn.Module):
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
-        outputs[self.out_name] = SecondDerivO2_f.apply(
-            inputs[f"{self.var}>>{self.indep_var}::1"],
-            inputs[f"{self.var}"],
-            inputs[f"{self.var}>>{self.indep_var}::-1"],
-            dx,
+        # [1.0, -2.0, 1.0]
+        outputs[self.out_name] = (
+            (1.0 / (dx**2)) * inputs[f"{self.var}>>{self.indep_var}::1"]
+            + (-2.0 / (dx**2)) * inputs[f"{self.var}"]
+            + (1.0 / (dx**2)) * inputs[f"{self.var}>>{self.indep_var}::-1"]
         )
         return outputs
 
@@ -105,13 +104,13 @@ class SecondDerivO4(torch.nn.Module):
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
-        outputs[self.out_name] = SecondDerivO4_f.apply(
-            inputs[f"{self.var}>>{self.indep_var}::2"],
-            inputs[f"{self.var}>>{self.indep_var}::1"],
-            inputs[f"{self.var}"],
-            inputs[f"{self.var}>>{self.indep_var}::-1"],
-            inputs[f"{self.var}>>{self.indep_var}::-2"],
-            dx,
+        # [-1/12, 4/3, -5/2, 4/3, -1/12]
+        outputs[self.out_name] = (
+            (-1.0 / (12.0 * dx**2)) * inputs[f"{self.var}>>{self.indep_var}::2"]
+            + (4.0 / (3.0 * dx**2)) * inputs[f"{self.var}>>{self.indep_var}::1"]
+            + (-5.0 / (2.0 * dx**2)) * inputs[f"{self.var}"]
+            + (4.0 / (3.0 * dx**2)) * inputs[f"{self.var}>>{self.indep_var}::-1"]
+            + (-1.0 / (12.0 * dx**2)) * inputs[f"{self.var}>>{self.indep_var}::-2"]
         )
         return outputs
 
@@ -132,12 +131,12 @@ class MixedSecondDerivO2(torch.nn.Module):
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
-        outputs[self.out_name] = MixedSecondDerivO2_f.apply(
-            inputs[f"{self.var}>>{self.indep_vars[0]}::1&&{self.indep_vars[1]}::1"],
-            inputs[f"{self.var}>>{self.indep_vars[0]}::-1&&{self.indep_vars[1]}::1"],
-            inputs[f"{self.var}>>{self.indep_vars[0]}::1&&{self.indep_vars[1]}::-1"],
-            inputs[f"{self.var}>>{self.indep_vars[0]}::-1&&{self.indep_vars[1]}::-1"],
-            dx,
+        # Ref: https://onlinelibrary.wiley.com/doi/pdf/10.1002/9781119083405.app1
+        outputs[self.out_name] = (
+            (0.25 / (dx**2)) * inputs[f"{self.var}>>{self.indep_vars[0]}::1&&{self.indep_vars[1]}::1"]
+            + (-0.25 / (dx**2)) * inputs[f"{self.var}>>{self.indep_vars[0]}::-1&&{self.indep_vars[1]}::1"]
+            + (-0.25 / (dx**2)) * inputs[f"{self.var}>>{self.indep_vars[0]}::1&&{self.indep_vars[1]}::-1"]
+            + (0.25 / (dx**2)) * inputs[f"{self.var}>>{self.indep_vars[0]}::-1&&{self.indep_vars[1]}::-1"]
         )
         return outputs
 
@@ -159,12 +158,12 @@ class ThirdDerivO2(torch.nn.Module):
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
-        outputs[self.out_name] = ThirdDerivO2_f.apply(
-            inputs[f"{self.var}>>{self.indep_var}::2"],
-            inputs[f"{self.var}>>{self.indep_var}::1"],
-            inputs[f"{self.var}>>{self.indep_var}::-1"],
-            inputs[f"{self.var}>>{self.indep_var}::-2"],
-            dx,
+        # [1/2, -1.0, 1.0, -1/2]
+        outputs[self.out_name] = (
+            (0.5 / (dx**3)) * inputs[f"{self.var}>>{self.indep_var}::2"]
+            + (-1.0 / (dx**3)) * inputs[f"{self.var}>>{self.indep_var}::1"]
+            + (1.0 / (dx**3)) * inputs[f"{self.var}>>{self.indep_var}::-1"]
+            + (-0.5 / (dx**3)) * inputs[f"{self.var}>>{self.indep_var}::-2"]
         )
         return outputs
 
@@ -192,13 +191,13 @@ class ForthDerivO2(torch.nn.Module):
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
-        outputs[self.out_name] = ForthDerivO2_f.apply(
-            inputs[f"{self.var}>>{self.indep_var}::2"],
-            inputs[f"{self.var}>>{self.indep_var}::1"],
-            inputs[f"{self.var}"],
-            inputs[f"{self.var}>>{self.indep_var}::-1"],
-            inputs[f"{self.var}>>{self.indep_var}::-2"],
-            dx,
+        # [1.0, -4.0, 6.0, -4.0, 1.0]
+        outputs[self.out_name] = (
+            (1.0 / (dx**4)) * inputs[f"{self.var}>>{self.indep_var}::2"]
+            + (-4.0 / (dx**4)) * inputs[f"{self.var}>>{self.indep_var}::1"]
+            + (6.0 / (dx**4)) * inputs[f"{self.var}"]
+            + (-4.0 / (dx**4)) * inputs[f"{self.var}>>{self.indep_var}::-1"]
+            + (1.0 / (dx**4)) * inputs[f"{self.var}>>{self.indep_var}::-2"]
         )
         return outputs
 

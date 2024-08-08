@@ -14,4 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .finite_derivatives import FirstDeriv, SecondDeriv, ThirdDeriv, ForthDeriv
+from .grads import FirstDeriv, SecondDeriv, ThirdDeriv, ForthDeriv

@@ -24,14 +24,11 @@ Tensor = torch.Tensor
 
 
 class FirstDerivO2(torch.nn.Module):
-    def __init__(self, derivative_key: Key) -> None:
+    def __init__(self, var: str, indep_var: str, out_name: str) -> None:
         super().__init__()
-        assert (
-            len(derivative_key.derivatives) == 1
-        ), f"Key must have one derivative for first derivative calc"
-        self.var = derivative_key.name
-        self.indep_var = str(derivative_key.derivatives[0])
-        self.out_name = str(derivative_key)
+        self.var = var
+        self.indep_var = indep_var
+        self.out_name = out_name
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
@@ -44,14 +41,11 @@ class FirstDerivO2(torch.nn.Module):
 
 
 class FirstDerivO4(torch.nn.Module):
-    def __init__(self, derivative_key: Key) -> None:
+    def __init__(self, var: str, indep_var: str, out_name: str) -> None:
         super().__init__()
-        assert (
-            len(derivative_key.derivatives) == 1
-        ), f"Key must have one derivative for first derivative calc"
-        self.var = derivative_key.name
-        self.indep_var = str(derivative_key.derivatives[0])
-        self.out_name = str(derivative_key)
+        self.var = var
+        self.indep_var = indep_var
+        self.out_name = out_name
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
@@ -66,17 +60,11 @@ class FirstDerivO4(torch.nn.Module):
 
 
 class SecondDerivO2(torch.nn.Module):
-    def __init__(self, derivative_key: Key) -> None:
+    def __init__(self, var: str, indep_var: str, out_name: str) -> None:
         super().__init__()
-        assert (
-            len(derivative_key.derivatives) == 2
-        ), f"Key must have two derivatives for second derivative calc"
-        assert (
-            derivative_key.derivatives[0] == derivative_key.derivatives[1]
-        ), f"Derivatives keys should be the same"
-        self.var = derivative_key.name
-        self.indep_var = str(derivative_key.derivatives[0])
-        self.out_name = str(derivative_key)
+        self.var = var
+        self.indep_var = indep_var
+        self.out_name = out_name
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
@@ -90,17 +78,11 @@ class SecondDerivO2(torch.nn.Module):
 
 
 class SecondDerivO4(torch.nn.Module):
-    def __init__(self, derivative_key: Key) -> None:
+    def __init__(self, var: str, indep_var: str, out_name: str) -> None:
         super().__init__()
-        assert (
-            len(derivative_key.derivatives) == 2
-        ), f"Key must have two derivatives for second derivative calc"
-        assert (
-            derivative_key.derivatives[0] == derivative_key.derivatives[1]
-        ), f"Derivatives keys should be the same"
-        self.var = derivative_key.name
-        self.indep_var = str(derivative_key.derivatives[0])
-        self.out_name = str(derivative_key)
+        self.var = var
+        self.indep_var = indep_var
+        self.out_name = out_name
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
@@ -116,18 +98,12 @@ class SecondDerivO4(torch.nn.Module):
 
 
 class MixedSecondDerivO2(torch.nn.Module):
-    def __init__(self, derivative_key: Key) -> None:
+    def __init__(self, var: str, indep_vars: List[str], out_name: str) -> None:
         super().__init__()
-        assert (
-            len(derivative_key.derivatives) == 2
-        ), f"Key must have two derivatives for second derivative calc"
-        self.var = derivative_key.name
-        self.indep_vars = [
-            str(derivative_key.derivatives[0]),
-            str(derivative_key.derivatives[1]),
-        ]
+        self.var = var
+        self.indep_vars = indep_vars
         self.indep_vars.sort()
-        self.out_name = str(derivative_key)
+        self.out_name = out_name
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
@@ -142,19 +118,12 @@ class MixedSecondDerivO2(torch.nn.Module):
 
 
 class ThirdDerivO2(torch.nn.Module):
-    def __init__(self, derivative_key: Key) -> None:
+    def __init__(self, var: str, indep_var: str, out_name: str) -> None:
         super().__init__()
-        assert (
-            len(derivative_key.derivatives) == 3
-        ), f"Key must have three derivatives for third derivative calc"
-        assert (
-            derivative_key.derivatives[0]
-            == derivative_key.derivatives[1]
-            == derivative_key.derivatives[2]
-        ), f"Derivatives keys should be the same"
-        self.var = derivative_key.name
-        self.indep_var = str(derivative_key.derivatives[0])
-        self.out_name = str(derivative_key)
+        
+        self.var = var
+        self.indep_var = indep_var
+        self.out_name = out_name
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
@@ -169,25 +138,11 @@ class ThirdDerivO2(torch.nn.Module):
 
 
 class ForthDerivO2(torch.nn.Module):
-    def __init__(self, derivative_key: Key) -> None:
+    def __init__(self, var: str, indep_var: str, out_name: str) -> None:
         super().__init__()
-        assert (
-            len(derivative_key.derivatives) == 4
-        ), f"Key must have three derivatives for forth derivative calc"
-        assert (
-            derivative_key.derivatives[0]
-            == derivative_key.derivatives[1]
-            == derivative_key.derivatives[2]
-            == derivative_key.derivatives[3]
-        ), f"Derivatives keys should be the same"
-        self.var = derivative_key.name
-        self.indep_var = str(derivative_key.derivatives[0])
-        self.out_name = str(derivative_key)
-        self.register_buffer(
-            "coeff",
-            torch.Tensor([1.0, -4.0, 6.0, -4.0, 1.0]).double().unsqueeze(-1),
-            persistent=False,
-        )
+        self.var = var
+        self.indep_var = indep_var
+        self.out_name = out_name
 
     def forward(self, inputs: Dict[str, Tensor], dx: float) -> Dict[str, Tensor]:
         outputs = {}
@@ -271,7 +226,8 @@ class FirstDeriv(DerivBase):
                 self._stencil = self._stencil.union(
                     {f"{indep_vars[0]}::-1", f"{indep_vars[0]}::1"}
                 )
-                eval_list.append(FirstDerivO2(key))
+                assert (len(key.derivatives) == 1), f"Key must have one derivative for first derivative calc"
+                eval_list.append(FirstDerivO2(key.name, str(key.derivatives[0]), str(key)))
             elif order == 4:
                 self._stencil = self._stencil.union(
                     {
@@ -281,7 +237,8 @@ class FirstDeriv(DerivBase):
                         f"{indep_vars[0]}::2",
                     }
                 )
-                eval_list.append(FirstDerivO4(key))
+                assert (len(key.derivatives) == 1), f"Key must have one derivative for first derivative calc"
+                eval_list.append(FirstDerivO4(key.name, str(key.derivatives[0]), str(key)))
 
         self._eval = torch.nn.ModuleList(eval_list)
 
@@ -313,7 +270,9 @@ class SecondDeriv(DerivBase):
                             f"{indep_vars[0]}::1",
                         }
                     )
-                    eval_list.append(SecondDerivO2(key))
+                    assert (len(key.derivatives) == 2), f"Key must have two derivatives for second derivative calc"
+                    assert (key.derivatives[0] == key.derivatives[1]), f"Derivatives keys should be the same"
+                    eval_list.append(SecondDerivO2(key.name, str(key.derivatives[0]), str(key)))
                 elif order == 4:
                     self._stencil = self._stencil.union(
                         {
@@ -324,7 +283,9 @@ class SecondDeriv(DerivBase):
                             f"{indep_vars[0]}::2",
                         }
                     )
-                    eval_list.append(SecondDerivO4(key))
+                    assert (len(key.derivatives) == 2), f"Key must have two derivatives for second derivative calc"
+                    assert (key.derivatives[0] == key.derivatives[1]), f"Derivatives keys should be the same"
+                    eval_list.append(SecondDerivO4(key.name, str(key.derivatives[0]), str(key)))
             # Mixed derivative
             else:
                 if order == 2:
@@ -338,7 +299,8 @@ class SecondDeriv(DerivBase):
                             f"{indep_vars[0]}::1&&{indep_vars[1]}::1",
                         }
                     )
-                    eval_list.append(MixedSecondDerivO2(key))
+                    assert (len(key.derivatives) == 2), f"Key must have two derivatives for second derivative calc"
+                    eval_list.append(MixedSecondDerivO2(key.name, [str(key.derivatives[0]), str(key.derivatives[1])], str(key)))
                 elif order == 4:
                     raise NotImplementedError(
                         "Fourth order mixed second derivatives not supported"
@@ -377,7 +339,9 @@ class ThirdDeriv(DerivBase):
                         f"{indep_vars[0]}::2",
                     }
                 )
-                eval_list.append(ThirdDerivO2(key))
+                assert (len(key.derivatives) == 3), f"Key must have three derivatives for third derivative calc"
+                assert (key.derivatives[0] == key.derivatives[1] == key.derivatives[2]), f"Derivatives keys should be the same"
+                eval_list.append(ThirdDerivO2(key.name, str(key.derivatives[0]), str(key)))
 
         self._eval = torch.nn.ModuleList(eval_list)
 
@@ -416,6 +380,8 @@ class ForthDeriv(DerivBase):
                         f"{indep_vars[0]}::2",
                     }
                 )
-                eval_list.append(ForthDerivO2(key))
+                assert (len(key.derivatives) == 4), f"Key must have three derivatives for forth derivative calc"
+                assert (key.derivatives[0] == key.derivatives[1] == key.derivatives[2] == key.derivatives[3]), f"Derivatives keys should be the same"
+                eval_list.append(ForthDerivO2(key.name, str(key.derivatives[0]), str(key)))
 
         self._eval = torch.nn.ModuleList(eval_list)

@@ -33,10 +33,10 @@ logger = logging.getLogger(__name__)
 
 # ==== Autodiff ====
 @torch.jit.script
-def gradient(y: torch.Tensor, x: List[torch.Tensor]) -> List[torch.Tensor]:
+def gradient_autodiff(y: torch.Tensor, x: List[torch.Tensor]) -> List[torch.Tensor]:
     """
-    TorchScript function to compute the gradient of a tensor wrt multople inputs
-    """
+    TorchScript function to compute the gradient of a tensor wrt multiple inputs
+    """    
     grad_outputs: List[Optional[torch.Tensor]] = [torch.ones_like(y, device=y.device)]
     grad = torch.autograd.grad(
         [
@@ -123,7 +123,7 @@ class Derivative(torch.nn.Module):
                 # thread-local configurations, and since Autograd runs in a different thread, it
                 # could use a different/default AMP dtype than the one specified in the forward thread.
                 # Disabling autocast here will allow Autograd to run the same dtype as the forward pass.
-                grad = gradient(var, grad_var)
+                grad = gradient_autodiff(var, grad_var)
 
             if self.scaler_enabled:
                 grad = self._unscale(grad, var_name)

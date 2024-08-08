@@ -22,7 +22,7 @@ from torch import nn
 from typing import Dict, List, Optional, Callable, Union
 
 # Import from Modulus
-from modulus.sym.eq.derivatives import gradient
+from modulus.sym.eq.derivatives import gradient_autodiff
 from modulus.sym.hydra import to_absolute_path, add_hydra_run_path
 
 logger = logging.getLogger(__name__)
@@ -170,7 +170,7 @@ class GradNorm(Aggregator):
         grads_norm: torch.Tensor = torch.zeros_like(self.init_losses)
         shared_params: torch.Tensor = self.params[-2]  # TODO generalize this
         for i, key in enumerate(losses.keys()):
-            grads: torch.Tensor = gradient(losses[key], [shared_params])[0]
+            grads: torch.Tensor = gradient_autodiff(losses[key], [shared_params])[0]
             grads_norm[i] = torch.norm(lmbda_exp[i] * grads.detach(), p=2)
         avg_grad: torch.Tensor = grads_norm.detach().mean()
 
@@ -371,7 +371,7 @@ class LRAnnealing(Aggregator):
 
             # Compute the mean of each loss gradients
             for key in losses.keys():
-                grads: List[torch.Tensor] = gradient(losses[key], self.params)
+                grads: List[torch.Tensor] = gradient_autodiff(losses[key], self.params)
                 grads_flattened: List[torch.Tensor] = []
                 for i in range(len(grads)):
                     if grads[i] is not None:

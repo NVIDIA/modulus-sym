@@ -1,9 +1,27 @@
+# SPDX-FileCopyrightText: Copyright (c) 2023 - 2024 NVIDIA CORPORATION & AFFILIATES.
+# SPDX-FileCopyrightText: All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 import numpy as np
 from typing import Dict, List, Set, Optional, Union, Callable
 import logging
-from modulus.sym.eq.mfd.grads import FirstDerivO2, SecondDerivO2
+from modulus.sym.eq.mfd import grads as mfd_grads
+from modulus.sym.eq.fd import grads as fd_grads
 from modulus.sym.eq.derivatives import gradient_autodiff
+
 
 def compute_stencil(coords, model, dx):
     # compute stencil points
@@ -89,41 +107,18 @@ class GradientsAutoDiff(torch.nn.Module):
 
         grad = gradient_autodiff(y, [x])
 
+        result = {}
+        axis_list = ["x", "y", "z"]
         if self.order == 1:
-            if self.dim == 1:
-                return {
-                    f"{self.invar}__x": grad[0][:, 0:1],
-                }
-            elif self.dim == 2:
-                return {
-                    f"{self.invar}__x": grad[0][:, 0:1],
-                    f"{self.invar}__y": grad[0][:, 1:2],
-                }
-            elif self.dim == 3:
-                return {
-                    f"{self.invar}__x": grad[0][:, 0:1],
-                    f"{self.invar}__y": grad[0][:, 1:2],
-                    f"{self.invar}__z": grad[0][:, 2:3],
-                }
-
+            for axis in range(self.dim):
+                result[f"{self.invar}__{axis_list[axis]}"] = grad[0][:, axis : axis + 1]
         elif self.order == 2:
             ggrad = gradient_autodiff(grad[0], [x])
-
-            if self.dim == 1:
-                return {
-                    f"{self.invar}__x__x": ggrad[0][:, 0:1],
-                }
-            elif self.dim == 2:
-                return {
-                    f"{self.invar}__x__x": ggrad[0][:, 0:1],
-                    f"{self.invar}__y__y": ggrad[0][:, 1:2],
-                }
-            elif self.dim == 3:
-                return {
-                    f"{self.invar}__x__x": ggrad[0][:, 0:1],
-                    f"{self.invar}__y__y": ggrad[0][:, 1:2],
-                    f"{self.invar}__z__z": ggrad[0][:, 2:3],
-                }
+            for axis in range(self.dim):
+                result[f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"] = ggrad[
+                    0
+                ][:, axis : axis + 1]
+        return result
 
 
 class GradientsMeshlessFiniteDifference(torch.nn.Module):
@@ -137,70 +132,52 @@ class GradientsMeshlessFiniteDifference(torch.nn.Module):
         self.dim = dim
         self.order = order
 
-        if self.dim == 1:
-            if self.order == 1:
-                self.first_deriv_x = FirstDerivO2(var=self.invar, indep_var="x", out_name=f"{self.invar}__x")
-            if self.order == 2:
-                self.second_deriv_x = SecondDerivO2(var=self.invar, indep_var="x", out_name=f"{self.invar}__x__x")
-        if self.dim == 2:
-            if self.order == 1:
-                self.first_deriv_x = FirstDerivO2(var=self.invar, indep_var="x", out_name=f"{self.invar}__x")
-                self.first_deriv_y = FirstDerivO2(var=self.invar, indep_var="y", out_name=f"{self.invar}__y")
-            if self.order == 2:
-                self.second_deriv_x = SecondDerivO2(var=self.invar, indep_var="x", out_name=f"{self.invar}__x__x")
-                self.second_deriv_y = SecondDerivO2(var=self.invar, indep_var="y", out_name=f"{self.invar}__y__y")
-        if self.dim == 3:
-            if self.order == 1:
-                self.first_deriv_x = FirstDerivO2(var=self.invar, indep_var="x", out_name=f"{self.invar}__x")
-                self.first_deriv_y = FirstDerivO2(var=self.invar, indep_var="y", out_name=f"{self.invar}__y")
-                self.first_deriv_z = FirstDerivO2(var=self.invar, indep_var="z", out_name=f"{self.invar}__z")
-            if self.order == 2:
-                self.second_deriv_x = SecondDerivO2(var=self.invar, indep_var="x", out_name=f"{self.invar}__x__x")
-                self.second_deriv_y = SecondDerivO2(var=self.invar, indep_var="y", out_name=f"{self.invar}__y__y")
-                self.second_deriv_z = SecondDerivO2(var=self.invar, indep_var="z", out_name=f"{self.invar}__z__z")
-                
         if isinstance(self.dx, (float, int)):
             self.dx = [self.dx for _ in range(self.dim)]
 
         assert self.order < 3, "Derivatives only upto 2nd order are supported"
         assert len(self.dx) == self.dim, f"Mismatch in {self.dim} and {self.dx}"
 
-    def forward(self, input_dict):
-        if self.order == 1:
-            # combine them according to the FD rules
-            if self.dim == 1:
-                return {
-                    f"{self.invar}__x": self.first_deriv_x.forward(input_dict, self.dx[0])[f"{self.invar}__x"],
-                }
-            elif self.dim == 2:
-                return {
-                    f"{self.invar}__x": self.first_deriv_x.forward(input_dict, self.dx[0])[f"{self.invar}__x"],
-                    f"{self.invar}__y": self.first_deriv_y.forward(input_dict, self.dx[1])[f"{self.invar}__y"],
-                }
-            elif self.dim == 3:
-                return {
-                    f"{self.invar}__x": self.first_deriv_x.forward(input_dict, self.dx[0])[f"{self.invar}__x"],
-                    f"{self.invar}__y": self.first_deriv_y.forward(input_dict, self.dx[1])[f"{self.invar}__y"],
-                    f"{self.invar}__z": self.first_deriv_z.forward(input_dict, self.dx[0])[f"{self.invar}__z"],
-                }
+        self.init_derivative_operators()
 
+    def init_derivative_operators(self):
+        self.first_deriv_ops = {}
+        self.second_deriv_ops = {}
+
+        if self.order == 1:
+            for axis in range(self.dim):
+                axis_name = ["x", "y", "z"][axis]
+                self.first_deriv_ops[axis] = mfd_grads.FirstDerivO2(
+                    var=self.invar,
+                    indep_var=axis_name,
+                    out_name=f"{self.invar}__{axis_name}",
+                )
         elif self.order == 2:
-            # combine them according to the FD rules
-            if self.dim == 1:
-                return {
-                    f"{self.invar}__x__x": self.second_deriv_x.forward(input_dict, self.dx[0])[f"{self.invar}__x__x"],
-                }
-            elif self.dim == 2:
-                return {
-                    f"{self.invar}__x__x": self.second_deriv_x.forward(input_dict, self.dx[0])[f"{self.invar}__x__x"],
-                    f"{self.invar}__y__y": self.second_deriv_y.forward(input_dict, self.dx[1])[f"{self.invar}__y__y"],
-                }
-            elif self.dim == 3:
-                return {
-                    f"{self.invar}__x__x": self.second_deriv_x.forward(input_dict, self.dx[0])[f"{self.invar}__x__x"],
-                    f"{self.invar}__y__y": self.second_deriv_y.forward(input_dict, self.dx[1])[f"{self.invar}__y__y"],
-                    f"{self.invar}__z__z": self.second_deriv_z.forward(input_dict, self.dx[2])[f"{self.invar}__z__z"],
-                }
+            for axis in range(self.dim):
+                axis_name = ["x", "y", "z"][axis]
+                self.second_deriv_ops[axis] = mfd_grads.SecondDerivO2(
+                    var=self.invar,
+                    indep_var=axis_name,
+                    out_name=f"{self.invar}__{axis_name}__{axis_name}",
+                )
+
+    def forward(self, input_dict):
+        result = {}
+        axis_list = ["x", "y", "z"]
+        if self.order == 1:
+            for axis, op in self.first_deriv_ops.items():
+                result[f"{self.invar}__{axis_list[axis]}"] = op.forward(
+                    input_dict, self.dx[axis]
+                )[f"{self.invar}__{axis_list[axis]}"]
+        elif self.order == 2:
+            for axis, op in self.second_deriv_ops.items():
+                result[
+                    f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"
+                ] = op.forward(input_dict, self.dx[axis])[
+                    f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"
+                ]
+
+        return result
 
 
 class GradientsFiniteDifference(torch.nn.Module):
@@ -223,26 +200,11 @@ class GradientsFiniteDifference(torch.nn.Module):
 
         assert self.order < 3, "Derivatives only upto 2nd order are supported"
         assert len(self.dx) == self.dim, f"Mismatch in {self.dim} and {self.dx}"
-        self.register_buffer(
-            "ddx1D",
-            torch.Tensor(
-                [
-                    -1.0 / 2.0,
-                    0.0,
-                    1.0 / 2.0,
-                ]
-            ),
-        )
-        self.register_buffer(
-            "d2dx21D",
-            torch.Tensor(
-                [
-                    1.0,
-                    -2.0,
-                    1.0,
-                ]
-            ),
-        )
+
+        if self.order == 1:
+            self.deriv_modulue = fd_grads.FirstDerivO2(self.dim, self.dx)
+        elif self.order == 2:
+            self.deriv_modulue = fd_grads.SecondDerivO2(self.dim, self.dx)
 
     def forward(self, input_dict):
         u = input_dict[self.invar]
@@ -251,231 +213,20 @@ class GradientsFiniteDifference(torch.nn.Module):
             u.dim() - 2
         ) == self.dim, f"Expected a {self.dim + 2} dimensional tensor, but got {u.dim()} dimensional tensor"
 
-        u = torch.nn.functional.pad(u, self.dim * (1, 1), "replicate")
-
         # compute finite difference based on convolutional operation
+        result = {}
+        derivatives = self.deriv_modulue(u)
+        axis_list = ["x", "y", "z"]
         if self.order == 1:
-            if self.dim == 1:
-                ddx2D = torch.reshape(
-                    self.ddx1D, shape=[1, 1] + 0 * [1] + [-1] + (0 - 0) * [1]
-                )
-
-                # return the grads
-                dudx = torch.nn.functional.conv3d(
-                    u, ddx2D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    :,
-                ]
-                dudx = (1 / self.dx[0]) * dudx
-
-                return {
-                    f"{self.invar}__x": dudx,
-                }
-            elif self.dim == 2:
-                ddx2D = torch.reshape(
-                    self.ddx1D, shape=[1, 1] + 0 * [1] + [-1] + (1 - 0) * [1]
-                )
-                ddy2D = torch.reshape(
-                    self.ddx1D, shape=[1, 1] + 1 * [1] + [-1] + (1 - 1) * [1]
-                )
-
-                # return the grads
-                dudx = torch.nn.functional.conv3d(
-                    u, ddx2D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    :,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                ]
-                dudx = (1 / self.dx[0]) * dudx
-
-                dudy = torch.nn.functional.conv3d(
-                    u, ddy2D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                    :,
-                ]
-                dudy = (1 / self.dx[1]) * dudy
-
-                return {
-                    f"{self.invar}__x": dudx,
-                    f"{self.invar}__y": dudy,
-                }
-
-            elif self.dim == 3:
-                ddx3D = torch.reshape(
-                    self.ddx1D, shape=[1, 1] + 0 * [1] + [-1] + (2 - 0) * [1]
-                )
-                ddy3D = torch.reshape(
-                    self.ddx1D, shape=[1, 1] + 1 * [1] + [-1] + (2 - 1) * [1]
-                )
-                ddz3D = torch.reshape(
-                    self.ddx1D, shape=[1, 1] + 2 * [1] + [-1] + (2 - 2) * [1]
-                )
-
-                # return the grads
-                dudx = torch.nn.functional.conv3d(
-                    u, ddx3D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    :,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                ]
-                dudx = (1 / self.dx[0]) * dudx
-
-                dudy = torch.nn.functional.conv3d(
-                    u, ddy3D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                    :,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                ]
-                dudy = (1 / self.dx[1]) * dudy
-
-                dudz = torch.nn.functional.conv3d(
-                    u, ddz3D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                    (self.ddx1D.shape[0] - 1) // 2 : -(self.ddx1D.shape[0] - 1) // 2,
-                    :,
-                ]
-                dudz = (1 / self.dx[2]) * dudz
-
-                return {
-                    f"{self.invar}__x": dudx,
-                    f"{self.invar}__y": dudy,
-                    f"{self.invar}__z": dudz,
-                }
+            for axis, derivative in enumerate(derivatives):
+                result[f"{self.invar}__{axis_list[axis]}"] = derivative
         elif self.order == 2:
-            if self.dim == 1:
-                d2dx22D = torch.reshape(
-                    self.d2dx21D, shape=[1, 1] + 0 * [1] + [-1] + (0 - 0) * [1]
-                )
+            for axis, derivative in enumerate(derivatives):
+                result[
+                    f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"
+                ] = derivative
 
-                # return the grads
-                d2udx2 = torch.nn.functional.conv3d(
-                    u, d2dx22D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    :,
-                ]
-                d2udx2 = (1 / (self.dx[0] ** 2)) * d2udx2
-
-                return {
-                    f"{self.invar}__x__x": d2udx2,
-                }
-            elif self.dim == 2:
-                d2dx22D = torch.reshape(
-                    self.d2dx21D, shape=[1, 1] + 0 * [1] + [-1] + (1 - 0) * [1]
-                )
-                d2dy22D = torch.reshape(
-                    self.d2dx21D, shape=[1, 1] + 1 * [1] + [-1] + (1 - 1) * [1]
-                )
-
-                # return the grads
-                d2udx2 = torch.nn.functional.conv3d(
-                    u, d2dx22D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    :,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                ]
-                d2udx2 = (1 / (self.dx[0] ** 2)) * d2udx2
-
-                d2udy2 = torch.nn.functional.conv3d(
-                    u, d2dy22D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                    :,
-                ]
-                d2udy2 = (1 / (self.dx[1] ** 2)) * d2udy2
-
-                return {
-                    f"{self.invar}__x__x": d2udx2,
-                    f"{self.invar}__y__y": d2udy2,
-                }
-
-            elif self.dim == 3:
-                d2dx23D = torch.reshape(
-                    self.d2dx21D, shape=[1, 1] + 0 * [1] + [-1] + (2 - 0) * [1]
-                )
-                d2dy23D = torch.reshape(
-                    self.d2dx21D, shape=[1, 1] + 1 * [1] + [-1] + (2 - 1) * [1]
-                )
-                d2dz23D = torch.reshape(
-                    self.d2dx21D, shape=[1, 1] + 2 * [1] + [-1] + (2 - 2) * [1]
-                )
-
-                # return the grads
-                d2udx2 = torch.nn.functional.conv3d(
-                    u, d2dx23D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    :,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                ]
-                d2udx2 = (1 / (self.dx[0] ** 2)) * d2udx2
-
-                d2udy2 = torch.nn.functional.conv3d(
-                    u, d2dy23D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                    :,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                ]
-                d2udy2 = (1 / (self.dx[1] ** 2)) * d2udy2
-
-                d2udz2 = torch.nn.functional.conv3d(
-                    u, d2dz23D, stride=1, padding=0, bias=None
-                )[
-                    :,
-                    :,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                    (self.d2dx21D.shape[0] - 1)
-                    // 2 : -(self.d2dx21D.shape[0] - 1)
-                    // 2,
-                    :,
-                ]
-                d2udz2 = (1 / (self.dx[2] ** 2)) * d2udz2
-
-                return {
-                    f"{self.invar}__x__x": d2udx2,
-                    f"{self.invar}__y__y": d2udy2,
-                    f"{self.invar}__z__z": d2udz2,
-                }
+        return result
 
 
 class GradientsSpectral(torch.nn.Module):
@@ -528,6 +279,8 @@ class GradientsSpectral(torch.nn.Module):
 
         wx_h = [j * k_x_i * u_h * (2 * pi / self.ell[i]) for i, k_x_i in enumerate(kx)]
 
+        result = {}
+        axis_list = ["x", "y", "z"]
         if self.order == 1:
             # inverse fourier transform out
             wx = torch.cat(
@@ -537,22 +290,9 @@ class GradientsSpectral(torch.nn.Module):
                 ],
                 dim=1,
             )
+            for axis in range(self.dim):
+                result[f"{self.invar}__{axis_list[axis]}"] = wx[:, axis : axis + 1]
 
-            if self.dim == 1:
-                return {
-                    f"{self.invar}__x": wx[:, 0:1],
-                }
-            elif self.dim == 2:
-                return {
-                    f"{self.invar}__x": wx[:, 0:1],
-                    f"{self.invar}__y": wx[:, 1:2],
-                }
-            elif self.dim == 3:
-                return {
-                    f"{self.invar}__x": wx[:, 0:1],
-                    f"{self.invar}__y": wx[:, 1:2],
-                    f"{self.invar}__z": wx[:, 2:3],
-                }
         elif self.order == 2:
             wxx_h = [
                 j * k_x_i * wx_h_i * (2 * pi / self.ell[i])
@@ -568,21 +308,12 @@ class GradientsSpectral(torch.nn.Module):
                 dim=1,
             )
 
-            if self.dim == 1:
-                return {
-                    f"{self.invar}__x__x": wxx[:, 0:1],
-                }
-            elif self.dim == 2:
-                return {
-                    f"{self.invar}__x__x": wxx[:, 0:1],
-                    f"{self.invar}__y__y": wxx[:, 1:2],
-                }
-            elif self.dim == 3:
-                return {
-                    f"{self.invar}__x__x": wxx[:, 0:1],
-                    f"{self.invar}__y__y": wxx[:, 1:2],
-                    f"{self.invar}__z__z": wxx[:, 2:3],
-                }
+            for axis in range(self.dim):
+                result[f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"] = wxx[
+                    :, axis : axis + 1
+                ]
+
+        return result
 
 
 class GradientsLeastSquares(torch.nn.Module):

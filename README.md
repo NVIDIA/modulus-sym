@@ -10,7 +10,7 @@
 | [**Contributing Guidelines**](#contributing-to-modulus)
 | [**Resources**](#resources)
 | [**Communication**](#communication)
- 
+
 ## What is Modulus Symbolic? 
 
 Modulus Symbolic (Modulus Sym) repository is part of Modulus SDK and it provides

@@ -33,9 +33,18 @@ class FirstDerivO2(torch.nn.Module):
         return torch.reshape(self.ddx1D, shape)
 
     def apply_convolution(self, u, kernel, axis):
-        conv_result = torch.nn.functional.conv3d(
-            u, kernel, stride=1, padding=0, bias=None
-        )
+        if self.dim == 1:
+            conv_result = torch.nn.functional.conv1d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
+        elif self.dim == 2:
+            conv_result = torch.nn.functional.conv2d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
+        elif self.dim == 3:
+            conv_result = torch.nn.functional.conv3d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
         slice_index = (kernel.flatten().shape[-1] - 1) // 2
         if self.dim == 1:
             return conv_result
@@ -84,9 +93,18 @@ class SecondDerivO2(torch.nn.Module):
         return torch.reshape(self.d2dx21D, shape)
 
     def apply_convolution(self, u, kernel, axis):
-        conv_result = torch.nn.functional.conv3d(
-            u, kernel, stride=1, padding=0, bias=None
-        )
+        if self.dim == 1:
+            conv_result = torch.nn.functional.conv1d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
+        elif self.dim == 2:
+            conv_result = torch.nn.functional.conv2d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
+        elif self.dim == 3:
+            conv_result = torch.nn.functional.conv3d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
         slice_index = (kernel.flatten().shape[-1] - 1) // 2
         if self.dim == 1:
             return conv_result

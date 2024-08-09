@@ -36,7 +36,7 @@ class FirstDerivO2(torch.nn.Module):
         conv_result = torch.nn.functional.conv3d(
             u, kernel, stride=1, padding=0, bias=None
         )
-        slice_index = (kernel.shape[-1] - 1) // 2
+        slice_index = (kernel.flatten().shape[-1] - 1) // 2
         if self.dim == 1:
             return conv_result
         elif self.dim == 2:

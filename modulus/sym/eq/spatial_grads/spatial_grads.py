@@ -816,7 +816,8 @@ class GradientsLeastSquares(torch.nn.Module):
 
 
 class GradientCalculator:
-    def __init__(self):
+    def __init__(self, device=None):
+        self.device = device if device is not None else torch.device("cpu")
         self.methods = {}
         self._register_methods()
 
@@ -828,11 +829,13 @@ class GradientCalculator:
         self.methods["least_squares"] = GradientsLeastSquares
 
     def get_gradient_module(self, method_name, invar, **kwargs):
-        return self.methods[method_name](invar, **kwargs)
+        module = self.methods[method_name](invar, **kwargs)
+        module.to(self.device)
+        return module
 
     def compute_gradients(self, input_dict, method_name=None, invar=None, **kwargs):
-        method = self.methods[method_name](invar, **kwargs)
-        return method.forward(input_dict)
+        module = self.get_gradient_module(method_name, invar, **kwargs)
+        return module.forward(input_dict)
 
     @staticmethod
     def clip_gradients():
@@ -849,108 +852,3 @@ class GradientCalculator:
     @staticmethod
     def unscale_grads():
         pass
-
-
-if __name__ == "__main__":
-
-    class Model(torch.nn.Module):
-        def __init__(self):
-            super().__init__()
-
-        def forward(self, x):
-            return (
-                torch.sin(x[:, 0:1])
-                + torch.sin(8 * x[:, 1:2])
-                + torch.sin(4 * x[:, 2:3])
-            )
-
-    steps = 100
-    x = torch.linspace(0, 2 * np.pi, steps=steps).requires_grad_(True)
-    y = torch.linspace(0, 2 * np.pi, steps=steps).requires_grad_(True)
-    z = torch.linspace(0, 2 * np.pi, steps=steps).requires_grad_(True)
-
-    # Connectivity information
-    edges = []
-    for i in range(steps):
-        for j in range(steps):
-            for k in range(steps):
-                index = i * steps * steps + j * steps + k
-                # Check and add connections in x direction
-                if i < steps - 1:
-                    edges.append([index, index + steps * steps])
-                # Check and add connections in y direction
-                if j < steps - 1:
-                    edges.append([index, index + steps])
-                # Check and add connections in z direction
-                if k < steps - 1:
-                    edges.append([index, index + 1])
-
-    # Convert connectivity to tensor
-    edges = torch.tensor(edges)
-
-    xx, yy, zz = torch.meshgrid(x, y, z, indexing="ij")
-    coords = torch.stack([xx, yy, zz], dim=0).unsqueeze(0)
-    coords_unstructured = torch.stack([xx, yy, zz], dim=-1).reshape(-1, 3)
-    node_ids = torch.arange(coords_unstructured.size(0)).reshape(-1, 1)
-
-    model = Model()
-
-    # instantiate gradient calculator
-    grad_calc = GradientCalculator()
-
-    # compute grads using autodiff
-    input_dict = {"coordinates": coords_unstructured, "u": model(coords_unstructured)}
-    grad_u_autodiff = grad_calc.compute_gradients(
-        input_dict, method_name="autodiff", invar="u"
-    )
-    print("AutoDiff: ", grad_u_autodiff.keys())
-
-    # compute grads using meshless fd
-    po_posx, po_negx, po_posy, po_negy, po_posz, po_negz = compute_stencil(
-        coords_unstructured, model, dx=0.001
-    )
-    input_dict = {
-        "u": model(coords_unstructured),
-        "u>>x::1": po_posx,
-        "u>>x::-1": po_negx,
-        "u>>y::1": po_posy,
-        "u>>y::-1": po_negy,
-        "u>>z::1": po_posz,
-        "u>>z::-1": po_negz,
-    }
-    grads_u_meshless_fd = grad_calc.compute_gradients(
-        input_dict, method_name="meshless_finite_difference", invar="u", dx=0.001
-    )
-    print("MFD: ", grads_u_meshless_fd.keys())
-
-    # compute grads using finite difference
-    input_dict = {"u": model(coords)}
-    grads_u_fd = grad_calc.compute_gradients(
-        input_dict, method_name="finite_difference", invar="u", dx=[0.001, 0.001, 0.001]
-    )
-    print("FD: ", grads_u_fd.keys())
-
-    # compute grads using spectral derivatives
-    input_dict = {"u": model(coords)}
-    grads_u_spectral = grad_calc.compute_gradients(
-        input_dict,
-        method_name="spectral",
-        invar="u",
-        ell=[2 * np.pi, 2 * np.pi, 2 * np.pi],
-    )
-    print("Spectral: ", grads_u_spectral.keys())
-
-    # compute grads using least squares method
-    input_dict = {
-        "u": model(coords_unstructured),
-        "coordinates": coords_unstructured,
-        "nodes": node_ids,
-        "edges": edges,
-        "connectivity_tensor": compute_connectivity_tensor(
-            coords_unstructured, node_ids, edges
-        ),
-    }
-    grads_u_ls = grad_calc.compute_gradients(
-        input_dict, method_name="least_squares", invar="u"
-    )
-    print("Least Squares: ", grads_u_ls.keys())

@@ -11,7 +11,7 @@
 | [**Resources**](#resources)
 | [**Communication**](#communication)
  
-## What is Modulus Symbolic?
+## What is Modulus Symbolic? 
 
 Modulus Symbolic (Modulus Sym) repository is part of Modulus SDK and it provides
 algorithms and utilities to be used with Modulus core, to explicitly physics inform the

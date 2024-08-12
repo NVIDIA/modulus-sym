@@ -23,7 +23,7 @@ from modulus.sym.eq.fd import grads as fd_grads
 from modulus.sym.eq.derivatives import gradient_autodiff
 
 
-def compute_stencil(coords, model, dx):
+def compute_stencil3d(coords, model, dx, return_mixed_derivs=False):
     # compute stencil points
     posx = coords[:, 0:1] + torch.ones_like(coords[:, 0:1]) * dx
     negx = coords[:, 0:1] - torch.ones_like(coords[:, 0:1]) * dx
@@ -39,7 +39,45 @@ def compute_stencil(coords, model, dx):
     uposz = model(torch.cat([coords[:, 0:1], coords[:, 1:2], posz], dim=1))
     unegz = model(torch.cat([coords[:, 0:1], coords[:, 1:2], negz], dim=1))
 
-    return uposx, unegx, uposy, unegy, uposz, unegz
+    if return_mixed_derivs:
+        uposxposy = model(torch.cat([posx, posy, coords[:, 2:3]], dim=1))
+        uposxnegy = model(torch.cat([posx, negy, coords[:, 2:3]], dim=1))
+        unegxposy = model(torch.cat([negx, posy, coords[:, 2:3]], dim=1))
+        unegxnegy = model(torch.cat([negx, negy, coords[:, 2:3]], dim=1))
+
+        uposxposz = model(torch.cat([posx, coords[:, 1:2], posz], dim=1))
+        uposxnegz = model(torch.cat([posx, coords[:, 1:2], negz], dim=1))
+        unegxposz = model(torch.cat([negx, coords[:, 1:2], posz], dim=1))
+        unegxnegz = model(torch.cat([negx, coords[:, 1:2], negz], dim=1))
+
+        uposyposz = model(torch.cat([coords[:, 0:1], posy, posz], dim=1))
+        uposynegz = model(torch.cat([coords[:, 0:1], posy, negz], dim=1))
+        unegyposz = model(torch.cat([coords[:, 0:1], negy, posz], dim=1))
+        unegynegz = model(torch.cat([coords[:, 0:1], negy, negz], dim=1))
+
+    if return_mixed_derivs:
+        return (
+            uposx,
+            unegx,
+            uposy,
+            unegy,
+            uposz,
+            unegz,
+            uposxposy,
+            uposxnegy,
+            unegxposy,
+            unegxnegy,
+            uposxposz,
+            uposxnegz,
+            unegxposz,
+            unegxnegz,
+            uposyposz,
+            uposynegz,
+            unegyposz,
+            unegynegz,
+        )
+    else:
+        return uposx, unegx, uposy, unegy, uposz, unegz
 
 
 def compute_connectivity_tensor(coords, nodes, edges):
@@ -55,12 +93,9 @@ def compute_connectivity_tensor(coords, nodes, edges):
             node_edges[node1].append((node1, node2))
         if node2 in node_edges:
             node_edges[node2].append((node2, node1))
-    avg_connectivity = 0.0
     max_connectivity = []
     for k, v in node_edges.items():
-        avg_connectivity += len(v)
         max_connectivity.append(len(v))
-    avg_connectivity = round(avg_connectivity / len(node_edges.keys()))
     max_connectivity = np.array(max_connectivity).max()
     for k, v in node_edges.items():
         if len(v) < max_connectivity:
@@ -82,14 +117,27 @@ def compute_connectivity_tensor(coords, nodes, edges):
 
 
 class GradientsAutoDiff(torch.nn.Module):
-    def __init__(self, invar: str, dim: int = 3, order: int = 1):
+    def __init__(
+        self,
+        invar: str,
+        dim: int = 3,
+        order: int = 1,
+        return_mixed_derivs: bool = False,
+    ):
         super(GradientsAutoDiff, self).__init__()
 
         self.invar = invar
         self.dim = dim
         self.order = order
+        self.return_mixed_derivs = return_mixed_derivs
 
         assert self.order < 3, "Derivatives only upto 2nd order are supported"
+
+        if self.return_mixed_derivs:
+            assert self.dim > 1, "Mixed Derivatives only supported for 2D and 3D inputs"
+            assert (
+                self.order == 2
+            ), "Mixed Derivatives not possible for first order derivatives"
 
     def forward(self, input_dict):
         y = input_dict[self.invar]
@@ -118,12 +166,32 @@ class GradientsAutoDiff(torch.nn.Module):
                 result[f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"] = ggrad[
                     0
                 ][:, axis : axis + 1]
+            if self.return_mixed_derivs:
+                # Need to compute them manually due to how pytorch builds graph
+                if self.dim == 2:
+                    grad_x = grad[0][:, 0:1]
+                    ggrad_mixed_xy = gradient_autodiff(grad_x, [x])[0][:, 1:2]
+                    result[f"{self.invar}__x__y"] = ggrad_mixed_xy
+                elif self.dim == 3:
+                    grad_x = grad[0][:, 0:1]
+                    grad_y = grad[0][:, 1:2]
+                    ggrad_mixed_xy = gradient_autodiff(grad_x, [x])[0][:, 1:2]
+                    ggrad_mixed_xz = gradient_autodiff(grad_x, [x])[0][:, 2:3]
+                    ggrad_mixed_yz = gradient_autodiff(grad_y, [x])[0][:, 2:3]
+                    result[f"{self.invar}__x__y"] = ggrad_mixed_xy
+                    result[f"{self.invar}__x__z"] = ggrad_mixed_xz
+                    result[f"{self.invar}__y__z"] = ggrad_mixed_yz
         return result
 
 
 class GradientsMeshlessFiniteDifference(torch.nn.Module):
     def __init__(
-        self, invar: str, dx: Union[Union[float, int]], dim: int = 3, order: int = 1
+        self,
+        invar: str,
+        dx: Union[Union[float, int]],
+        dim: int = 3,
+        order: int = 1,
+        return_mixed_derivs: bool = False,
     ):
         super(GradientsMeshlessFiniteDifference, self).__init__()
 
@@ -131,12 +199,19 @@ class GradientsMeshlessFiniteDifference(torch.nn.Module):
         self.dx = dx
         self.dim = dim
         self.order = order
+        self.return_mixed_derivs = return_mixed_derivs
 
         if isinstance(self.dx, (float, int)):
             self.dx = [self.dx for _ in range(self.dim)]
 
         assert self.order < 3, "Derivatives only upto 2nd order are supported"
         assert len(self.dx) == self.dim, f"Mismatch in {self.dim} and {self.dx}"
+
+        if self.return_mixed_derivs:
+            assert self.dim > 1, "Mixed Derivatives only supported for 2D and 3D inputs"
+            assert (
+                self.order == 2
+            ), "Mixed Derivatives not possible for first order derivatives"
 
         self.init_derivative_operators()
 
@@ -160,6 +235,24 @@ class GradientsMeshlessFiniteDifference(torch.nn.Module):
                     indep_var=axis_name,
                     out_name=f"{self.invar}__{axis_name}__{axis_name}",
                 )
+            if self.return_mixed_derivs:
+                self.mixed_deriv_ops = {}
+                self.mixed_deriv_ops["dxdy"] = mfd_grads.MixedSecondDerivO2(
+                    var=self.invar,
+                    indep_vars=["x", "y"],
+                    out_name=f"{self.invar}__x__y",
+                )
+                if self.dim == 3:
+                    self.mixed_deriv_ops["dxdz"] = mfd_grads.MixedSecondDerivO2(
+                        var=self.invar,
+                        indep_vars=["x", "z"],
+                        out_name=f"{self.invar}__x__z",
+                    )
+                    self.mixed_deriv_ops["dydz"] = mfd_grads.MixedSecondDerivO2(
+                        var=self.invar,
+                        indep_vars=["y", "z"],
+                        out_name=f"{self.invar}__y__z",
+                    )
 
     def forward(self, input_dict):
         result = {}
@@ -176,6 +269,19 @@ class GradientsMeshlessFiniteDifference(torch.nn.Module):
                 ] = op.forward(input_dict, self.dx[axis])[
                     f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"
                 ]
+            if self.return_mixed_derivs:
+                result[f"{self.invar}__x__y"] = self.mixed_deriv_ops["dxdy"].forward(
+                    input_dict, self.dx[0]
+                )[
+                    f"{self.invar}__x__y"
+                ]  # TODO: enable different dx and dy?
+                if self.dim == 3:
+                    result[f"{self.invar}__x__z"] = self.mixed_deriv_ops[
+                        "dxdz"
+                    ].forward(input_dict, self.dx[0])[f"{self.invar}__x__z"]
+                    result[f"{self.invar}__y__z"] = self.mixed_deriv_ops[
+                        "dydz"
+                    ].forward(input_dict, self.dx[0])[f"{self.invar}__y__z"]
 
         return result
 
@@ -187,6 +293,7 @@ class GradientsFiniteDifference(torch.nn.Module):
         dx: Union[Union[float, int], List[float]],
         dim: int = 3,
         order: int = 1,
+        return_mixed_derivs: bool = False,
     ):
         super(GradientsFiniteDifference, self).__init__()
 
@@ -194,6 +301,7 @@ class GradientsFiniteDifference(torch.nn.Module):
         self.dx = dx
         self.dim = dim
         self.order = order
+        self.return_mixed_derivs = return_mixed_derivs
 
         if isinstance(self.dx, (float, int)):
             self.dx = [self.dx for _ in range(self.dim)]
@@ -201,10 +309,18 @@ class GradientsFiniteDifference(torch.nn.Module):
         assert self.order < 3, "Derivatives only upto 2nd order are supported"
         assert len(self.dx) == self.dim, f"Mismatch in {self.dim} and {self.dx}"
 
+        if self.return_mixed_derivs:
+            assert self.dim > 1, "Mixed Derivatives only supported for 2D and 3D inputs"
+            assert (
+                self.order == 2
+            ), "Mixed Derivatives not possible for first order derivatives"
+
         if self.order == 1:
             self.deriv_modulue = fd_grads.FirstDerivO2(self.dim, self.dx)
         elif self.order == 2:
             self.deriv_modulue = fd_grads.SecondDerivO2(self.dim, self.dx)
+            if self.return_mixed_derivs:
+                self.mixed_deriv_module = fd_grads.MixedSecondDerivO2(self.dim, self.dx)
 
     def forward(self, input_dict):
         u = input_dict[self.invar]
@@ -225,6 +341,15 @@ class GradientsFiniteDifference(torch.nn.Module):
                 result[
                     f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"
                 ] = derivative
+            if self.return_mixed_derivs:
+                result[f"{self.invar}__x__y"] = self.mixed_deriv_module.forward(u)[0]
+                if self.dim == 3:
+                    result[f"{self.invar}__x__z"] = self.mixed_deriv_module.forward(u)[
+                        1
+                    ]
+                    result[f"{self.invar}__y__z"] = self.mixed_deriv_module.forward(u)[
+                        2
+                    ]
 
         return result
 

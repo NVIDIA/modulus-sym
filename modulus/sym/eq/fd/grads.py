@@ -136,3 +136,93 @@ class SecondDerivO2(torch.nn.Module):
             conv_result = (1 / (self.dx[axis] ** 2)) * conv_result
             result.append(conv_result)
         return result
+
+
+class MixedSecondDerivO2(torch.nn.Module):
+    # For 2d, this returns [d2f/dxdy]
+    # For 3d, this returns [d2f/dxdy, d2f/dxdz, d2f/dydz]
+    # Ref: https://onlinelibrary.wiley.com/doi/pdf/10.1002/9781119083405.app1
+    def __init__(self, dim: int, dx: Union[float, List[float]]):
+        super(MixedSecondDerivO2, self).__init__()
+        self.dim = dim
+        assert self.dim > 1, "Mixed Derivatives only supported for 2D and 3D inputs"
+        if isinstance(dx, float):
+            dx = [dx for _ in range(dim)]
+        self.dx = dx
+        assert len(self.dx) == self.dim, "Mismatch between dx and dim"
+
+        self.register_buffer("ddx1D", torch.Tensor([-1.0, 0.0, 1.0]))
+
+    def get_convolution_kernel(self, axis):
+        shape = [1, 1] + axis * [1] + [-1] + (self.dim - axis - 1) * [1]
+        return torch.reshape(self.ddx1D, shape)
+
+    def apply_convolution(self, u, kernel, axis):
+        if self.dim == 2:
+            conv_result = torch.nn.functional.conv2d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
+        elif self.dim == 3:
+            conv_result = torch.nn.functional.conv3d(
+                u, kernel, stride=1, padding=0, bias=None
+            )
+        slice_index = (kernel.flatten().shape[-1] - 1) // 2
+        if self.dim == 2:
+            if axis == 0:
+                return conv_result[:, :, :, slice_index:-slice_index]
+            elif axis == 1:
+                return conv_result[:, :, slice_index:-slice_index, :]
+        elif self.dim == 3:
+            if axis == 0:
+                return conv_result[
+                    :, :, :, slice_index:-slice_index, slice_index:-slice_index
+                ]
+            elif axis == 1:
+                return conv_result[
+                    :, :, slice_index:-slice_index, :, slice_index:-slice_index
+                ]
+            elif axis == 2:
+                return conv_result[
+                    :, :, slice_index:-slice_index, slice_index:-slice_index, :
+                ]
+
+    def forward(self, u):
+        # get u_i+1 and u_i-1
+        pad = (self.dim - 1) * (0, 0) + (1, 1)
+        u_pad = torch.nn.functional.pad(u, pad, "constant")
+
+        u_xplus = u_pad[:, :, :-2]
+        u_xminus = u_pad[:, :, 2:]
+        u_xplus = torch.nn.functional.pad(u_xplus, self.dim * (1, 1), "replicate")
+        u_xminus = torch.nn.functional.pad(u_xminus, self.dim * (1, 1), "replicate")
+
+        result = []
+        for axis in range(self.dim - 1):
+            kernel = self.get_convolution_kernel(
+                axis + 1
+            )  # Apply convolution except x dim
+            conv_result_1 = self.apply_convolution(u_xplus, kernel, axis + 1)
+            conv_result_2 = self.apply_convolution(u_xminus, kernel, axis + 1)
+            conv_result = (1 / (4 * self.dx[0] * self.dx[axis])) * (
+                conv_result_2 - conv_result_1
+            )
+            result.append(conv_result)  # for 2d, gives dxdy; for 3d gives dxdy, dxdz
+
+        if self.dim == 3:  # compute dydz
+            pad = (0, 0, 1, 1, 0, 0)
+            u_pad = torch.nn.functional.pad(u, pad, "constant")
+
+            u_yplus = u_pad[:, :, :, :-2]
+            u_yminus = u_pad[:, :, :, 2:]
+            u_yplus = torch.nn.functional.pad(u_yplus, self.dim * (1, 1), "replicate")
+            u_yminus = torch.nn.functional.pad(u_yminus, self.dim * (1, 1), "replicate")
+
+            kernel = self.get_convolution_kernel(2)  # Apply convolution on z dim
+            conv_result_1 = self.apply_convolution(u_yplus, kernel, 2)
+            conv_result_2 = self.apply_convolution(u_yminus, kernel, 2)
+            conv_result = (1 / (4 * self.dx[1] * self.dx[2])) * (
+                conv_result_2 - conv_result_1
+            )
+            result.append(conv_result)
+
+        return result

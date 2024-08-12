@@ -18,7 +18,7 @@ import torch
 import numpy as np
 from modulus.sym.eq.spatial_grads.spatial_grads import (
     GradientCalculator,
-    compute_stencil,
+    compute_stencil3d,
     compute_connectivity_tensor,
 )
 import pytest
@@ -192,7 +192,7 @@ def test_gradients_meshless_fd(general_setup):
     grad_calc = GradientCalculator(device=coords.device)
 
     # Compute stencil
-    po_posx, po_negx, po_posy, po_negy, po_posz, po_negz = compute_stencil(
+    po_posx, po_negx, po_posy, po_negy, po_posz, po_negz = compute_stencil3d(
         coords_unstructured, model, dx=0.001
     )
     input_dict = {

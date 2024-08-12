@@ -18,7 +18,7 @@ import torch
 import numpy as np
 from modulus.sym.eq.phy_informer import PhysicsInformer
 from modulus.sym.eq.spatial_grads.spatial_grads import (
-    compute_stencil,
+    compute_stencil3d,
 )
 from modulus.sym.eq.pdes.navier_stokes import NavierStokes
 import pytest
@@ -270,7 +270,7 @@ def test_residuals_autodiff(general_setup):
 def test_residuals_meshless_fd(general_setup):
     coords, coords_unstructured, residuals_analytical, model = general_setup
     # Compute stencil
-    po_posx, po_negx, po_posy, po_negy, po_posz, po_negz = compute_stencil(
+    po_posx, po_negx, po_posy, po_negy, po_posz, po_negz = compute_stencil3d(
         coords_unstructured, model, dx=0.001
     )
 

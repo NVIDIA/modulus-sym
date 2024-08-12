@@ -356,7 +356,12 @@ class GradientsFiniteDifference(torch.nn.Module):
 
 class GradientsSpectral(torch.nn.Module):
     def __init__(
-        self, invar: str, ell: Union[Union[float, int]], dim: int = 3, order: int = 1
+        self,
+        invar: str,
+        ell: Union[Union[float, int]],
+        dim: int = 3,
+        order: int = 1,
+        return_mixed_derivs: bool = False,
     ):
         super(GradientsSpectral, self).__init__()
 
@@ -364,12 +369,19 @@ class GradientsSpectral(torch.nn.Module):
         self.ell = ell
         self.dim = dim
         self.order = order
+        self.return_mixed_derivs = return_mixed_derivs
 
         if isinstance(self.ell, (float, int)):
             self.ell = [self.ell for _ in range(self.dim)]
 
         assert self.order < 3, "Derivatives only upto 2nd order are supported"
         assert len(self.ell) == self.dim, f"Mismatch in {self.dim} and {self.ell}"
+
+        if self.return_mixed_derivs:
+            assert self.dim > 1, "Mixed Derivatives only supported for 2D and 3D inputs"
+            assert (
+                self.order == 2
+            ), "Mixed Derivatives not possible for first order derivatives"
 
     def forward(self, input_dict):
         u = input_dict[self.invar]
@@ -437,6 +449,41 @@ class GradientsSpectral(torch.nn.Module):
                 result[f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"] = wxx[
                     :, axis : axis + 1
                 ]
+
+            if self.return_mixed_derivs:
+                w_xy_h = (
+                    -(2 * pi / self.ell[0])
+                    * (2 * pi / self.ell[1])
+                    * kx[0]
+                    * kx[1]
+                    * u_h
+                )
+                w_xy = torch.fft.ifftn(w_xy_h, dim=list(range(2, self.dim + 2))).real
+                result[f"{self.invar}__x__y"] = w_xy
+                if self.dim == 3:
+                    w_xz_h = (
+                        -(2 * pi / self.ell[0])
+                        * (2 * pi / self.ell[2])
+                        * kx[0]
+                        * kx[2]
+                        * u_h
+                    )
+                    w_xz = torch.fft.ifftn(
+                        w_xz_h, dim=list(range(2, self.dim + 2))
+                    ).real
+                    result[f"{self.invar}__x__z"] = w_xz
+
+                    w_yz_h = (
+                        -(2 * pi / self.ell[1])
+                        * (2 * pi / self.ell[2])
+                        * kx[1]
+                        * kx[2]
+                        * u_h
+                    )
+                    w_yz = torch.fft.ifftn(
+                        w_yz_h, dim=list(range(2, self.dim + 2))
+                    ).real
+                    result[f"{self.invar}__y__z"] = w_yz
 
         return result
 

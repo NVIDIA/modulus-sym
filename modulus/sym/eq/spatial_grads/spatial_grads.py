@@ -20,6 +20,7 @@ from typing import Dict, List, Set, Optional, Union, Callable
 import logging
 from modulus.sym.eq.mfd import grads as mfd_grads
 from modulus.sym.eq.fd import grads as fd_grads
+from modulus.sym.eq.ls import grads as ls_grads
 from modulus.sym.eq.derivatives import gradient_autodiff
 
 
@@ -181,6 +182,7 @@ class GradientsAutoDiff(torch.nn.Module):
                     result[f"{self.invar}__x__y"] = ggrad_mixed_xy
                     result[f"{self.invar}__x__z"] = ggrad_mixed_xz
                     result[f"{self.invar}__y__z"] = ggrad_mixed_yz
+
         return result
 
 
@@ -489,17 +491,32 @@ class GradientsSpectral(torch.nn.Module):
 
 
 class GradientsLeastSquares(torch.nn.Module):
-    def __init__(self, invar: str, dim: int = 3, order: int = 1):
+    def __init__(
+        self,
+        invar: str,
+        dim: int = 3,
+        order: int = 1,
+        return_mixed_derivs: bool = False,
+    ):
         super(GradientsLeastSquares, self).__init__()
         self.invar = invar
         self.cache = {}
         self.dim = dim
         self.order = order
+        self.return_mixed_derivs = return_mixed_derivs
 
         assert (
             self.dim > 1
         ), "1D gradients using Least squares is not supported. Please try other methods."
         assert self.order < 3, "Derivatives only upto 2nd order are supported"
+
+        if self.return_mixed_derivs:
+            assert (
+                self.order == 2
+            ), "Mixed Derivatives not possible for first order derivatives"
+
+        # TODO add a seperate SecondDeriv module
+        self.deriv_module = ls_grads.FirstDeriv(self.dim)
 
     def forward(self, input_dict):
 
@@ -510,481 +527,61 @@ class GradientsLeastSquares(torch.nn.Module):
         ), f"Expected shape (N, {self.dim}), but got {coords.shape}"
 
         connectivity_tensor = input_dict["connectivity_tensor"]
-        p1 = coords[connectivity_tensor[:, :, 0]]
-        p2 = coords[connectivity_tensor[:, :, 1]]
 
+        result = {}
         if self.dim == 2:
-            dx = p1[:, :, 0] - p2[:, :, 0]
-            dy = p1[:, :, 1] - p2[:, :, 1]
-            y = input_dict[self.invar]
-
-            f1 = y[connectivity_tensor[:, :, 0]]
-            f2 = y[connectivity_tensor[:, :, 1]]
-
-            du = (f1 - f2).squeeze(-1)
-            w = 1 / torch.sqrt(dx**2 + dy**2)
-            w = torch.where(torch.isinf(w), torch.tensor(1.0).to(w.device), w)
-            # mask = ~((dx == 0) & (dy == 0) & (dz == 0))
-            mask = torch.ones_like(dx)
+            derivs = self.deriv_module.forward(
+                coords, connectivity_tensor, input_dict[self.invar]
+            )
 
             if self.order == 1:
-                # compute the gradients using either cramers rule or qr decomposion
-                a1 = torch.sum((w**2 * dx * dx) * mask, dim=1)
-                b1 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                d1 = torch.sum((w**2 * du * dx) * mask, dim=1)
-
-                a2 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                b2 = torch.sum((w**2 * dy * dy) * mask, dim=1)
-                d2 = torch.sum((w**2 * du * dy) * mask, dim=1)
-
-                detA = torch.linalg.det(
-                    torch.stack(
-                        [
-                            torch.stack([a1, a2], dim=1),
-                            torch.stack([b1, b2], dim=1),
-                        ],
-                        dim=2,
-                    )
-                )
-                dudx = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack([d1, d2], dim=1),
-                                torch.stack([b1, b2], dim=1),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
-                )
-                dudy = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack([a1, a2], dim=1),
-                                torch.stack([d1, d2], dim=1),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
-                )
-                return {
-                    f"{self.invar}__x": dudx.unsqueeze(dim=1),
-                    f"{self.invar}__y": dudy.unsqueeze(dim=1),
-                }
+                result[f"{self.invar}__x"] = derivs[0]
+                result[f"{self.invar}__y"] = derivs[1]
+                return result
             elif self.order == 2:
-                a1 = torch.sum((w**2 * dx * dx) * mask, dim=1)
-                b1 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                d1 = torch.sum((0.5 * w**2 * dx * dx * dx) * mask, dim=1)
-                e1 = torch.sum((0.5 * w**2 * dx * dy * dy) * mask, dim=1)
-                g1 = torch.sum((w**2 * dx * dx * dy) * mask, dim=1)
-                j1 = torch.sum((w**2 * du * dx) * mask, dim=1)
-
-                a2 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                b2 = torch.sum((w**2 * dy * dy) * mask, dim=1)
-                d2 = torch.sum((0.5 * w**2 * dx * dx * dy) * mask, dim=1)
-                e2 = torch.sum((0.5 * w**2 * dy * dy * dy) * mask, dim=1)
-                g2 = torch.sum((w**2 * dx * dy * dy) * mask, dim=1)
-                j2 = torch.sum((w**2 * du * dy) * mask, dim=1)
-
-                a4 = torch.sum((0.5 * w**2 * dx * dx * dx) * mask, dim=1)
-                b4 = torch.sum((0.5 * w**2 * dx * dx * dy) * mask, dim=1)
-                d4 = torch.sum((0.25 * w**2 * dx * dx * dx * dx) * mask, dim=1)
-                e4 = torch.sum((0.25 * w**2 * dx * dx * dy * dy) * mask, dim=1)
-                g4 = torch.sum((0.5 * w**2 * dx * dx * dx * dy) * mask, dim=1)
-                j4 = torch.sum((0.5 * w**2 * du * dx * dx) * mask, dim=1)
-
-                a5 = torch.sum((0.5 * w**2 * dx * dy * dy) * mask, dim=1)
-                b5 = torch.sum((0.5 * w**2 * dy * dy * dy) * mask, dim=1)
-                d5 = torch.sum((0.25 * w**2 * dx * dx * dy * dy) * mask, dim=1)
-                e5 = torch.sum((0.25 * w**2 * dy * dy * dy * dy) * mask, dim=1)
-                g5 = torch.sum((0.5 * w**2 * dx * dy * dy * dy) * mask, dim=1)
-                j5 = torch.sum((0.5 * w**2 * du * dy * dy) * mask, dim=1)
-
-                a7 = torch.sum((w**2 * dx * dx * dy) * mask, dim=1)
-                b7 = torch.sum((w**2 * dx * dy * dy) * mask, dim=1)
-                d7 = torch.sum((0.5 * w**2 * dx * dx * dx * dy) * mask, dim=1)
-                e7 = torch.sum((0.5 * w**2 * dx * dy * dy * dy) * mask, dim=1)
-                g7 = torch.sum((w**2 * dx * dx * dy * dy) * mask, dim=1)
-                j7 = torch.sum((w**2 * du * dx * dy) * mask, dim=1)
-
-                matA = torch.stack(
-                    [
-                        torch.stack([a1, a2, a4, a5, a7], dim=1),
-                        torch.stack([b1, b2, b4, b5, b7], dim=1),
-                        torch.stack([d1, d2, d4, d5, d7], dim=1),
-                        torch.stack([e1, e2, e4, e5, e7], dim=1),
-                        torch.stack([g1, g2, g4, g5, g7], dim=1),
-                    ],
-                    dim=2,
+                dderivs_x = self.deriv_module.forward(
+                    coords, connectivity_tensor, derivs[0]
                 )
-
-                detA = torch.linalg.det(matA)
-                detA = detA + 1e-10
-
-                d2udx2 = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack([a1, a2, a4, a5, a7], dim=1),
-                                torch.stack([b1, b2, b4, b5, b7], dim=1),
-                                torch.stack([j1, j2, j4, j5, j7], dim=1),
-                                torch.stack([e1, e2, e4, e5, e7], dim=1),
-                                torch.stack([g1, g2, g4, g5, g7], dim=1),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
+                dderivs_y = self.deriv_module.forward(
+                    coords, connectivity_tensor, derivs[1]
                 )
+                result[f"{self.invar}__x__x"] = dderivs_x[0]
+                result[f"{self.invar}__y__y"] = dderivs_y[1]
 
-                d2udy2 = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack([a1, a2, a4, a5, a7], dim=1),
-                                torch.stack([b1, b2, b4, b5, b7], dim=1),
-                                torch.stack([d1, d2, d4, d5, d7], dim=1),
-                                torch.stack([j1, j2, j4, j5, j7], dim=1),
-                                torch.stack([g1, g2, g4, g5, g7], dim=1),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
-                )
-
-                return {
-                    f"{self.invar}__x__x": d2udx2.unsqueeze(dim=1),
-                    f"{self.invar}__y__y": d2udy2.unsqueeze(dim=1),
-                }
+                if self.return_mixed_derivs:
+                    result[f"{self.invar}__x__y"] = dderivs_x[1]  # same as dderivs_y[0]
+                return result
 
         elif self.dim == 3:
-            dx = p1[:, :, 0] - p2[:, :, 0]
-            dy = p1[:, :, 1] - p2[:, :, 1]
-            dz = p1[:, :, 2] - p2[:, :, 2]
-            y = input_dict[self.invar]
-
-            f1 = y[connectivity_tensor[:, :, 0]]
-            f2 = y[connectivity_tensor[:, :, 1]]
-
-            du = (f1 - f2).squeeze(-1)
-            w = 1 / torch.sqrt(dx**2 + dy**2 + dz**2)
-            w = torch.where(torch.isinf(w), torch.tensor(1.0).to(w.device), w)
-            # mask = ~((dx == 0) & (dy == 0) & (dz == 0))
-            mask = torch.ones_like(dx)
+            derivs = self.deriv_module.forward(
+                coords, connectivity_tensor, input_dict[self.invar]
+            )
 
             if self.order == 1:
-                # compute the gradients using either cramers rule or qr decomposion
-                a1 = torch.sum((w**2 * dx * dx) * mask, dim=1)
-                b1 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                c1 = torch.sum((w**2 * dx * dz) * mask, dim=1)
-                d1 = torch.sum((w**2 * du * dx) * mask, dim=1)
-
-                a2 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                b2 = torch.sum((w**2 * dy * dy) * mask, dim=1)
-                c2 = torch.sum((w**2 * dy * dz) * mask, dim=1)
-                d2 = torch.sum((w**2 * du * dy) * mask, dim=1)
-
-                a3 = torch.sum((w**2 * dx * dz) * mask, dim=1)
-                b3 = torch.sum((w**2 * dy * dz) * mask, dim=1)
-                c3 = torch.sum((w**2 * dz * dz) * mask, dim=1)
-                d3 = torch.sum((w**2 * du * dz) * mask, dim=1)
-
-                detA = torch.linalg.det(
-                    torch.stack(
-                        [
-                            torch.stack([a1, a2, a3], dim=1),
-                            torch.stack([b1, b2, b3], dim=1),
-                            torch.stack([c1, c2, c3], dim=1),
-                        ],
-                        dim=2,
-                    )
-                )
-                dudx = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack([d1, d2, d3], dim=1),
-                                torch.stack([b1, b2, b3], dim=1),
-                                torch.stack([c1, c2, c3], dim=1),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
-                )
-                dudy = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack([a1, a2, a3], dim=1),
-                                torch.stack([d1, d2, d3], dim=1),
-                                torch.stack([c1, c2, c3], dim=1),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
-                )
-                dudz = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack([a1, a2, a3], dim=1),
-                                torch.stack([b1, b2, b3], dim=1),
-                                torch.stack([d1, d2, d3], dim=1),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
-                )
-
-                return {
-                    f"{self.invar}__x": dudx.unsqueeze(dim=1),
-                    f"{self.invar}__y": dudy.unsqueeze(dim=1),
-                    f"{self.invar}__z": dudz.unsqueeze(dim=1),
-                }
+                result[f"{self.invar}__x"] = derivs[0]
+                result[f"{self.invar}__y"] = derivs[1]
+                result[f"{self.invar}__z"] = derivs[2]
+                return result
             elif self.order == 2:
-                a1 = torch.sum((w**2 * dx * dx) * mask, dim=1)
-                b1 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                c1 = torch.sum((w**2 * dx * dz) * mask, dim=1)
-                d1 = torch.sum((0.5 * w**2 * dx * dx * dx) * mask, dim=1)
-                e1 = torch.sum((0.5 * w**2 * dx * dy * dy) * mask, dim=1)
-                f1 = torch.sum((0.5 * w**2 * dx * dz * dz) * mask, dim=1)
-                g1 = torch.sum((w**2 * dx * dx * dy) * mask, dim=1)
-                h1 = torch.sum((w**2 * dx * dy * dz) * mask, dim=1)
-                i1 = torch.sum((w**2 * dx * dx * dz) * mask, dim=1)
-                j1 = torch.sum((w**2 * du * dx) * mask, dim=1)
-
-                a2 = torch.sum((w**2 * dx * dy) * mask, dim=1)
-                b2 = torch.sum((w**2 * dy * dy) * mask, dim=1)
-                c2 = torch.sum((w**2 * dy * dz) * mask, dim=1)
-                d2 = torch.sum((0.5 * w**2 * dx * dx * dy) * mask, dim=1)
-                e2 = torch.sum((0.5 * w**2 * dy * dy * dy) * mask, dim=1)
-                f2 = torch.sum((0.5 * w**2 * dy * dz * dz) * mask, dim=1)
-                g2 = torch.sum((w**2 * dx * dy * dy) * mask, dim=1)
-                h2 = torch.sum((w**2 * dy * dy * dz) * mask, dim=1)
-                i2 = torch.sum((w**2 * dx * dy * dz) * mask, dim=1)
-                j2 = torch.sum((w**2 * du * dy) * mask, dim=1)
-
-                a3 = torch.sum((w**2 * dx * dz) * mask, dim=1)
-                b3 = torch.sum((w**2 * dy * dz) * mask, dim=1)
-                c3 = torch.sum((w**2 * dz * dz) * mask, dim=1)
-                d3 = torch.sum((0.5 * w**2 * dx * dx * dz) * mask, dim=1)
-                e3 = torch.sum((0.5 * w**2 * dy * dy * dz) * mask, dim=1)
-                f3 = torch.sum((0.5 * w**2 * dz * dz * dz) * mask, dim=1)
-                g3 = torch.sum((w**2 * dx * dy * dz) * mask, dim=1)
-                h3 = torch.sum((w**2 * dy * dz * dz) * mask, dim=1)
-                i3 = torch.sum((w**2 * dx * dz * dz) * mask, dim=1)
-                j3 = torch.sum((w**2 * du * dz) * mask, dim=1)
-
-                a4 = torch.sum((0.5 * w**2 * dx * dx * dx) * mask, dim=1)
-                b4 = torch.sum((0.5 * w**2 * dx * dx * dy) * mask, dim=1)
-                c4 = torch.sum((0.5 * w**2 * dx * dx * dz) * mask, dim=1)
-                d4 = torch.sum((0.25 * w**2 * dx * dx * dx * dx) * mask, dim=1)
-                e4 = torch.sum((0.25 * w**2 * dx * dx * dy * dy) * mask, dim=1)
-                f4 = torch.sum((0.25 * w**2 * dx * dx * dz * dz) * mask, dim=1)
-                g4 = torch.sum((0.5 * w**2 * dx * dx * dx * dy) * mask, dim=1)
-                h4 = torch.sum((0.5 * w**2 * dx * dx * dy * dz) * mask, dim=1)
-                i4 = torch.sum((0.5 * w**2 * dx * dx * dx * dz) * mask, dim=1)
-                j4 = torch.sum((0.5 * w**2 * du * dx * dx) * mask, dim=1)
-
-                a5 = torch.sum((0.5 * w**2 * dx * dy * dy) * mask, dim=1)
-                b5 = torch.sum((0.5 * w**2 * dy * dy * dy) * mask, dim=1)
-                c5 = torch.sum((0.5 * w**2 * dy * dy * dz) * mask, dim=1)
-                d5 = torch.sum((0.25 * w**2 * dx * dx * dy * dy) * mask, dim=1)
-                e5 = torch.sum((0.25 * w**2 * dy * dy * dy * dy) * mask, dim=1)
-                f5 = torch.sum((0.25 * w**2 * dy * dy * dz * dz) * mask, dim=1)
-                g5 = torch.sum((0.5 * w**2 * dx * dy * dy * dy) * mask, dim=1)
-                h5 = torch.sum((0.5 * w**2 * dy * dy * dy * dz) * mask, dim=1)
-                i5 = torch.sum((0.5 * w**2 * dx * dy * dy * dz) * mask, dim=1)
-                j5 = torch.sum((0.5 * w**2 * du * dy * dy) * mask, dim=1)
-
-                a6 = torch.sum((0.5 * w**2 * dx * dz * dz) * mask, dim=1)
-                b6 = torch.sum((0.5 * w**2 * dy * dz * dz) * mask, dim=1)
-                c6 = torch.sum((0.5 * w**2 * dz * dz * dz) * mask, dim=1)
-                d6 = torch.sum((0.25 * w**2 * dx * dx * dz * dz) * mask, dim=1)
-                e6 = torch.sum((0.25 * w**2 * dy * dy * dz * dz) * mask, dim=1)
-                f6 = torch.sum((0.25 * w**2 * dz * dz * dz * dz) * mask, dim=1)
-                g6 = torch.sum((0.5 * w**2 * dx * dy * dz * dz) * mask, dim=1)
-                h6 = torch.sum((0.5 * w**2 * dy * dz * dz * dz) * mask, dim=1)
-                i6 = torch.sum((0.5 * w**2 * dx * dz * dz * dz) * mask, dim=1)
-                j6 = torch.sum((0.5 * w**2 * du * dz * dz) * mask, dim=1)
-
-                a7 = torch.sum((w**2 * dx * dx * dy) * mask, dim=1)
-                b7 = torch.sum((w**2 * dx * dy * dy) * mask, dim=1)
-                c7 = torch.sum((w**2 * dx * dy * dz) * mask, dim=1)
-                d7 = torch.sum((0.5 * w**2 * dx * dx * dx * dy) * mask, dim=1)
-                e7 = torch.sum((0.5 * w**2 * dx * dy * dy * dy) * mask, dim=1)
-                f7 = torch.sum((0.5 * w**2 * dx * dy * dz * dz) * mask, dim=1)
-                g7 = torch.sum((w**2 * dx * dx * dy * dy) * mask, dim=1)
-                h7 = torch.sum((w**2 * dx * dy * dy * dz) * mask, dim=1)
-                i7 = torch.sum((w**2 * dx * dx * dy * dz) * mask, dim=1)
-                j7 = torch.sum((w**2 * du * dx * dy) * mask, dim=1)
-
-                a8 = torch.sum((w**2 * dx * dy * dz) * mask, dim=1)
-                b8 = torch.sum((w**2 * dy * dy * dz) * mask, dim=1)
-                c8 = torch.sum((w**2 * dy * dz * dz) * mask, dim=1)
-                d8 = torch.sum((0.5 * w**2 * dx * dx * dy * dz) * mask, dim=1)
-                e8 = torch.sum((0.5 * w**2 * dy * dy * dy * dz) * mask, dim=1)
-                f8 = torch.sum((0.5 * w**2 * dy * dz * dz * dz) * mask, dim=1)
-                g8 = torch.sum((w**2 * dx * dy * dy * dz) * mask, dim=1)
-                h8 = torch.sum((w**2 * dy * dy * dz * dz) * mask, dim=1)
-                i8 = torch.sum((w**2 * dx * dy * dz * dz) * mask, dim=1)
-                j8 = torch.sum((w**2 * du * dy * dz) * mask, dim=1)
-
-                a9 = torch.sum((w**2 * dx * dx * dz) * mask, dim=1)
-                b9 = torch.sum((w**2 * dx * dy * dz) * mask, dim=1)
-                c9 = torch.sum((w**2 * dx * dz * dz) * mask, dim=1)
-                d9 = torch.sum((0.5 * w**2 * dx * dx * dx * dz) * mask, dim=1)
-                e9 = torch.sum((0.5 * w**2 * dx * dy * dy * dz) * mask, dim=1)
-                f9 = torch.sum((0.5 * w**2 * dx * dz * dz * dz) * mask, dim=1)
-                g9 = torch.sum((w**2 * dx * dx * dy * dz) * mask, dim=1)
-                h9 = torch.sum((w**2 * dx * dy * dz * dz) * mask, dim=1)
-                i9 = torch.sum((w**2 * dx * dx * dz * dz) * mask, dim=1)
-                j9 = torch.sum((w**2 * du * dx * dz) * mask, dim=1)
-
-                matA = torch.stack(
-                    [
-                        torch.stack([a1, a2, a3, a4, a5, a6, a7, a8, a9], dim=1),
-                        torch.stack([b1, b2, b3, b4, b5, b6, b7, b8, b9], dim=1),
-                        torch.stack([c1, c2, c3, c4, c5, c6, c7, c8, c9], dim=1),
-                        torch.stack([d1, d2, d3, d4, d5, d6, d7, d8, d9], dim=1),
-                        torch.stack([e1, e2, e3, e4, e5, e6, e7, e8, e9], dim=1),
-                        torch.stack([f1, f2, f3, f4, f5, f6, f7, f8, f9], dim=1),
-                        torch.stack([g1, g2, g3, g4, g5, g6, g7, g8, g9], dim=1),
-                        torch.stack([h1, h2, h3, h4, h5, h6, h7, h8, h9], dim=1),
-                        torch.stack([i1, i2, i3, i4, i5, i6, i7, i8, i9], dim=1),
-                    ],
-                    dim=2,
+                dderivs_x = self.deriv_module.forward(
+                    coords, connectivity_tensor, derivs[0]
                 )
-
-                detA = torch.linalg.det(matA)
-                detA = detA + 1e-10
-
-                d2udx2 = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack(
-                                    [a1, a2, a3, a4, a5, a6, a7, a8, a9], dim=1
-                                ),
-                                torch.stack(
-                                    [b1, b2, b3, b4, b5, b6, b7, b8, b9], dim=1
-                                ),
-                                torch.stack(
-                                    [c1, c2, c3, c4, c5, c6, c7, c8, c9], dim=1
-                                ),
-                                torch.stack(
-                                    [j1, j2, j3, j4, j5, j6, j7, j8, j9], dim=1
-                                ),
-                                torch.stack(
-                                    [e1, e2, e3, e4, e5, e6, e7, e8, e9], dim=1
-                                ),
-                                torch.stack(
-                                    [f1, f2, f3, f4, f5, f6, f7, f8, f9], dim=1
-                                ),
-                                torch.stack(
-                                    [g1, g2, g3, g4, g5, g6, g7, g8, g9], dim=1
-                                ),
-                                torch.stack(
-                                    [h1, h2, h3, h4, h5, h6, h7, h8, h9], dim=1
-                                ),
-                                torch.stack(
-                                    [i1, i2, i3, i4, i5, i6, i7, i8, i9], dim=1
-                                ),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
+                dderivs_y = self.deriv_module.forward(
+                    coords, connectivity_tensor, derivs[1]
                 )
-
-                d2udy2 = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack(
-                                    [a1, a2, a3, a4, a5, a6, a7, a8, a9], dim=1
-                                ),
-                                torch.stack(
-                                    [b1, b2, b3, b4, b5, b6, b7, b8, b9], dim=1
-                                ),
-                                torch.stack(
-                                    [c1, c2, c3, c4, c5, c6, c7, c8, c9], dim=1
-                                ),
-                                torch.stack(
-                                    [d1, d2, d3, d4, d5, d6, d7, d8, d9], dim=1
-                                ),
-                                torch.stack(
-                                    [j1, j2, j3, j4, j5, j6, j7, j8, j9], dim=1
-                                ),
-                                torch.stack(
-                                    [f1, f2, f3, f4, f5, f6, f7, f8, f9], dim=1
-                                ),
-                                torch.stack(
-                                    [g1, g2, g3, g4, g5, g6, g7, g8, g9], dim=1
-                                ),
-                                torch.stack(
-                                    [h1, h2, h3, h4, h5, h6, h7, h8, h9], dim=1
-                                ),
-                                torch.stack(
-                                    [i1, i2, i3, i4, i5, i6, i7, i8, i9], dim=1
-                                ),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
+                dderivs_z = self.deriv_module.forward(
+                    coords, connectivity_tensor, derivs[2]
                 )
+                result[f"{self.invar}__x__x"] = dderivs_x[0]
+                result[f"{self.invar}__y__y"] = dderivs_y[1]
+                result[f"{self.invar}__z__z"] = dderivs_z[2]
 
-                d2udz2 = (
-                    torch.linalg.det(
-                        torch.stack(
-                            [
-                                torch.stack(
-                                    [a1, a2, a3, a4, a5, a6, a7, a8, a9], dim=1
-                                ),
-                                torch.stack(
-                                    [b1, b2, b3, b4, b5, b6, b7, b8, b9], dim=1
-                                ),
-                                torch.stack(
-                                    [c1, c2, c3, c4, c5, c6, c7, c8, c9], dim=1
-                                ),
-                                torch.stack(
-                                    [d1, d2, d3, d4, d5, d6, d7, d8, d9], dim=1
-                                ),
-                                torch.stack(
-                                    [e1, e2, e3, e4, e5, e6, e7, e8, e9], dim=1
-                                ),
-                                torch.stack(
-                                    [j1, j2, j3, j4, j5, j6, j7, j8, j9], dim=1
-                                ),
-                                torch.stack(
-                                    [g1, g2, g3, g4, g5, g6, g7, g8, g9], dim=1
-                                ),
-                                torch.stack(
-                                    [h1, h2, h3, h4, h5, h6, h7, h8, h9], dim=1
-                                ),
-                                torch.stack(
-                                    [i1, i2, i3, i4, i5, i6, i7, i8, i9], dim=1
-                                ),
-                            ],
-                            dim=2,
-                        )
-                    )
-                    / detA
-                )
+                if self.return_mixed_derivs:
+                    result[f"{self.invar}__x__y"] = dderivs_x[1]
+                    result[f"{self.invar}__x__z"] = dderivs_x[2]
+                    result[f"{self.invar}__y__z"] = dderivs_y[2]
 
-                return {
-                    f"{self.invar}__x__x": d2udx2.unsqueeze(dim=1),
-                    f"{self.invar}__y__y": d2udy2.unsqueeze(dim=1),
-                    f"{self.invar}__z__z": d2udz2.unsqueeze(dim=1),
-                }
+                return result
 
 
 class GradientCalculator:

@@ -16,6 +16,7 @@
 
 import copy
 import torch
+import modulus
 import torch.nn as nn
 import numpy as np
 import logging
@@ -26,6 +27,7 @@ from modulus.sym.graph import Graph
 
 from typing import Dict, List, Set, Optional, Union, Callable
 from modulus.sym.node import Node
+from modulus.sym.eq.pde import PDE
 
 from modulus.sym.eq.spatial_grads.spatial_grads import (
     GradientCalculator,
@@ -37,18 +39,97 @@ logger.setLevel(logging.DEBUG)
 
 
 class PhysicsInformer(object):
+    """
+    A utility to compute the residual of a Partial Differential Equation (PDE).
+    Given the equations and `required_outputs`, this utility constructs the
+    computational graph, including computing of the derivatives to output the residuals.
+
+    This utility computes the spatial grads automatically. Currently the spatial grads
+    are computed using "autodiff", "meshless_finite_difference", "finite_difference",
+    "spectral", and "least_squares" methods. All the other gradients (such as
+    gradients w.r.t. time) will have to be manually included in the `input_dict` to the
+    forward call.
+
+    Parameters
+    ----------
+    required_outputs : List[str]
+        Required keys in the output dictionary. To find the available outputs of a PDE,
+        you can use the `.pprint()` method.
+    equations : PDE
+        Equation to use for computing the residual. The equation must be in the form of
+        Modulus Sym's PDE. For more details,
+        refer: https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/features/nodes.html#equations.
+        Custom PDEs are also supported.
+        For details refer: https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/features/nodes.html#custom-pdes
+    grad_method : str
+        Gradient method to use. Currently below methods are supported, which can be
+        selected based on the model output format:
+            `autodiff`: The spatial gradients are computed using automatic
+            differentiation. Ideal for networks dealing with point-clouds and
+            fully-differentiable networks. The `.forward` call requires input dict with
+            the relevant variables in `[N, 1]` shape along with entry for "coordinates"
+            in `[N, m]` shape where m is the dimensionality of the input
+            (1/2/3 based on 1D, 2D and 3D).
+            Note: the coordinates tensor must have `requires_grad` set to `True` and the
+            model outputs need to be connected to the coordinates in the computational
+            graph.
+            `meshless_finite_difference`: The spatial gradients are computed using
+            meshless finite difference. Ideal for use with point-clouds.
+            For details refer: https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/features/performance.html#meshless-finite-derivatives.
+            The `.forward` call requires input dict with the relevant variables in
+            `[N, 1]` shape along with the same variables executed at the stencil points.
+            Stencil points are defined by the following convention:
+                "u>>x::1": u(i+1, j)
+                "u>>x::-1": u(i-1, j)
+                "u>>x::1&&y::1": u(i+1, j+1)
+                "u>>x::-1&&y::-1": u(i-1, j-1)
+                etc.
+            `finite_difference`: The spatial gradients are computed using finite
+            difference assuming regular grid. Ideal for use with regular grids / images.
+            The `.forward` call requires input dict with the relevant variables in
+            `[N, 1, H, W, D]` for 3D, `[N, 1, H, W]` for 2D and `[N, 1, H]` for 1D.
+            `spectral`: The spatial gradients are computed using FFTs. Note: this can
+            lead to boundary artifacts for non-periodic signals. Ideal for use with
+            regular grids / images.
+            The `.forward` call requires input dict with the relevant variables in
+            `[N, 1, H, W, D]` for 3D, `[N, 1, H, W]` for 2D and `[N, 1, H]` for 1D.
+            `least_squares`: The spatial gradients are computed using Least Squares
+            technique. Ideal for use with mesh based representations. All values are
+            computed at the nodes. The `.forward` call requires input dict with
+            the relevant variables in `[N, 1]` shape along with entry for "coordinates"
+            in `[N, m]` shape where m is the dimensionality of the input
+            (1/2/3 based on 1D, 2D and 3D), "node_ids", "edges" and
+            "connectivity_tensor". The "node_ids" and "edges" can directly derived from
+            the graph representation (for example for dgl graph, by running
+            `graph.nodes()` and `graph.edges()`). For computing connectivity tensor,
+            refer: `modulus.sym.eq.spatial_grads.spatial_grads.compute_connectivity_tensor`
+    fd_dx : Union[float, List[float]], optional
+        dx to be used for meshless finite difference and regular finite difference
+        calculation. If float, the same value is used across all dimensions,
+        by default 0.001
+    bounds : List[float], optional
+        bounds to be used for spectral derivatives, by default [2 * np.pi, 2 * np.pi, 2 * np.pi]
+    device : Optional[str], optional
+        The device to use for computation. Options are "cuda" or "cpu". If not
+        specified, the computation defaults to "cpu".
+    """
+
     def __init__(
         self,
-        required_outputs,
-        equations,
-        grad_method,
-        available_inputs=None,
-        fd_dx=0.001,  # only applies for FD and Meshless FD. Ignored for the rest
-        bounds=[2 * np.pi, 2 * np.pi, 2 * np.pi],
-        device=None,
+        required_outputs: List[str],
+        equations: PDE,
+        grad_method: str,
+        fd_dx: Union[
+            float, List[float]
+        ] = 0.001,  # only applies for FD and Meshless FD. Ignored for the rest
+        bounds: List[float] = [
+            2 * np.pi,
+            2 * np.pi,
+            2 * np.pi,
+        ],  # only applies for FD and Meshless FD. Ignored for the rest
+        device: Optional[str] = None,
     ):
         super().__init__()
-        self.available_inputs = available_inputs
         self.required_outputs = required_outputs
         self.equations = equations
         self.dim = equations.dim
@@ -65,6 +146,7 @@ class PhysicsInformer(object):
         self.graph = self._create_graph()
 
     def _find_required_inputs(self):
+        """Find the required inputs"""
         node_outputs = [str(n.outputs[0]) for n in self.nodes]
         node_inputs = set()
 
@@ -99,16 +181,15 @@ class PhysicsInformer(object):
     def _expand_for_meshless_fd(self, node_inputs):
         node_inputs_new = copy.deepcopy(node_inputs)
         for node in node_inputs:
-            node_inputs_new.extend(
-                [
-                    f"{node}>>x::1",
-                    f"{node}>>x::-1",
-                    f"{node}>>y::1",
-                    f"{node}>>y::-1",
-                    f"{node}>>z::1",
-                    f"{node}>>z::-1",
-                ]
-            )
+            mfd_vars = [
+                f"{node}>>x::1",
+                f"{node}>>x::-1",
+                f"{node}>>y::1",
+                f"{node}>>y::-1",
+                f"{node}>>z::1",
+                f"{node}>>z::-1",
+            ]
+            node_inputs_new.extend(mfd_vars[: 2 * self.dim])
         return node_inputs_new
 
     def _create_graph(self):

@@ -112,6 +112,27 @@ class PhysicsInformer(object):
     device : Optional[str], optional
         The device to use for computation. Options are "cuda" or "cpu". If not
         specified, the computation defaults to "cpu".
+
+    Examples
+    --------
+    >>> import torch
+    >>> from modulus.sym.eq.pdes.navier_stokes import NavierStokes
+    >>> from modulus.sym.eq.phy_informer import PhysicsInformer
+    >>> ns = NavierStokes(nu=0.1, rho=1.0, dim=2, time=True)
+    >>> phy_inf = PhysicsInformer(
+    ... required_outputs=["continuity", "momentum_x"],
+    ... equations=ns,
+    ... grad_method="finite_difference"
+    ... )
+    >>> tensor = torch.rand(1, 1, 10, 10)   # [N, 1, H, W]
+    >>> sorted(phy_inf.required_inputs)
+    ...
+    ['p', 'u', 'u__t', 'v']
+    >>> out_dict = phy_inf.forward({"u": tensor, "v": tensor, "u__t": tensor, "p": tensor})
+    >>> out_dict.keys()
+    dict_keys(['continuity', 'momentum_x'])
+    >>> out_dict["continuity"].shape
+    torch.Size([1, 1, 10, 10])
     """
 
     def __init__(
@@ -142,10 +163,10 @@ class PhysicsInformer(object):
 
         self.require_mixed_derivs = False
 
-        self.required_inputs = self._find_required_inputs()
         self.graph = self._create_graph()
 
-    def _find_required_inputs(self):
+    @property
+    def required_inputs(self):
         """Find the required inputs"""
         node_outputs = [str(n.outputs[0]) for n in self.nodes]
         node_inputs = set()
@@ -179,6 +200,7 @@ class PhysicsInformer(object):
         return node_inputs
 
     def _expand_for_meshless_fd(self, node_inputs):
+        """Add input keys specific to MFD"""
         node_inputs_new = copy.deepcopy(node_inputs)
         for node in node_inputs:
             mfd_vars = [
@@ -193,6 +215,7 @@ class PhysicsInformer(object):
         return node_inputs_new
 
     def _create_graph(self):
+        """Create the computational graph"""
         first_deriv, second_deriv, _ = self._extract_derivatives()
 
         input_keys_sym = [Key(k) for k in self.required_inputs]
@@ -206,6 +229,7 @@ class PhysicsInformer(object):
         ).to(self.device)
 
     def _extract_derivatives(self):
+        """Extract the derivatives from the provided PDE"""
         first_deriv, second_deriv, other_derivs = set(), set(), set()
 
         for node in self.nodes:
@@ -221,6 +245,7 @@ class PhysicsInformer(object):
         return first_deriv_consolidated, second_deriv_consolidated, other_derivs
 
     def _process_derivative(self, derr, first_deriv, second_deriv, other_derivs):
+        """Helper to process and find the valid derivative nodes"""
         if str(derr).count("__") > 2:
             raise ValueError("Only second order PDEs are supported presently")
 
@@ -247,6 +272,7 @@ class PhysicsInformer(object):
             second_deriv.add(str(derr))
 
     def _create_diff_nodes(self, derivatives, dim, order):
+        """Create various custom derivative nodes"""
         diff_nodes = []
         for derr_var in derivatives:
             node = self._create_diff_node(derr_var, dim, order)
@@ -255,6 +281,7 @@ class PhysicsInformer(object):
         return diff_nodes
 
     def _create_diff_node(self, derr_var, dim, order):
+        """Select appropriate derivative node based on grad_method"""
         methods = {
             "finite_difference": self._fd_gradient_module,
             "spectral": self._spectral_gradient_module,
@@ -273,6 +300,7 @@ class PhysicsInformer(object):
             )
 
     def _derivative_keys(self, derr_var, dim, order, return_mixed_derivs=False):
+        """Helper to set the output keys"""
         base_keys = ["__x", "__y", "__z"]
         base_keys = [base_keys[i] for i in range(dim)]
         output_keys = [f"{derr_var}{k * order}" for k in base_keys]
@@ -354,6 +382,8 @@ class PhysicsInformer(object):
         )
 
     def forward(self, inputs):
+        """Forward pass"""
+        # TODO: enable access to cached connectivity tensor
         if self.grad_method == "least_squares":
             connectivity_tensor = compute_connectivity_tensor(
                 inputs["coordinates"], inputs["nodes"], inputs["edges"]

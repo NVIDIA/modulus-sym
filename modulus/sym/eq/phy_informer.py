@@ -59,6 +59,8 @@ class PhysicsInformer(object):
         self.grad_calc = GradientCalculator(device=self.device)
         self.nodes = self.equations.make_nodes()
 
+        self.require_mixed_derivs = False
+
         self.required_inputs = self._find_required_inputs()
         self.graph = self._create_graph()
 
@@ -156,9 +158,7 @@ class PhysicsInformer(object):
             str(derr).count("__") == 2
             and str(derr).split("__")[1] != str(derr).split("__")[2]
         ):
-            raise ValueError(
-                f"Found {str(derr)}. PDEs with Mixed Derivatives not supported presently"
-            )
+            self.require_mixed_derivs = True
 
         if str(derr).count("__") == 1:
             first_deriv.add(str(derr))
@@ -167,13 +167,13 @@ class PhysicsInformer(object):
 
     def _create_diff_nodes(self, derivatives, dim, order):
         diff_nodes = []
-        for derr in derivatives:
-            node = self._create_diff_node(derr, dim, order)
+        for derr_var in derivatives:
+            node = self._create_diff_node(derr_var, dim, order)
             if node:
                 diff_nodes.append(node)
         return diff_nodes
 
-    def _create_diff_node(self, derr, dim, order):
+    def _create_diff_node(self, derr_var, dim, order):
         methods = {
             "finite_difference": self._fd_gradient_module,
             "spectral": self._spectral_gradient_module,
@@ -184,56 +184,92 @@ class PhysicsInformer(object):
 
         if self.grad_method in methods:
             return Node(
-                str(derr).split("__")[0],
-                self._derivative_keys(derr, order),
-                methods[self.grad_method](derr, dim, order),
+                [derr_var],
+                self._derivative_keys(
+                    derr_var, dim, order, return_mixed_derivs=self.require_mixed_derivs
+                ),
+                methods[self.grad_method](derr_var, dim, order),
             )
 
-    def _derivative_keys(self, derr, order):
+    def _derivative_keys(self, derr_var, dim, order, return_mixed_derivs=False):
         base_keys = ["__x", "__y", "__z"]
-        return [f"{derr}{k * order}" for k in base_keys]
+        base_keys = [base_keys[i] for i in range(dim)]
+        output_keys = [f"{derr_var}{k * order}" for k in base_keys]
+        if return_mixed_derivs:
+            if order == 2:
+                if dim == 2:
+                    output_keys.append(f"{derr_var}__x__y")
+                    output_keys.append(f"{derr_var}__y__x")
+                if dim == 3:
+                    output_keys.append(f"{derr_var}__x__y")
+                    output_keys.append(f"{derr_var}__y__x")
+                    output_keys.append(f"{derr_var}__x__z")
+                    output_keys.append(f"{derr_var}__z__x")
+                    output_keys.append(f"{derr_var}__y__z")
+                    output_keys.append(f"{derr_var}__z__y")
+        return output_keys
 
-    def _fd_gradient_module(self, derr, dim, order):
+    def _fd_gradient_module(self, derr_var, dim, order):
+        return_mixed_derivs = False
+        if order == 2 and self.require_mixed_derivs:
+            return_mixed_derivs = True
         return self.grad_calc.get_gradient_module(
             self.grad_method,
-            str(derr).split("__")[0],
+            derr_var,
             dx=self.fd_dx,
             dim=dim,
             order=order,
+            return_mixed_derivs=return_mixed_derivs,
         )
 
-    def _spectral_gradient_module(self, derr, dim, order):
+    def _spectral_gradient_module(self, derr_var, dim, order):
+        return_mixed_derivs = False
+        if order == 2 and self.require_mixed_derivs:
+            return_mixed_derivs = True
         return self.grad_calc.get_gradient_module(
             self.grad_method,
-            str(derr).split("__")[0],
+            derr_var,
             ell=self.bounds,
             dim=dim,
             order=order,
+            return_mixed_derivs=return_mixed_derivs,
         )
 
-    def _ls_gradient_module(self, derr, dim, order):
+    def _ls_gradient_module(self, derr_var, dim, order):
+        return_mixed_derivs = False
+        if order == 2 and self.require_mixed_derivs:
+            return_mixed_derivs = True
         return self.grad_calc.get_gradient_module(
             self.grad_method,
-            str(derr).split("__")[0],
+            derr_var,
             dim=dim,
             order=order,
+            return_mixed_derivs=return_mixed_derivs,
         )
 
-    def _autodiff_gradient_module(self, derr, dim, order):
+    def _autodiff_gradient_module(self, derr_var, dim, order):
+        return_mixed_derivs = False
+        if order == 2 and self.require_mixed_derivs:
+            return_mixed_derivs = True
         return self.grad_calc.get_gradient_module(
             self.grad_method,
-            str(derr).split("__")[0],
+            derr_var,
             dim=dim,
             order=order,
+            return_mixed_derivs=return_mixed_derivs,
         )
 
-    def _meshless_fd_gradient_module(self, derr, dim, order):
+    def _meshless_fd_gradient_module(self, derr_var, dim, order):
+        return_mixed_derivs = False
+        if order == 2 and self.require_mixed_derivs:
+            return_mixed_derivs = True
         return self.grad_calc.get_gradient_module(
             self.grad_method,
-            str(derr).split("__")[0],
+            derr_var,
             dx=self.fd_dx,
             dim=dim,
             order=order,
+            return_mixed_derivs=return_mixed_derivs,
         )
 
     def forward(self, inputs):

@@ -173,6 +173,7 @@ class GradientsAutoDiff(torch.nn.Module):
                     grad_x = grad[0][:, 0:1]
                     ggrad_mixed_xy = gradient_autodiff(grad_x, [x])[0][:, 1:2]
                     result[f"{self.invar}__x__y"] = ggrad_mixed_xy
+                    result[f"{self.invar}__y__x"] = ggrad_mixed_xy
                 elif self.dim == 3:
                     grad_x = grad[0][:, 0:1]
                     grad_y = grad[0][:, 1:2]
@@ -180,8 +181,11 @@ class GradientsAutoDiff(torch.nn.Module):
                     ggrad_mixed_xz = gradient_autodiff(grad_x, [x])[0][:, 2:3]
                     ggrad_mixed_yz = gradient_autodiff(grad_y, [x])[0][:, 2:3]
                     result[f"{self.invar}__x__y"] = ggrad_mixed_xy
+                    result[f"{self.invar}__y__x"] = ggrad_mixed_xy
                     result[f"{self.invar}__x__z"] = ggrad_mixed_xz
+                    result[f"{self.invar}__z__x"] = ggrad_mixed_xz
                     result[f"{self.invar}__y__z"] = ggrad_mixed_yz
+                    result[f"{self.invar}__z__y"] = ggrad_mixed_yz
 
         return result
 
@@ -277,11 +281,20 @@ class GradientsMeshlessFiniteDifference(torch.nn.Module):
                 )[
                     f"{self.invar}__x__y"
                 ]  # TODO: enable different dx and dy?
+                result[f"{self.invar}__y__x"] = self.mixed_deriv_ops["dxdy"].forward(
+                    input_dict, self.dx[0]
+                )[f"{self.invar}__x__y"]
                 if self.dim == 3:
                     result[f"{self.invar}__x__z"] = self.mixed_deriv_ops[
                         "dxdz"
                     ].forward(input_dict, self.dx[0])[f"{self.invar}__x__z"]
+                    result[f"{self.invar}__z__x"] = self.mixed_deriv_ops[
+                        "dxdz"
+                    ].forward(input_dict, self.dx[0])[f"{self.invar}__x__z"]
                     result[f"{self.invar}__y__z"] = self.mixed_deriv_ops[
+                        "dydz"
+                    ].forward(input_dict, self.dx[0])[f"{self.invar}__y__z"]
+                    result[f"{self.invar}__z__y"] = self.mixed_deriv_ops[
                         "dydz"
                     ].forward(input_dict, self.dx[0])[f"{self.invar}__y__z"]
 
@@ -345,11 +358,18 @@ class GradientsFiniteDifference(torch.nn.Module):
                 ] = derivative
             if self.return_mixed_derivs:
                 result[f"{self.invar}__x__y"] = self.mixed_deriv_module.forward(u)[0]
+                result[f"{self.invar}__y__x"] = self.mixed_deriv_module.forward(u)[0]
                 if self.dim == 3:
                     result[f"{self.invar}__x__z"] = self.mixed_deriv_module.forward(u)[
                         1
                     ]
+                    result[f"{self.invar}__z__x"] = self.mixed_deriv_module.forward(u)[
+                        1
+                    ]
                     result[f"{self.invar}__y__z"] = self.mixed_deriv_module.forward(u)[
+                        2
+                    ]
+                    result[f"{self.invar}__z__y"] = self.mixed_deriv_module.forward(u)[
                         2
                     ]
 
@@ -462,6 +482,7 @@ class GradientsSpectral(torch.nn.Module):
                 )
                 w_xy = torch.fft.ifftn(w_xy_h, dim=list(range(2, self.dim + 2))).real
                 result[f"{self.invar}__x__y"] = w_xy
+                result[f"{self.invar}__y__x"] = w_xy
                 if self.dim == 3:
                     w_xz_h = (
                         -(2 * pi / self.ell[0])
@@ -474,6 +495,7 @@ class GradientsSpectral(torch.nn.Module):
                         w_xz_h, dim=list(range(2, self.dim + 2))
                     ).real
                     result[f"{self.invar}__x__z"] = w_xz
+                    result[f"{self.invar}__z__x"] = w_xz
 
                     w_yz_h = (
                         -(2 * pi / self.ell[1])
@@ -486,6 +508,7 @@ class GradientsSpectral(torch.nn.Module):
                         w_yz_h, dim=list(range(2, self.dim + 2))
                     ).real
                     result[f"{self.invar}__y__z"] = w_yz
+                    result[f"{self.invar}__z__y"] = w_yz
 
         return result
 
@@ -550,6 +573,7 @@ class GradientsLeastSquares(torch.nn.Module):
 
                 if self.return_mixed_derivs:
                     result[f"{self.invar}__x__y"] = dderivs_x[1]  # same as dderivs_y[0]
+                    result[f"{self.invar}__y__x"] = dderivs_x[1]
                 return result
 
         elif self.dim == 3:
@@ -578,8 +602,11 @@ class GradientsLeastSquares(torch.nn.Module):
 
                 if self.return_mixed_derivs:
                     result[f"{self.invar}__x__y"] = dderivs_x[1]
+                    result[f"{self.invar}__y__x"] = dderivs_x[1]
                     result[f"{self.invar}__x__z"] = dderivs_x[2]
+                    result[f"{self.invar}__z__x"] = dderivs_x[2]
                     result[f"{self.invar}__y__z"] = dderivs_y[2]
+                    result[f"{self.invar}__z__y"] = dderivs_y[2]
 
                 return result
 

@@ -15,24 +15,19 @@
 # limitations under the License.
 
 import copy
-import torch
-import modulus
-import torch.nn as nn
-import numpy as np
 import logging
+from typing import List, Optional, Union
 
-from dataclasses import dataclass, field
-from modulus.sym.key import Key
-from modulus.sym.graph import Graph
-
-from typing import Dict, List, Set, Optional, Union, Callable
-from modulus.sym.node import Node
+import numpy as np
+import torch
 from modulus.sym.eq.pde import PDE
-
 from modulus.sym.eq.spatial_grads.spatial_grads import (
     GradientCalculator,
     compute_connectivity_tensor,
 )
+from modulus.sym.graph import Graph
+from modulus.sym.key import Key
+from modulus.sym.node import Node
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

@@ -14,17 +14,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import torch
-import numpy as np
-from typing import Dict, List, Set, Optional, Union, Callable
 import logging
-from modulus.sym.eq.mfd import grads as mfd_grads
+from typing import List, Optional, Union
+
+import numpy as np
+import torch
+from modulus.sym.eq.derivatives import gradient_autodiff
 from modulus.sym.eq.fd import grads as fd_grads
 from modulus.sym.eq.ls import grads as ls_grads
-from modulus.sym.eq.derivatives import gradient_autodiff
+from modulus.sym.eq.mfd import grads as mfd_grads
+
+
+def compute_stencil2d(coords, model, dx, return_mixed_derivs=False):
+    """Compute 2D stencil required for MFD"""
+    # compute stencil points
+    posx = coords[:, 0:1] + torch.ones_like(coords[:, 0:1]) * dx
+    negx = coords[:, 0:1] - torch.ones_like(coords[:, 0:1]) * dx
+    posy = coords[:, 1:2] + torch.ones_like(coords[:, 0:1]) * dx
+    negy = coords[:, 1:2] - torch.ones_like(coords[:, 0:1]) * dx
+
+    uposx = model(torch.cat([posx, coords[:, 1:2], coords[:, 2:3]], dim=1))
+    unegx = model(torch.cat([negx, coords[:, 1:2], coords[:, 2:3]], dim=1))
+    uposy = model(torch.cat([coords[:, 0:1], posy, coords[:, 2:3]], dim=1))
+    unegy = model(torch.cat([coords[:, 0:1], negy, coords[:, 2:3]], dim=1))
+
+    if return_mixed_derivs:
+        uposxposy = model(torch.cat([posx, posy, coords[:, 2:3]], dim=1))
+        uposxnegy = model(torch.cat([posx, negy, coords[:, 2:3]], dim=1))
+        unegxposy = model(torch.cat([negx, posy, coords[:, 2:3]], dim=1))
+        unegxnegy = model(torch.cat([negx, negy, coords[:, 2:3]], dim=1))
+
+    if return_mixed_derivs:
+        return (
+            uposx,
+            unegx,
+            uposy,
+            unegy,
+            uposxposy,
+            uposxnegy,
+            unegxposy,
+            unegxnegy,
+        )
+    else:
+        return uposx, unegx, uposy, unegy
 
 
 def compute_stencil3d(coords, model, dx, return_mixed_derivs=False):
+    """Compute 3D stencil required for MFD"""
     # compute stencil points
     posx = coords[:, 0:1] + torch.ones_like(coords[:, 0:1]) * dx
     negx = coords[:, 0:1] - torch.ones_like(coords[:, 0:1]) * dx
@@ -82,6 +118,28 @@ def compute_stencil3d(coords, model, dx, return_mixed_derivs=False):
 
 
 def compute_connectivity_tensor(coords, nodes, edges):
+    """
+    Compute connectivity tensor for given nodes and edges.
+
+    Parameters
+    ----------
+    coords :
+        Coordinates of the nodes in [N, 3] or [N, 2] format.
+        Where N is the number of nodes.
+    nodes :
+        Node ids of the nodes in the mesh in [N, 1] format.
+        Where N is the number of nodes.
+    edges :
+        Edges of the mesh in [M, 2] format.
+        Where M is the number of edges.
+
+    Returns
+    -------
+    torch.Tensor
+        Tensor containing neighbor nodes for each node. Each node is made to have
+        same neighbors by finding the max neighbors and adding (0, 0) for points with
+        fewer neighbors.
+    """
     edge_list = []
     for i in range(edges.size(0)):
         node1, node2 = edges[i][0].item(), edges[i][1].item()
@@ -118,6 +176,22 @@ def compute_connectivity_tensor(coords, nodes, edges):
 
 
 class GradientsAutoDiff(torch.nn.Module):
+    """
+    Compute spatial derivatives using Automatic differentiation.
+
+    Parameters
+    ----------
+    invar : str
+        Variable whose gradients are computed.
+    dim : int, optional
+        Dimensionality of the input (1D, 2D, or 3D), by default 3
+    order : int, optional
+        Order of the derivatives, by default 1 which returns the first order
+        derivatives (e.g. `u__x`, `u__y`, `u__z`). Max order 2 is supported.
+    return_mixed_derivs : bool, optional
+        Whether to include mixed derivatives such as `u__x__y`, by default False
+    """
+
     def __init__(
         self,
         invar: str,
@@ -191,6 +265,26 @@ class GradientsAutoDiff(torch.nn.Module):
 
 
 class GradientsMeshlessFiniteDifference(torch.nn.Module):
+    """
+    Compute spatial derivatives using Meshless Finite Differentiation. The gradients are
+    computed using 2nd order finite difference stencils.
+    For more details, refer: https://docs.nvidia.com/deeplearning/modulus/modulus-sym/user_guide/features/performance.html#meshless-finite-derivatives
+
+    Parameters
+    ----------
+    invar : str
+        Variable whose gradients are computed.
+    dx : Union[Union[float, int]]
+        dx for the finite difference calculation.
+    dim : int, optional
+        Dimensionality of the input (1D, 2D, or 3D), by default 3
+    order : int, optional
+        Order of the derivatives, by default 1 which returns the first order
+        derivatives (e.g. `u__x`, `u__y`, `u__z`). Max order 2 is supported.
+    return_mixed_derivs : bool, optional
+        Whether to include mixed derivatives such as `u__x__y`, by default False
+    """
+
     def __init__(
         self,
         invar: str,
@@ -302,6 +396,25 @@ class GradientsMeshlessFiniteDifference(torch.nn.Module):
 
 
 class GradientsFiniteDifference(torch.nn.Module):
+    """
+    Compute spatial derivatives using Finite Differentiation. The gradients are
+    computed using 2nd order finite difference stencils using convolution operation.
+
+    Parameters
+    ----------
+    invar : str
+        Variable whose gradients are computed.
+    dx : Union[Union[float, int]]
+        dx for the finite difference calculation.
+    dim : int, optional
+        Dimensionality of the input (1D, 2D, or 3D), by default 3
+    order : int, optional
+        Order of the derivatives, by default 1 which returns the first order
+        derivatives (e.g. `u__x`, `u__y`, `u__z`). Max order 2 is supported.
+    return_mixed_derivs : bool, optional
+        Whether to include mixed derivatives such as `u__x__y`, by default False
+    """
+
     def __init__(
         self,
         invar: str,
@@ -377,6 +490,24 @@ class GradientsFiniteDifference(torch.nn.Module):
 
 
 class GradientsSpectral(torch.nn.Module):
+    """
+    Compute spatial derivatives using Spectral Differentiation using FFTs.
+
+    Parameters
+    ----------
+    invar : str
+        Variable whose gradients are computed.
+    ell : Union[Union[float, int]]
+        bounds for the domain.
+    dim : int, optional
+        Dimensionality of the input (1D, 2D, or 3D), by default 3
+    order : int, optional
+        Order of the derivatives, by default 1 which returns the first order
+        derivatives (e.g. `u__x`, `u__y`, `u__z`). Max order 2 is supported.
+    return_mixed_derivs : bool, optional
+        Whether to include mixed derivatives such as `u__x__y`, by default False
+    """
+
     def __init__(
         self,
         invar: str,
@@ -514,6 +645,25 @@ class GradientsSpectral(torch.nn.Module):
 
 
 class GradientsLeastSquares(torch.nn.Module):
+    """
+    Compute spatial derivatives using Least Squares technique modified to compute
+    gradients on nodes.
+
+    Reference: https://scientific-sims.com/cfdlab/Dimitri_Mavriplis/HOME/assets/papers/aiaa20033986.pdf
+
+    Parameters
+    ----------
+    invar : str
+        Variable whose gradients are computed.
+    dim : int, optional
+        Dimensionality of the input (2D, or 3D), by default 3
+    order : int, optional
+        Order of the derivatives, by default 1 which returns the first order
+        derivatives (e.g. `u__x`, `u__y`, `u__z`). Max order 2 is supported.
+    return_mixed_derivs : bool, optional
+        Whether to include mixed derivatives such as `u__x__y`, by default False
+    """
+
     def __init__(
         self,
         invar: str,
@@ -612,7 +762,42 @@ class GradientsLeastSquares(torch.nn.Module):
 
 
 class GradientCalculator:
-    def __init__(self, device=None):
+    """
+    Unified Gradient calculator class.
+
+    Parameters
+    ----------
+    device : Optional[str], optional
+        The device to use for computation. Options are "cuda" or "cpu". If not
+        specified, the computation defaults to "cpu".
+
+    Examples
+    --------
+    >>> import torch
+    >>> from modulus.sym.eq.spatial_grads.spatial_grads import GradientCalculator
+    >>> coords = torch.rand(10, 3).requires_grad_(True)
+    >>> u = coords[:, 0:1] ** 2 * coords[:, 1:2] ** 3 * coords[:, 2:3] ** 4
+    >>> grad_calculator = GradientCalculator()
+    >>> input_dict = {"coordinates": coords, "u": u}
+    >>> grad_u_autodiff = grad_calculator.compute_gradients(
+    ... input_dict,
+    ... method_name="autodiff",
+    ... invar="u"
+    ... )
+    >>> sorted(grad_u_autodiff.keys())
+    ['u__x', 'u__y', 'u__z']
+    >>> grad_u_autodiff = grad_calculator.compute_gradients(
+    ... input_dict,
+    ... method_name="autodiff",
+    ... order=2,
+    ... return_mixed_derivs=True,
+    ... invar="u"
+    ... )
+    >>> sorted(grad_u_autodiff.keys())
+    ['u__x__x', 'u__x__y', 'u__x__z', 'u__y__x', 'u__y__y', 'u__y__z', 'u__z__x', 'u__z__y', 'u__z__z']
+    """
+
+    def __init__(self, device: Optional[str] = None):
         self.device = device if device is not None else torch.device("cpu")
         self.methods = {}
         self._register_methods()
@@ -625,11 +810,13 @@ class GradientCalculator:
         self.methods["least_squares"] = GradientsLeastSquares
 
     def get_gradient_module(self, method_name, invar, **kwargs):
+        """Return the gradient module"""
         module = self.methods[method_name](invar, **kwargs)
         module.to(self.device)
         return module
 
     def compute_gradients(self, input_dict, method_name=None, invar=None, **kwargs):
+        """Compute the gradients"""
         module = self.get_gradient_module(method_name, invar, **kwargs)
         return module.forward(input_dict)
 

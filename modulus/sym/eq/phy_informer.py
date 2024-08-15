@@ -104,6 +104,10 @@ class PhysicsInformer(object):
         by default 0.001
     bounds : List[float], optional
         bounds to be used for spectral derivatives, by default [2 * np.pi, 2 * np.pi, 2 * np.pi]
+    compute_connectivity : bool, optional
+        Wether to compute the connectivity tensor during forward pass (only applies for
+        least squares method), by default True. Set to false if this can be computed as
+        a part of the dataloader.
     device : Optional[str], optional
         The device to use for computation. Options are "cuda" or "cpu". If not
         specified, the computation defaults to "cpu".
@@ -143,6 +147,7 @@ class PhysicsInformer(object):
             2 * np.pi,
             2 * np.pi,
         ],  # only applies for FD and Meshless FD. Ignored for the rest
+        compute_connectivity: bool = True,  # only applies for least squares. Ignored for the rest
         device: Optional[str] = None,
     ):
         super().__init__()
@@ -152,6 +157,7 @@ class PhysicsInformer(object):
         self.grad_method = grad_method
         self.fd_dx = fd_dx
         self.bounds = bounds
+        self.compute_connectivity = compute_connectivity
         self.device = device if device is not None else torch.device("cpu")
         self.grad_calc = GradientCalculator(device=self.device)
         self.nodes = self.equations.make_nodes()
@@ -189,7 +195,12 @@ class PhysicsInformer(object):
         elif self.grad_method == "autodiff":
             node_inputs.append("coordinates")
         elif self.grad_method == "least_squares":
-            node_inputs.extend(["coordinates", "nodes", "edges"])
+            if self.compute_connectivity:
+                node_inputs.extend(["coordinates", "nodes", "edges"])
+            else:
+                node_inputs.extend(
+                    ["coordinates", "nodes", "edges", "connectivity_tensor"]
+                )
 
         # print(f"To compute the required {self.required_outputs}, using {self.grad_method} method, {node_inputs} will be required. Please provide them during the forward call")
         return node_inputs
@@ -378,11 +389,11 @@ class PhysicsInformer(object):
 
     def forward(self, inputs):
         """Forward pass"""
-        # TODO: enable access to cached connectivity tensor
         if self.grad_method == "least_squares":
-            connectivity_tensor = compute_connectivity_tensor(
-                inputs["coordinates"], inputs["nodes"], inputs["edges"]
-            )
-            inputs["connectivity_tensor"] = connectivity_tensor
+            if self.compute_connectivity:
+                connectivity_tensor = compute_connectivity_tensor(
+                    inputs["coordinates"], inputs["nodes"], inputs["edges"]
+                )
+                inputs["connectivity_tensor"] = connectivity_tensor
 
         return self.graph.forward(inputs)

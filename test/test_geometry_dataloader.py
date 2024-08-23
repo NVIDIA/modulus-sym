@@ -15,10 +15,15 @@
 # limitations under the License.
 
 import numpy as np
+import copy
 import pytest
+from pathlib import Path
 from modulus.sym.geometry.geometry_dataloader import GeometryDatapipe
 from modulus.sym.geometry.primitives_3d import Box, Sphere, Cylinder
 from modulus.sym.geometry.tessellation import Tessellation
+import torch
+
+dir_path = Path(__file__).parent
 
 
 @pytest.mark.parametrize("device", ["cuda", "cpu"])
@@ -77,7 +82,7 @@ def test_geom_datapipe_stl(device):
     geoms = []
     for i in range(10):
         geo = Tessellation.from_stl(
-            "./stls/cube.stl"
+            dir_path / "stls/cube.stl"
         )  # use the same stl again and again
         geoms.append(geo)
 
@@ -112,3 +117,34 @@ def test_geom_datapipe_stl(device):
             elem in list(data[0].keys())
             for elem in ["x", "y", "z", "area", "sdf", "sdf__x", "sdf__y", "sdf__z"]
         )
+
+
+@pytest.mark.parametrize("device", ["cuda", "cpu"])
+def test_geom_datapipe_stl_quasirandom(device):
+
+    geoms = []
+    for i in range(4):
+        geo = Tessellation.from_stl(
+            dir_path / "stls/cube.stl"
+        )  # use the same stl again and again
+        geoms.append(geo)
+
+    datapipe = GeometryDatapipe(
+        geom_objects=geoms,
+        sample_type="volume",
+        quasirandom=True,
+        num_points=100,
+        batch_size=2,
+        num_workers=1,
+        device=device,
+    )
+
+    for epoch in range(2):
+        for i, data in enumerate(datapipe):
+            if (epoch == 0) and (i == 0):
+                s1 = copy.deepcopy(data[0])
+            if (epoch == 1) and (i == 0):
+                s2 = copy.deepcopy(data[0])
+
+    for k in s1.keys():
+        assert torch.allclose(s1[k], s2[k])

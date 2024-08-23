@@ -528,6 +528,7 @@ class Geometry:
         parameterization: Union[Parameterization, None] = None,
         compute_sdf_derivatives: bool = False,
         quasirandom: bool = False,
+        flip_interior: bool = False,
     ):
         """
         Samples the interior of the geometry.
@@ -550,6 +551,9 @@ class Geometry:
         quasirandom : bool
             If true then sample the points using the Halton sequences.
             Default is False.
+        flip_interior : bool
+            If true, then instead of sampling inside the geometry, the
+            points are sampled in the region defined between bounds and geometry.
 
         Returns
         -------
@@ -609,8 +613,11 @@ class Geometry:
                 )
             )
 
-            # remove points outside of domain
-            criteria_index = np.greater(local_invar["sdf"], 0)
+            # remove points inside/outside of domain
+            if flip_interior:
+                criteria_index = np.less(local_invar["sdf"], 0)
+            else:
+                criteria_index = np.greater(local_invar["sdf"], 0)
             if criteria is not None:
                 criteria_index = np.logical_and(
                     criteria_index, criteria(local_invar, local_params)

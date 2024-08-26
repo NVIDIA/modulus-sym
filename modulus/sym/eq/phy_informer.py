@@ -391,7 +391,7 @@ class PhysicsInformer:
         if self.grad_method == "least_squares":
             if self.compute_connectivity:
                 connectivity_tensor = compute_connectivity_tensor(
-                    inputs["coordinates"], inputs["nodes"], inputs["edges"]
+                    inputs["nodes"], inputs["edges"]
                 )
                 inputs["connectivity_tensor"] = connectivity_tensor
 

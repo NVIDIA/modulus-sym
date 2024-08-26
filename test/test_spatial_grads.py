@@ -143,9 +143,7 @@ def least_squares_setup(request):
     edges = torch.cat(edges).to(device)
 
     node_ids = torch.arange(coords_unstructured.size(0)).reshape(-1, 1).to(device)
-    connectivity_tensor = compute_connectivity_tensor(
-        coords_unstructured, node_ids, edges
-    )
+    connectivity_tensor = compute_connectivity_tensor(node_ids, edges)
 
     return (
         coords,

@@ -117,15 +117,12 @@ def compute_stencil3d(coords, model, dx, return_mixed_derivs=False):
         return uposx, unegx, uposy, unegy, uposz, unegz
 
 
-def compute_connectivity_tensor(coords, nodes, edges):
+def compute_connectivity_tensor(nodes, edges):
     """
     Compute connectivity tensor for given nodes and edges.
 
     Parameters
     ----------
-    coords :
-        Coordinates of the nodes in [N, 3] or [N, 2] format.
-        Where N is the number of nodes.
     nodes :
         Node ids of the nodes in the mesh in [N, 1] format.
         Where N is the number of nodes.

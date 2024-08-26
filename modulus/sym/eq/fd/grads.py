@@ -19,6 +19,8 @@ from typing import Union, List
 
 
 class FirstDerivO2(torch.nn.Module):
+    """Module to compute first derivative with 2nd order accuracy"""
+
     def __init__(self, dim: int, dx: Union[float, List[float]]):
         super(FirstDerivO2, self).__init__()
         self.dim = dim
@@ -79,6 +81,8 @@ class FirstDerivO2(torch.nn.Module):
 
 
 class SecondDerivO2(torch.nn.Module):
+    """Module to compute second derivative with 2nd order accuracy"""
+
     def __init__(self, dim: int, dx: Union[float, List[float]]):
         super(SecondDerivO2, self).__init__()
         self.dim = dim
@@ -139,9 +143,14 @@ class SecondDerivO2(torch.nn.Module):
 
 
 class MixedSecondDerivO2(torch.nn.Module):
-    # For 2d, this returns [d2f/dxdy]
-    # For 3d, this returns [d2f/dxdy, d2f/dxdz, d2f/dydz]
-    # Ref: https://onlinelibrary.wiley.com/doi/pdf/10.1002/9781119083405.app1
+    """Module to compute second mixed derivative with 2nd order accuracy
+
+    For 2d, this returns [d2f/dxdy]
+    For 3d, this returns [d2f/dxdy, d2f/dxdz, d2f/dydz]
+
+    Ref: https://onlinelibrary.wiley.com/doi/pdf/10.1002/9781119083405.app1
+    """
+
     def __init__(self, dim: int, dx: Union[float, List[float]]):
         super(MixedSecondDerivO2, self).__init__()
         self.dim = dim

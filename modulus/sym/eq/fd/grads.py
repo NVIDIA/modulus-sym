@@ -17,6 +17,8 @@
 import torch
 from typing import Union, List
 
+Tensor = torch.Tensor
+
 
 class FirstDerivO2(torch.nn.Module):
     """Module to compute first derivative with 2nd order accuracy"""
@@ -69,7 +71,7 @@ class FirstDerivO2(torch.nn.Module):
                     :, :, slice_index:-slice_index, slice_index:-slice_index, :
                 ]
 
-    def forward(self, u):
+    def forward(self, u) -> List[Tensor]:
         u = torch.nn.functional.pad(u, self.dim * (1, 1), "replicate")
         result = []
         for axis in range(self.dim):
@@ -131,7 +133,7 @@ class SecondDerivO2(torch.nn.Module):
                     :, :, slice_index:-slice_index, slice_index:-slice_index, :
                 ]
 
-    def forward(self, u):
+    def forward(self, u) -> List[Tensor]:
         u = torch.nn.functional.pad(u, self.dim * (1, 1), "replicate")
         result = []
         for axis in range(self.dim):
@@ -195,7 +197,7 @@ class MixedSecondDerivO2(torch.nn.Module):
                     :, :, slice_index:-slice_index, slice_index:-slice_index, :
                 ]
 
-    def forward(self, u):
+    def forward(self, u) -> List[Tensor]:
         # get u_i+1 and u_i-1
         pad = (self.dim - 1) * (0, 0) + (1, 1)
         u_pad = torch.nn.functional.pad(u, pad, "constant")

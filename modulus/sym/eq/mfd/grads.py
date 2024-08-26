@@ -18,7 +18,7 @@ import torch
 import numpy as np
 
 from modulus.sym.key import Key
-from typing import Dict, List, Set, Optional, Union, Callable
+from typing import Dict, List
 
 Tensor = torch.Tensor
 

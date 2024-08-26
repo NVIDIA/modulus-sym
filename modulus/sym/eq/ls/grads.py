@@ -15,7 +15,9 @@
 # limitations under the License.
 
 import torch
-from typing import Union, List
+from typing import List
+
+Tensor = torch.Tensor
 
 
 class FirstDeriv(torch.nn.Module):
@@ -29,7 +31,7 @@ class FirstDeriv(torch.nn.Module):
             self.dim > 1
         ), "First Derivative through least squares method only supported for 2D and 3D inputs"
 
-    def forward(self, coords, connectivity_tensor, y):
+    def forward(self, coords, connectivity_tensor, y) -> List[Tensor]:
         p1 = coords[connectivity_tensor[:, :, 0]]
         p2 = coords[connectivity_tensor[:, :, 1]]
         dx = p1[:, :, 0] - p2[:, :, 0]

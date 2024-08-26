@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class PhysicsInformer(object):
+class PhysicsInformer:
     """
     A utility to compute the residual of a Partial Differential Equation (PDE).
     Given the equations and `required_outputs`, this utility constructs the
@@ -150,7 +150,6 @@ class PhysicsInformer(object):
         compute_connectivity: bool = True,  # only applies for least squares. Ignored for the rest
         device: Optional[str] = None,
     ):
-        super().__init__()
         self.required_outputs = required_outputs
         self.equations = equations
         self.dim = equations.dim

@@ -22,7 +22,7 @@ class FirstDeriv(torch.nn.Module):
     """Module to compute first derivative with 2nd order accuracy using least squares method"""
 
     def __init__(self, dim: int):
-        super(FirstDeriv, self).__init__()
+        super().__init__()
 
         self.dim = dim
         assert (

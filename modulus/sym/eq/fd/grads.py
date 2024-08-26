@@ -22,7 +22,7 @@ class FirstDerivO2(torch.nn.Module):
     """Module to compute first derivative with 2nd order accuracy"""
 
     def __init__(self, dim: int, dx: Union[float, List[float]]):
-        super(FirstDerivO2, self).__init__()
+        super().__init__()
         self.dim = dim
         if isinstance(dx, float):
             dx = [dx for _ in range(dim)]
@@ -84,7 +84,7 @@ class SecondDerivO2(torch.nn.Module):
     """Module to compute second derivative with 2nd order accuracy"""
 
     def __init__(self, dim: int, dx: Union[float, List[float]]):
-        super(SecondDerivO2, self).__init__()
+        super().__init__()
         self.dim = dim
         if isinstance(dx, float):
             dx = [dx for _ in range(dim)]
@@ -152,7 +152,7 @@ class MixedSecondDerivO2(torch.nn.Module):
     """
 
     def __init__(self, dim: int, dx: Union[float, List[float]]):
-        super(MixedSecondDerivO2, self).__init__()
+        super().__init__()
         self.dim = dim
         assert self.dim > 1, "Mixed Derivatives only supported for 2D and 3D inputs"
         if isinstance(dx, float):

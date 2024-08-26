@@ -199,7 +199,7 @@ class GradientsAutoDiff(torch.nn.Module):
         order: int = 1,
         return_mixed_derivs: bool = False,
     ):
-        super(GradientsAutoDiff, self).__init__()
+        super().__init__()
 
         self.invar = invar
         self.dim = dim
@@ -293,7 +293,7 @@ class GradientsMeshlessFiniteDifference(torch.nn.Module):
         order: int = 1,
         return_mixed_derivs: bool = False,
     ):
-        super(GradientsMeshlessFiniteDifference, self).__init__()
+        super().__init__()
 
         self.invar = invar
         self.dx = dx
@@ -423,7 +423,7 @@ class GradientsFiniteDifference(torch.nn.Module):
         order: int = 1,
         return_mixed_derivs: bool = False,
     ):
-        super(GradientsFiniteDifference, self).__init__()
+        super().__init__()
 
         self.invar = invar
         self.dx = dx
@@ -516,7 +516,7 @@ class GradientsSpectral(torch.nn.Module):
         order: int = 1,
         return_mixed_derivs: bool = False,
     ):
-        super(GradientsSpectral, self).__init__()
+        super().__init__()
 
         self.invar = invar
         self.ell = ell
@@ -671,7 +671,7 @@ class GradientsLeastSquares(torch.nn.Module):
         order: int = 1,
         return_mixed_derivs: bool = False,
     ):
-        super(GradientsLeastSquares, self).__init__()
+        super().__init__()
         self.invar = invar
         self.cache = {}
         self.dim = dim

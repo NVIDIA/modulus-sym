@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 def gradient_autodiff(y: torch.Tensor, x: List[torch.Tensor]) -> List[torch.Tensor]:
     """
     TorchScript function to compute the gradient of a tensor wrt multiple inputs
-    """    
+    """
     grad_outputs: List[Optional[torch.Tensor]] = [torch.ones_like(y, device=y.device)]
     grad = torch.autograd.grad(
         [

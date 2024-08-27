@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - AMP for derivatives.
+- Generalized PDE residual computing utility.
+- Support for spatial gradients calculations using finite difference, meshless finite
+  difference, spectral and least squares methods.
 
 ### Changed
 

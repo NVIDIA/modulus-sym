@@ -122,9 +122,11 @@ class GeometryDatapipe:
         # get the var names by sampling one of the geom
         geo = self.geom_objects[0]
         if self.sample_type == "surface":
-            samples = geo.sample_boundary(nr_points=10)
+            samples = geo.sample_boundary(nr_points=self.num_points)
         elif self.sample_type == "volume":
-            samples = geo.sample_interior(nr_points=10, compute_sdf_derivatives=True)
+            samples = geo.sample_interior(
+                nr_points=self.num_points, compute_sdf_derivatives=True
+            )
 
         available_vars = list(samples.keys())
         if self.requested_vars is None:

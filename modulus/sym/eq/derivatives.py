@@ -24,7 +24,7 @@ from modulus.sym.amp import DerivScaler, DerivScalers, AmpManager, AmpMode
 from modulus.sym.constants import diff
 from modulus.sym.key import Key
 from modulus.sym.node import Node
-from modulus.sym.eq.mfd import FirstDeriv, SecondDeriv, ThirdDeriv, ForthDeriv
+from modulus.sym.eq.mfd import FirstDeriv, SecondDeriv, ThirdDeriv, FourthDeriv
 
 from typing import Dict, List, Set, Optional, Union, Callable
 
@@ -264,7 +264,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
         self.first_deriv = FirstDeriv(self.derivatives[1], self.dx, order=order)
         self.second_deriv = SecondDeriv(self.derivatives[2], self.dx, order=order)
         self.third_deriv = ThirdDeriv(self.derivatives[3], self.dx, order=order)
-        self.forth_deriv = ForthDeriv(self.derivatives[4], self.dx, order=order)
+        self.fourth_deriv = FourthDeriv(self.derivatives[4], self.dx, order=order)
 
     @torch.jit.ignore()
     def forward(self, inputs: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
@@ -274,7 +274,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
         self.first_deriv.dx = dx
         self.second_deriv.dx = dx
         self.third_deriv.dx = dx
-        self.forth_deriv.dx = dx
+        self.fourth_deriv.dx = dx
         torch.cuda.nvtx.range_push(f"Calculating meshless finite derivatives")
 
         # Assemble global stencil
@@ -283,7 +283,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
             self.first_deriv,
             self.second_deriv,
             self.third_deriv,
-            self.forth_deriv,
+            self.fourth_deriv,
         ]:
             stencil_list = deriv.stencil
             # Remove centered stencil points if already in input dictionary
@@ -333,7 +333,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
         outputs_first = self.first_deriv(finite_diff_inputs)
         outputs_second = self.second_deriv(finite_diff_inputs)
         outputs_third = self.third_deriv(finite_diff_inputs)
-        outputs_forth = self.forth_deriv(finite_diff_inputs)
+        outputs_fourth = self.fourth_deriv(finite_diff_inputs)
 
         outputs = inputs
         if self.double_cast:
@@ -344,14 +344,14 @@ class MeshlessFiniteDerivative(torch.nn.Module):
                 outputs_second[key] = value.type(dtype)
             for key, value in outputs_third.items():
                 outputs_third[key] = value.type(dtype)
-            for key, value in outputs_forth.items():
-                outputs_forth[key] = value.type(dtype)
+            for key, value in outputs_fourth.items():
+                outputs_fourth[key] = value.type(dtype)
         outputs = {
             **inputs,
             **outputs_first,
             **outputs_second,
             **outputs_third,
-            **outputs_forth,
+            **outputs_fourth,
         }
         torch.cuda.nvtx.range_pop()
         torch.cuda.nvtx.range_pop()

@@ -20,7 +20,7 @@ from typing import Union, List
 Tensor = torch.Tensor
 
 
-class FirstDerivO2(torch.nn.Module):
+class FirstDerivSecondOrder(torch.nn.Module):
     """Module to compute first derivative with 2nd order accuracy"""
 
     def __init__(self, dim: int, dx: Union[float, List[float]]):
@@ -82,7 +82,7 @@ class FirstDerivO2(torch.nn.Module):
         return result
 
 
-class SecondDerivO2(torch.nn.Module):
+class SecondDerivSecondOrder(torch.nn.Module):
     """Module to compute second derivative with 2nd order accuracy"""
 
     def __init__(self, dim: int, dx: Union[float, List[float]]):
@@ -144,7 +144,7 @@ class SecondDerivO2(torch.nn.Module):
         return result
 
 
-class MixedSecondDerivO2(torch.nn.Module):
+class MixedSecondDerivSecondOrder(torch.nn.Module):
     """Module to compute second mixed derivative with 2nd order accuracy
 
     For 2d, this returns [d2f/dxdy]

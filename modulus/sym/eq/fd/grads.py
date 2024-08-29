@@ -34,7 +34,8 @@ class FirstDerivSecondOrder(torch.nn.Module):
 
     def get_convolution_kernel(self, axis):
         shape = [1, 1] + axis * [1] + [-1] + (self.dim - axis - 1) * [1]
-        return torch.reshape(self.ddx1D, shape)
+        # multiply with 1/dx
+        return (1 / self.dx[axis]) * torch.reshape(self.ddx1D, shape)
 
     def apply_convolution(self, u, kernel, axis):
         if self.dim == 1:
@@ -77,7 +78,6 @@ class FirstDerivSecondOrder(torch.nn.Module):
         for axis in range(self.dim):
             kernel = self.get_convolution_kernel(axis)
             conv_result = self.apply_convolution(u, kernel, axis)
-            conv_result = (1 / self.dx[axis]) * conv_result
             result.append(conv_result)
         return result
 
@@ -96,7 +96,8 @@ class SecondDerivSecondOrder(torch.nn.Module):
 
     def get_convolution_kernel(self, axis):
         shape = [1, 1] + axis * [1] + [-1] + (self.dim - axis - 1) * [1]
-        return torch.reshape(self.d2dx21D, shape)
+        # multiply with 1/dx**2
+        return (1 / (self.dx[axis] ** 2)) * torch.reshape(self.d2dx21D, shape)
 
     def apply_convolution(self, u, kernel, axis):
         if self.dim == 1:
@@ -139,7 +140,6 @@ class SecondDerivSecondOrder(torch.nn.Module):
         for axis in range(self.dim):
             kernel = self.get_convolution_kernel(axis)
             conv_result = self.apply_convolution(u, kernel, axis)
-            conv_result = (1 / (self.dx[axis] ** 2)) * conv_result
             result.append(conv_result)
         return result
 

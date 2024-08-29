@@ -19,7 +19,7 @@ import pytest
 import torch.nn as nn
 
 from modulus.sym.amp import DerivScaler, AmpManager
-from modulus.sym.eq.derivatives import gradient
+from modulus.sym.eq.derivatives import gradient_autodiff
 from modulus.sym import modulus_ext
 
 
@@ -60,7 +60,7 @@ def test_run_deriv_scaler():
             u = model(torch.cat([x, y], dim=-1))
             # first order derivatives: u__x and u__y
             u_scale = deriv_scaler.scale(u)
-            grad = gradient(u_scale, [x, y])
+            grad = gradient_autodiff(u_scale, [x, y])
             u__x, u__y = deriv_scaler.unscale_deriv(grad)
             # loss
             loss = u.sum() + u__x.sum() + u__y.sum()
@@ -144,7 +144,7 @@ def test_cuda_graph_deriv_scaler():
             u = model(torch.cat([x, y], dim=-1))
             # first order derivatives: u__x and u__y
             u_scale = deriv_scaler.scale(u)
-            grad = gradient(u_scale, [x, y])
+            grad = gradient_autodiff(u_scale, [x, y])
             u__x, u__y = deriv_scaler.unscale_deriv(grad)
             # loss
             loss = u.sum() + u__x.sum() + u__y.sum()

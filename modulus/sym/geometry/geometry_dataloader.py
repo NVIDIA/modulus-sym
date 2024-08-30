@@ -165,7 +165,7 @@ class GeometryDatapipe:
             vars_tuple = dali.fn.external_source(
                 source,
                 num_outputs=len(self.requested_vars),
-                parallel=False,  # Parallel=False to simplify the code, you can switch to True if your source is thread-safe
+                parallel=True,
                 batch=False,
                 device="cpu",
             )

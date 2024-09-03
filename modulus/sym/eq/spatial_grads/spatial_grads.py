@@ -233,20 +233,12 @@ class GradientsAutoDiff(torch.nn.Module):
             for axis in range(self.dim):
                 result[f"{self.invar}__{axis_list[axis]}"] = grad[0][:, axis : axis + 1]
         elif self.order == 2:
-<<<<<<< HEAD
             for axis in range(self.dim):
                 result[
                     f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"
                 ] = gradient_autodiff(grad[0][:, axis : axis + 1], [x])[0][
                     :, axis : axis + 1
                 ]
-=======
-            ggrad = gradient_autodiff(grad[0], [x])
-            for axis in range(self.dim):
-                result[f"{self.invar}__{axis_list[axis]}__{axis_list[axis]}"] = ggrad[
-                    0
-                ][:, axis : axis + 1]
->>>>>>> main
             if self.return_mixed_derivs:
                 # Need to compute them manually due to how pytorch builds graph
                 if self.dim == 2:

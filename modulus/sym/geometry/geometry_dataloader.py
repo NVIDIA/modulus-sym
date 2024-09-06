@@ -60,7 +60,7 @@ class GeometryDatapipe:
     quasirandom : bool, optional
         If true, points are sampled using Halton Sequences, by default False
     dtype : str, optional
-        Typecode to which the output data is cast.
+        Typecode to which the output data is cast, by default float32.
     shuffle : bool, optional
         Shuffle dataset, by default True
     num_workers : int, optional
@@ -224,7 +224,7 @@ class GeometrySource:
     quasirandom : bool, optional
         If true, points are sampled using Halton Sequences, by default False
     dtype : str, optional
-        Typecode to which the output data is cast.
+        Typecode to which the output data is cast, by default float32.
     shuffle : bool, optional
         Shuffle dataset, by default True
     process_rank : int, optional

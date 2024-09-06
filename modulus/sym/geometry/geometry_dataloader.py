@@ -59,6 +59,8 @@ class GeometryDatapipe:
         where the internal bounds are used (bounding box).
     quasirandom : bool, optional
         If true, points are sampled using Halton Sequences, by default False
+    dtype : str, optional
+        Typecode to which the output data is cast.
     shuffle : bool, optional
         Shuffle dataset, by default True
     num_workers : int, optional
@@ -81,6 +83,7 @@ class GeometryDatapipe:
         flip_interior: bool = False,  # Whether to sample inside of the geometry or outside
         bounds: Union[Dict[str, float], None] = None,
         quasirandom: bool = False,
+        dtype: str = "float32",
         shuffle: bool = True,
         num_workers: int = 1,
         device: Union[str, torch.device] = "cuda",
@@ -96,6 +99,7 @@ class GeometryDatapipe:
         self.flip_interior = flip_interior
         self.bounds = bounds
         self.quasirandom = quasirandom
+        self.dtype = dtype
         self.shuffle = shuffle
         self.num_workers = num_workers
         self.process_rank = process_rank
@@ -156,6 +160,7 @@ class GeometryDatapipe:
                 sample_type=self.sample_type,
                 bounds=self.bounds,
                 quasirandom=self.quasirandom,
+                dtype=self.dtype,
                 shuffle=self.shuffle,
                 process_rank=self.process_rank,
                 world_size=self.world_size,
@@ -218,6 +223,8 @@ class GeometrySource:
         where the internal bounds are used (bounding box).
     quasirandom : bool, optional
         If true, points are sampled using Halton Sequences, by default False
+    dtype : str, optional
+        Typecode to which the output data is cast.
     shuffle : bool, optional
         Shuffle dataset, by default True
     process_rank : int, optional
@@ -236,6 +243,7 @@ class GeometrySource:
         flip_interior: bool = False,
         bounds: Union[Dict[str, float], None] = None,
         quasirandom: bool = False,
+        dtype: str = "float32",
         shuffle: bool = True,
         process_rank: int = 0,
         world_size: int = 1,
@@ -249,6 +257,7 @@ class GeometrySource:
         self.flip_interior = flip_interior
         self.bounds = bounds
         self.quasirandom = quasirandom
+        self.dtype = dtype
         self.shuffle = shuffle
 
         self.last_epoch = None
@@ -275,6 +284,8 @@ class GeometrySource:
             samples = data.sample_boundary(
                 nr_points=self.num_points, quasirandom=self.quasirandom
             )  # Note quasirandom for boundary sampling is not yet supported
+            for k, v in samples.items():
+                samples[k] = v.astype(self.dtype)
         elif self.sample_type == "volume":
             samples = data.sample_interior(
                 nr_points=self.num_points,
@@ -283,6 +294,8 @@ class GeometrySource:
                 bounds=self.bounds,
                 quasirandom=self.quasirandom,
             )
+            for k, v in samples.items():
+                samples[k] = v.astype(self.dtype)
 
         # Add batch dimension
         var = tuple([samples[k] for k in self.requested_vars])

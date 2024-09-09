@@ -308,7 +308,121 @@ Tesselated geometries can also be combined with the primitives
    Tesselated Geometry sampling using Modulus Sym: Stanford bunny
 
 
+Signed Distance Fields (SDF) of Geometry objects
+-------------------------------------------------
+
+Mathematically, signed distance field or signed distance function (SDF) is defined as
+the orthonogal distance of a given point to the boundary / surface of a geometric shape.
+It is widely used to describe the geometry in mathematics, rendering, and similar
+applications. In physics-informed learning, it is also used to represent
+`geometric inputs to the neural networks <https://www.research.autodesk.com/app/uploads/2023/03/convolutional-neural-networks-for.pdf_rectr0tDKzFYVAAJe.pdf>`_.
+
+Modulus' geometry module (CSG and Tesselation) compute the SDF (and its derivatives) on
+the points sampled in the interior which can be used in the training pipelines.
+Additionally, the SDF can be computed on arbitrary points using the ``.sdf`` attribute.
+ 
+Modulus also provides a utility to recover the STL geometry from the SDF. This utility
+uses marching cubes algorithm to reconstruct the STL from the given SDF field. For
+more details refer `here <https://github.com/NVIDIA/modulus/blob/main/modulus/utils/mesh/generate_stl.py#L25>`_.
+
+Below example shows the use of these utilities for a CSG geometry.
+
+.. code-block:: python
+    :caption: Computing SDF for CSG geometry and reconstructing the STL
+
+    import numpy as np
+    from modulus.sym.geometry.primitives_3d import Box, Sphere, Cylinder
+
+    from modulus.utils.mesh import sdf_to_stl
+
+    # make standard constructive solid geometry example
+    box = Box(point_1=(-1, -1, -1), point_2=(1, 1, 1))
+    sphere = Sphere(center=(0, 0, 0), radius=1.2)
+    cylinder_1 = Cylinder(center=(0, 0, 0), radius=0.5, height=2)
+    cylinder_2 = cylinder_1.rotate(angle=float(np.pi / 2.0), axis="x")
+    cylinder_3 = cylinder_1.rotate(angle=float(np.pi / 2.0), axis="y")
+
+    all_cylinders = cylinder_1 + cylinder_2 + cylinder_3
+    box_minus_sphere = box & sphere
+    geo = box_minus_sphere - all_cylinders
+
+    # generate cartesian grid to compute SDF
+    x = np.linspace(-2, 2, 100)
+    y = np.linspace(-2, 2, 100)
+    z = np.linspace(-2, 2, 100)
+
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    
+    # compute the SDF on the grid points
+    sdf = geo.sdf(
+            {
+                "x": xx.reshape(-1, 1), 
+                "y": yy.reshape(-1, 1), 
+                "z": zz.reshape(-1, 1),
+            }, 
+        params={}
+    )["sdf"]
+
+    # reconstruct the STL from SDF
+    sdf_to_stl(
+        sdf.reshape(100, 100, 100),    # sdf field in [nx, ny, nz] shape
+        threshold=0.0,
+        backend="skimage",  # skimage backend works better for CSG geometry
+        filename="csg_reconstruction.stl"
+    )
 
 
+.. figure:: /images/user_guide/sdf_to_stl_csg.png
+   :alt: Computing SDF for CSG geometry and reconstructing the STL
+   :width: 80.0%
+   :align: center
+
+   Computing SDF for CSG geometry and reconstructing the STL
 
 
+Below example shows the use of these utilities for a Tesselation geometry.
+
+.. code-block:: python
+    :caption: Computing SDF for Tesselation geometry and reconstructing the STL
+
+    import numpy as np
+    from modulus.sym.geometry.tessellation import Tessellation
+
+    from modulus.utils.mesh import sdf_to_stl
+
+    # read the Stanford Bunny stl
+    geo = Tessellation.from_stl("./Stanford_Bunny.stl")
+
+    # generate cartesian grid to compute SDF
+    bounds = {str(k): v for k, v in geo.bounds.bound_ranges.items()}
+    x = np.linspace(bounds["x"][0] - 1, bounds["x"][1] + 1, 100)
+    y = np.linspace(bounds["y"][0] - 1, bounds["y"][1] + 1, 100)
+    z = np.linspace(bounds["z"][0] - 1, bounds["z"][1] + 1, 100)
+
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    
+    # compute the SDF on the grid points
+    sdf = geo.sdf(
+            {
+                "x": xx.reshape(-1, 1), 
+                "y": yy.reshape(-1, 1), 
+                "z": zz.reshape(-1, 1),
+            }, 
+        params={}
+    )["sdf"]
+    
+    # reconstruct the STL from SDF
+    sdf_to_stl(
+        sdf.reshape(100, 100, 100),    # sdf field in [nx, ny, nz] shape
+        threshold=0.0,
+        backend="warp",  # warp backend works better and is faster for STL geometry
+        filename="stl_reconstruction.stl"
+    )
+
+
+.. figure:: /images/user_guide/sdf_to_stl_tesselation.png
+   :alt: Computing SDF for Tesselation geometry and reconstructing the STL
+   :width: 80.0%
+   :align: center
+
+   Computing SDF for Tesselation geometry and reconstructing the STL

@@ -1,6 +1,5 @@
-Modulus Sym Equations
-=====================
-
+Modulus Sym Equations and Utils
+================================
 
 pde.advection\_diffusion
 ----------------------------------------
@@ -65,9 +64,16 @@ pde.wave\_equation
    :members:
    :show-inheritance:
 
-Derivatives
---------------------------
+Physics Informer
+------------------
 
-.. automodule:: modulus.sym.eq.derivatives
+.. automodule:: modulus.sym.eq.phy_informer
+   :members:
+   :show-inheritance:
+
+GradientCalculator
+--------------------
+
+.. automodule:: modulus.sym.eq.spatial_grads.spatial_grads
    :members:
    :show-inheritance:

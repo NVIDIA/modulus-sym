@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
+- Upgrade Sympy and Scikit-Learn versions.
+
 ## [1.6.0] - 2024-07-23
 
 ### Added

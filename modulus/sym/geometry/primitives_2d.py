@@ -21,7 +21,20 @@ see https://www.iquilezles.org/www/articles/distfunctions/distfunctions.html
 
 import sys
 from operator import mul
-from sympy import Symbol, Abs, Max, Min, sqrt, sin, cos, acos, atan2, pi, Heaviside
+from sympy import (
+    Symbol,
+    Abs,
+    Max,
+    Min,
+    sqrt,
+    sin,
+    cos,
+    acos,
+    atan2,
+    pi,
+    Heaviside,
+    Piecewise,
+)
 from functools import reduce
 
 pi = float(pi)
@@ -552,9 +565,9 @@ class Polygon(Geometry):
             sdfs.append(sdf)
 
             # winding calculation
-            cond_1 = Heaviside(y - v2[1])
-            cond_2 = Heaviside(v1[1] - y)
-            cond_3 = Heaviside((dx * py) - (dy * px))
+            cond_1 = Heaviside(y - v2[1]).rewrite(Piecewise)
+            cond_2 = Heaviside(v1[1] - y).rewrite(Piecewise)
+            cond_3 = Heaviside((dx * py) - (dy * px)).rewrite(Piecewise)
             all_cond = cond_1 * cond_2 * cond_3
             none_cond = (1.0 - cond_1) * (1.0 - cond_2) * (1.0 - cond_3)
             cond = 1.0 - 2.0 * Min(all_cond + none_cond, 1.0)

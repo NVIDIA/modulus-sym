@@ -317,13 +317,13 @@ It is widely used to describe the geometry in mathematics, rendering, and simila
 applications. In physics-informed learning, it is also used to represent
 `geometric inputs to the neural networks <https://www.research.autodesk.com/app/uploads/2023/03/convolutional-neural-networks-for.pdf_rectr0tDKzFYVAAJe.pdf>`_.
 
-Modulus' geometry module (CSG and Tesselation) compute the SDF (and its derivatives) on
-the points sampled in the interior which can be used in the training pipelines.
-Additionally, the SDF can be computed on arbitrary points using the ``.sdf`` attribute.
+Modulus' geometry module (CSG and Tesselation) computes the SDF (and its derivatives) on
+points sampled in the interior for use in the training pipelines.
+Additionally, the SDF can be computed on custom points using the ``.sdf`` attribute.
  
-Modulus also provides a utility to recover the STL geometry from the SDF. This utility
-uses marching cubes algorithm to reconstruct the STL from the given SDF field. For
-more details refer `here <https://github.com/NVIDIA/modulus/blob/main/modulus/utils/mesh/generate_stl.py#L25>`_.
+Modulus also provides a utility to recover the STL geometry from the SDF using marching
+cubes algorithm. For more details refer
+`here <https://github.com/NVIDIA/modulus/blob/main/modulus/utils/mesh/generate_stl.py#L25>`_.
 
 Below example shows the use of these utilities for a CSG geometry.
 

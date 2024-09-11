@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generalized PDE residual computing utility.
 - Support for spatial gradients calculations using finite difference, meshless finite
   difference, spectral and least squares methods.
+- Add docs for SDF and relevant features for geometry module.
 
 ### Changed
 

@@ -63,3 +63,10 @@ geometry.tessellation
 .. automodule:: modulus.sym.geometry.tessellation
    :members:
    :show-inheritance:
+
+geometry.geometry_dataloader
+-----------------------------
+
+.. automodule:: modulus.sym.geometry.geometry_dataloader
+   :members:
+   :show-inheritance:

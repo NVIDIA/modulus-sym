@@ -20,7 +20,6 @@ from torch import nn
 from typing import Dict, List
 
 # Import from Modulus
-from modulus.sym.eq.derivatives import gradient
 from modulus.sym.loss.aggregator import Aggregator
 
 

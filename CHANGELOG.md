@@ -6,16 +6,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.0a0] - 2024-09-XX
+## [1.8.0a0] - 2024-11-XX
 
 ### Added
-
-- AMP for derivatives.
-- DALI based dataloader for Geometry module.
-- Generalized PDE residual computing utility.
-- Support for spatial gradients calculations using finite difference, meshless finite
-  difference, spectral and least squares methods.
-- Add docs for SDF and relevant features for geometry module.
 
 ### Changed
 
@@ -26,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+### Dependencies
+
+## [1.7.0] - 2024-09-24
+
+### Added
+
+- AMP for derivatives.
+- DALI based dataloader for Geometry module.
+- Generalized PDE residual computing utility.
+- Support for spatial gradients calculations using finite difference, meshless finite
+  difference, spectral and least squares methods.
+- Add docs for SDF and relevant features for geometry module.
 
 ### Dependencies
 

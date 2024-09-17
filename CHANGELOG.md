@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Dependencies
 
-## [1.7.0] - 2024-09-XX
+## [1.7.0] - 2024-09-24
 
 ### Added
 
@@ -32,16 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for spatial gradients calculations using finite difference, meshless finite
   difference, spectral and least squares methods.
 - Add docs for SDF and relevant features for geometry module.
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ### Dependencies
 

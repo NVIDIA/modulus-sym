@@ -37,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Upgrade Sympy and Scikit-Learn versions.
 
+### Security
+
+- Upgrade notebook, opencv-python and setuptools versions to fix CVEs GHSA-9q39-rmj3-p4r2,
+  GHSA-qr4w-53vh-m672, and GHSA-cx63-2mw6-8hw5 respectively.
+
 ## [1.6.0] - 2024-07-23
 
 ### Added

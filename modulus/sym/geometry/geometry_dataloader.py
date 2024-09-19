@@ -138,7 +138,7 @@ class GeometryDatapipe:
 
         if not set(self.requested_vars) <= set(available_vars):
             raise ValueError(
-                f"Requested variables not available. Please select from {available_vars}"
+                f"Requested variables not available. Please choose from {available_vars}"
             )
 
     def _create_pipeline(self) -> dali.Pipeline:

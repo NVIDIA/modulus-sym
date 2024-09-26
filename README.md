@@ -108,7 +108,8 @@ start with a reference sample and then update it for your own use case.
 The recommended method for installing the latest version of Modulus Symbolic is using PyPi:
 
 ```bash
-pip install nvidia-modulus.sym
+pip install "pint==0.19.2"
+pip install nvidia-modulus.sym --no-build-isolation
 ```
 
 Note, the above method only works for x86/amd64 based architectures. For installing

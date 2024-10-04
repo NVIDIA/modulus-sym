@@ -43,5 +43,5 @@ def cuda_extension():
 
 setup(
     ext_modules=[cuda_extension()],
-    cmdclass={"build_ext": BuildExtension},
+    cmdclass={"build_ext": BuildExtension.with_options(use_ninja=False)},
 )

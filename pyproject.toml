@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "torch"]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -29,10 +29,11 @@ dependencies = [
     "pillow==10.2.0",
     "notebook>=7.2.2",
     "mistune==2.0.3",
-    "pint==0.19.2",
+    "pint>=0.19.2",
     "tensorboard>=2.8.0",
     "vtk>=9.2.6",
     "h5py>=3.7.0",
+    "ninja"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

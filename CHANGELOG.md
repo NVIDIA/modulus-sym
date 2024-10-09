@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added devcontainer support.
+
 ### Changed
+
+- Speeds up CUDA extension build by about 3x.
 
 ### Deprecated
 
@@ -21,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 ### Dependencies
+
+- Relaxes versions for several dependencies.
 
 ## [1.7.0] - 2024-09-24
 

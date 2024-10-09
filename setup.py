@@ -34,7 +34,7 @@ def cuda_extension():
     if cuda_version >= 12:
         nvcc_args.append("-gencode=arch=compute_90,code=sm_90")
 
-    nvcc_args.append("-t=0") # Enable multi-threaded builds
+    nvcc_args.append("-t=0")  # Enable multi-threaded builds
     # nvcc_args.append("--time=output.txt")
 
     return CUDAExtension(

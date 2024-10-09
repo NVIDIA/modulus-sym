@@ -34,6 +34,9 @@ def cuda_extension():
     if cuda_version >= 12:
         nvcc_args.append("-gencode=arch=compute_90,code=sm_90")
 
+    nvcc_args.append("-t=0") # Enable multi-threaded builds
+    # nvcc_args.append("--time=output.txt")
+
     return CUDAExtension(
         name="modulus.sym.modulus_ext",
         sources=glob.glob("modulus/sym/csrc/*.cu"),
@@ -43,5 +46,5 @@ def cuda_extension():
 
 setup(
     ext_modules=[cuda_extension()],
-    cmdclass={"build_ext": BuildExtension.with_options(use_ninja=False)},
+    cmdclass={"build_ext": BuildExtension.with_options(use_ninja=True)},
 )

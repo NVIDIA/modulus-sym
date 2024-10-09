@@ -5,7 +5,6 @@
 	"image": "nvcr.io/nvidia/pytorch:24.08-py3",
 	"runArgs": [
 		"--gpus=all",
-		"--env=NVIDIA_DISABLE_REQUIRE=1", // NOTE comment out if host has correct cuda driver
 		"--shm-size=10.24gb"
 	],
 	// While it may seem a good idea to mount it with `-v` in `runArgs` above

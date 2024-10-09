@@ -75,7 +75,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 // Modified from https://github.com/pytorch/pytorch/blob/release/1.11/aten/src/ATen/native/cuda/AmpKernels.cu#L181
 
-#include <torch/extension.h>
+#include <torch/python.h>
 #include <c10/cuda/CUDAStream.h>
 
 using torch::Tensor;

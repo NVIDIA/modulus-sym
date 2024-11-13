@@ -95,16 +95,17 @@ class Tessellation(Geometry):
                     invar["normal_z"].append(
                         np.full(x.shape, mesh.normals[index, 2]) / normal_scale
                     )
-                    invar["area"].append(
-                        np.full(x.shape, triangle_areas[index] / x.shape[0])
-                    )
+
                 invar["x"] = np.concatenate(invar["x"], axis=0)
                 invar["y"] = np.concatenate(invar["y"], axis=0)
                 invar["z"] = np.concatenate(invar["z"], axis=0)
                 invar["normal_x"] = np.concatenate(invar["normal_x"], axis=0)
                 invar["normal_y"] = np.concatenate(invar["normal_y"], axis=0)
                 invar["normal_z"] = np.concatenate(invar["normal_z"], axis=0)
-                invar["area"] = np.concatenate(invar["area"], axis=0)
+                # Compute area from the original mesh
+                invar["area"] = np.ones_like(invar["x"]) * (
+                    np.sum(triangle_areas) / nr_points
+                )
 
                 # sample from the param ranges
                 params = parameterization.sample(nr_points, quasirandom=quasirandom)
@@ -234,29 +235,14 @@ def _sample_triangle(
 
 
 # area of array of triangles
-def _area_of_triangles(
-    v0, v1, v2
-):  # ref https://math.stackexchange.com/questions/128991/how-to-calculate-the-area-of-a-3d-triangle
-    a = np.sqrt(
-        (v0[:, 0] - v1[:, 0]) ** 2
-        + (v0[:, 1] - v1[:, 1]) ** 2
-        + (v0[:, 2] - v1[:, 2]) ** 2
-        + 1e-10
-    )
-    b = np.sqrt(
-        (v1[:, 0] - v2[:, 0]) ** 2
-        + (v1[:, 1] - v2[:, 1]) ** 2
-        + (v1[:, 2] - v2[:, 2]) ** 2
-        + 1e-10
-    )
-    c = np.sqrt(
-        (v0[:, 0] - v2[:, 0]) ** 2
-        + (v0[:, 1] - v2[:, 1]) ** 2
-        + (v0[:, 2] - v2[:, 2]) ** 2
-        + 1e-10
-    )
-    s = (a + b + c) / 2
-    area = np.sqrt(s * (s - a) * (s - b) * (s - c) + 1e-10)
+def _area_of_triangles(v0, v1, v2):
+    edge1 = v1 - v0
+    edge2 = v2 - v0
+
+    # use cross product to find the area of the triangle
+    cross_product = np.cross(edge1, edge2)
+    area = np.linalg.norm(cross_product, axis=1) / 2
+
     return area
 
 

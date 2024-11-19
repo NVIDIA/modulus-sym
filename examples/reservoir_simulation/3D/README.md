@@ -121,6 +121,8 @@ To run the example, launch the Modulus container using below:
 ```bash
 docker run --rm --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --runtime nvidia -v ${PWD}:/examples -it nvcr.io/nvidia/modulus/modulus:23.08
 ```
+Currently, this example is tested to run with Modulus release 24.09 and earlier.
+
 Next, clone the repo to get this example using:
 ```bash
 cd /examples

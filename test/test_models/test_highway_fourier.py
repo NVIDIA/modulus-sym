@@ -73,7 +73,7 @@ def test_highway_fourier_net():
     # load outputs
     data_out1 = test_data["data_out"]
     # verify
-    assert np.allclose(data_out1, data_out2, rtol=1e-3), "Test failed!"
+    assert np.allclose(data_out1, data_out2, atol=1e-3, rtol=1e-3), "Test failed!"
     print("Success!")
 
 

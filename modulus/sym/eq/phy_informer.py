@@ -89,7 +89,8 @@ class PhysicsInformer:
             The `.forward` call requires input dict with the relevant variables in
             `[N, 1, H, W, D]` for 3D, `[N, 1, H, W]` for 2D and `[N, 1, H]` for 1D.
             `least_squares`: The spatial gradients are computed using Least Squares
-            technique. Ideal for use with mesh based representations. All values are
+            technique. Ideal for use with mesh based representations (i.e. unstructured
+            grids). All values are
             computed at the nodes. The `.forward` call requires input dict with
             the relevant variables in `[N, 1]` shape along with entry for "coordinates"
             in `[N, m]` shape where m is the dimensionality of the input

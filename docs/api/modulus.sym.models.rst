@@ -8,6 +8,13 @@ models.afno
    :members: AFNOArch
    :show-inheritance:
 
+models.deeponet
+-------------------------------
+
+.. automodule:: modulus.sym.models.deeponet
+   :members: DeepONetArch
+   :show-inheritance:
+
 models.dgm
 -------------------------------
 

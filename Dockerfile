@@ -48,7 +48,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/vtk-9.2.
 # Install modulus sym dependencies
 RUN pip install --no-cache-dir "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python>=4.8.1.78" \
     "scikit-learn>=1.0.2" "symengine>=0.10.0" "sympy>=1.12" "timm>=1.0.3" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
-    "typing==3.7.4.3" "pillow==10.2.0" "notebook>=7.2.2" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+    "typing==3.7.4.3" "pillow==10.3.0" "notebook>=7.2.2" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
 
 # Install warp-lang
 RUN pip install --no-cache-dir warp-lang

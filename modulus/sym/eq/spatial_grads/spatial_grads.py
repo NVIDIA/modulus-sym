@@ -651,7 +651,7 @@ class GradientsSpectral(torch.nn.Module):
 class GradientsLeastSquares(torch.nn.Module):
     """
     Compute spatial derivatives using Least Squares technique modified to compute
-    gradients on nodes.
+    gradients on nodes. Useful for mesh based representations (i.e. unstructured grids)
 
     Reference: https://scientific-sims.com/cfdlab/Dimitri_Mavriplis/HOME/assets/papers/aiaa20033986.pdf
 

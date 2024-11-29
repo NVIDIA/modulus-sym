@@ -441,8 +441,10 @@ class Ellipse(Geometry):
     ----------
     center : tuple with 2 ints or floats
         center point of circle
-    radius : int or float
-        radius of circle
+    major : int or float
+        major axis of ellipse
+    minor : int or float
+        minor axis of ellipse
     parameterization : Parameterization
         Parameterization of geometry.
     """

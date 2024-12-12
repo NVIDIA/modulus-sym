@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.0a0] - 2024-07-XX
+## [1.9.0a0] - 2025-01-XX
 
 ### Added
 
@@ -23,6 +23,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 ### Dependencies
+
+## [1.8.0] - 2024-12-04
+
+### Added
+
+- Added devcontainer support.
+
+### Changed
+
+- Speeds up CUDA extension build by about 3x.
+
+### Fixed
+
+- Fix the area calculated for STL meshes.
+
+### Dependencies
+
+- Relaxes versions for several dependencies.
+
+## [1.7.0] - 2024-09-24
+
+### Added
+
+- AMP for derivatives.
+- DALI based dataloader for Geometry module.
+- Generalized PDE residual computing utility.
+- Support for spatial gradients calculations using finite difference, meshless finite
+  difference, spectral and least squares methods.
+- Add docs for SDF and relevant features for geometry module.
+
+### Dependencies
+
+- Upgrade Sympy and Scikit-Learn versions.
+
+### Security
+
+- Upgrade notebook, opencv-python and setuptools versions to fix CVEs GHSA-9q39-rmj3-p4r2,
+  GHSA-qr4w-53vh-m672, and GHSA-cx63-2mw6-8hw5 respectively.
+
+## [1.6.0] - 2024-07-23
+
+### Added
+
+- Added inference notebook for Turbulence Super-resolution example.
+
+### Changed
+
+- Warp based backed for STL geometry handling
+
+### Dependencies
+
+- Update `timm` dependency
+- Update minimum python version to 3.10
 
 ## [1.5.0] - 2024-04-17
 

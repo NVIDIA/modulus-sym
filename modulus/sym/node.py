@@ -42,6 +42,8 @@ class Node:
 
     def __init__(self, inputs, outputs, evaluate, name="Node", optimize=False):
         super().__init__()
+        if isinstance(inputs, str):
+            inputs = [inputs]
         self._inputs = Key.convert_list([x for x in inputs if diff_str not in str(x)])
         self._outputs = Key.convert_list(outputs)
         self._derivatives = Key.convert_list([x for x in inputs if diff_str in str(x)])

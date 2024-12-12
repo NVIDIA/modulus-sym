@@ -28,6 +28,7 @@ from hydra.experimental.callback import Callback
 from typing import Any
 from omegaconf import DictConfig, OmegaConf
 
+from modulus.sym.amp import AmpManager
 from modulus.sym.distributed import DistributedManager
 from modulus.sym.manager import JitManager, JitArchMode, GraphManager
 
@@ -64,8 +65,21 @@ class ModulusCallback(Callback):
             jit_manager.enabled = False
             logger.warning("Disabling JIT because functorch does not work with it.")
 
+        # amp manager
+        amp_manager = AmpManager()
+        amp_manager.init(
+            config.amp.enabled,
+            config.amp.mode,
+            config.amp.dtype,
+            config.amp.autocast_activation,
+            config.amp.autocast_firstlayer,
+            config.amp.default_max_scale_log2,
+            config.amp.custom_max_scales_log2,
+        )
+
         logger.info(jit_manager)
         logger.info(graph_manager)
+        logger.info(amp_manager)
 
 
 DefaultCallbackConfigs = DictConfig(

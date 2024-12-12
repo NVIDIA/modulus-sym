@@ -20,10 +20,11 @@ import numpy as np
 import logging
 from torch.autograd import Function
 
+from modulus.sym.amp import DerivScaler, DerivScalers, AmpManager, AmpMode
 from modulus.sym.constants import diff
 from modulus.sym.key import Key
 from modulus.sym.node import Node
-from modulus.sym.eq.mfd import FirstDeriv, SecondDeriv, ThirdDeriv, ForthDeriv
+from modulus.sym.eq.mfd import FirstDeriv, SecondDeriv, ThirdDeriv, FourthDeriv
 
 from typing import Dict, List, Set, Optional, Union, Callable
 
@@ -32,9 +33,9 @@ logger = logging.getLogger(__name__)
 
 # ==== Autodiff ====
 @torch.jit.script
-def gradient(y: torch.Tensor, x: List[torch.Tensor]) -> List[torch.Tensor]:
+def gradient_autodiff(y: torch.Tensor, x: List[torch.Tensor]) -> List[torch.Tensor]:
     """
-    TorchScript function to compute the gradient of a tensor wrt multople inputs
+    TorchScript function to compute the gradient of a tensor wrt multiple inputs
     """
     grad_outputs: List[Optional[torch.Tensor]] = [torch.ones_like(y, device=y.device)]
     grad = torch.autograd.grad(
@@ -81,6 +82,9 @@ class Derivative(torch.nn.Module):
         }
         self.nvtx_str: str = f"Auto-Diff Node: {list(self.gradient_dict.keys())}"
 
+        self.scaler_enabled: bool = False
+        self.deriv_scalers: Dict[str, DerivScaler] = {}
+
     @staticmethod
     def prepare_input(
         input_variables: Dict[str, torch.Tensor], mask: List[str]
@@ -93,12 +97,37 @@ class Derivative(torch.nn.Module):
     ) -> Dict[str, torch.Tensor]:
         return {diff(var_name, name): output_tensors[i] for i, name in enumerate(sizes)}
 
+    # GradScaler and DerivScalers are shared python objects which could/should not
+    # be torchscripted.
+    @torch.jit.ignore
+    def _scale(self, var: torch.Tensor, var_name: str) -> torch.Tensor:
+        return self.deriv_scalers[var_name].scale(var)
+
+    @torch.jit.ignore
+    def _unscale(self, grad: List[torch.Tensor], var_name: str) -> List[torch.Tensor]:
+        return self.deriv_scalers[var_name].unscale_deriv(grad)
+
     def forward(self, input_var: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         output_var = {}
         for var_name, grad_sizes in self.gradient_dict.items():
             var = input_var[var_name]
             grad_var = self.prepare_input(input_var, grad_sizes.keys())
-            grad = gradient(var, grad_var)
+
+            if self.scaler_enabled:
+                var = self._scale(var, var_name)
+
+            # Calculate gradient using Autodiff.
+            with torch.cuda.amp.autocast(enabled=False):
+                # Autocast needs to be disabled because using Autograd within the autocast region
+                # is not recommended and could have unpredictable behavior. Autocast relies on
+                # thread-local configurations, and since Autograd runs in a different thread, it
+                # could use a different/default AMP dtype than the one specified in the forward thread.
+                # Disabling autocast here will allow Autograd to run the same dtype as the forward pass.
+                grad = gradient_autodiff(var, grad_var)
+
+            if self.scaler_enabled:
+                grad = self._unscale(grad, var_name)
+
             grad_dict = {
                 name: grad[i] for i, name in enumerate(self.gradient_names[var_name])
             }
@@ -106,7 +135,7 @@ class Derivative(torch.nn.Module):
         return output_var
 
     @classmethod
-    def make_node(cls, inputs: List[Key], derivatives: List[Key], name=None, jit=True):
+    def make_node(cls, inputs: List[Key], derivatives: List[Key], name=None, jit=False):
         derivatives = [d for d in derivatives if d not in inputs]
         bwd_derivative_dict = _derivative_dict(inputs, derivatives, forward=False)
         output_derivatives = []
@@ -127,6 +156,28 @@ class Derivative(torch.nn.Module):
             name=(nvtx_str if name is None else str(name)),
         )
         return derivative_node
+
+    def setup_deriv_scaler(self, deriv_scalers: DerivScalers):
+        self.scaler_enabled = True
+        amp_manager = AmpManager()
+
+        # Set scaler for each term, they could share and map to the same scaler.
+        if amp_manager.mode == AmpMode.PER_ORDER_SCALER:
+            # Use the maximum derivative order for this node. For example if we
+            # have gradient_dict as {"u__x", "nu"} to calculate u__x__x and
+            # nu__x, then order is 2.
+            order = max(len(g.split("__")) for g in self.gradient_dict)
+            for var_name in self.gradient_dict:
+                # use a separate scaler if it is in special_terms
+                if var_name in amp_manager.special_terms:
+                    self.deriv_scalers[var_name] = deriv_scalers.get_scaler(var_name)
+                else:
+                    self.deriv_scalers[var_name] = deriv_scalers.get_scaler(order)
+        elif amp_manager.mode == AmpMode.PER_TERM_SCALER:
+            for var_name in self.gradient_dict:
+                self.deriv_scalers[var_name] = deriv_scalers.get_scaler(var_name)
+        else:
+            raise ValueError(f"amp_manager.mode has wrong type: {amp_manager.mode}")
 
 
 def _derivative_dict(var, derivatives, forward=False):
@@ -213,7 +264,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
         self.first_deriv = FirstDeriv(self.derivatives[1], self.dx, order=order)
         self.second_deriv = SecondDeriv(self.derivatives[2], self.dx, order=order)
         self.third_deriv = ThirdDeriv(self.derivatives[3], self.dx, order=order)
-        self.forth_deriv = ForthDeriv(self.derivatives[4], self.dx, order=order)
+        self.fourth_deriv = FourthDeriv(self.derivatives[4], self.dx, order=order)
 
     @torch.jit.ignore()
     def forward(self, inputs: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
@@ -223,7 +274,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
         self.first_deriv.dx = dx
         self.second_deriv.dx = dx
         self.third_deriv.dx = dx
-        self.forth_deriv.dx = dx
+        self.fourth_deriv.dx = dx
         torch.cuda.nvtx.range_push(f"Calculating meshless finite derivatives")
 
         # Assemble global stencil
@@ -232,7 +283,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
             self.first_deriv,
             self.second_deriv,
             self.third_deriv,
-            self.forth_deriv,
+            self.fourth_deriv,
         ]:
             stencil_list = deriv.stencil
             # Remove centered stencil points if already in input dictionary
@@ -282,7 +333,7 @@ class MeshlessFiniteDerivative(torch.nn.Module):
         outputs_first = self.first_deriv(finite_diff_inputs)
         outputs_second = self.second_deriv(finite_diff_inputs)
         outputs_third = self.third_deriv(finite_diff_inputs)
-        outputs_forth = self.forth_deriv(finite_diff_inputs)
+        outputs_fourth = self.fourth_deriv(finite_diff_inputs)
 
         outputs = inputs
         if self.double_cast:
@@ -293,14 +344,14 @@ class MeshlessFiniteDerivative(torch.nn.Module):
                 outputs_second[key] = value.type(dtype)
             for key, value in outputs_third.items():
                 outputs_third[key] = value.type(dtype)
-            for key, value in outputs_forth.items():
-                outputs_forth[key] = value.type(dtype)
+            for key, value in outputs_fourth.items():
+                outputs_fourth[key] = value.type(dtype)
         outputs = {
             **inputs,
             **outputs_first,
             **outputs_second,
             **outputs_third,
-            **outputs_forth,
+            **outputs_fourth,
         }
         torch.cuda.nvtx.range_pop()
         torch.cuda.nvtx.range_pop()

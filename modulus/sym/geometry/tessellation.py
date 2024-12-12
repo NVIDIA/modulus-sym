@@ -23,18 +23,11 @@ import csv
 from stl import mesh as np_mesh
 from sympy import Symbol
 
-try:
-    import pysdf.sdf as pysdf
-except:
-    print(
-        "Error importing pysdf. Make sure 'libsdf.so' is in LD_LIBRARY_PATH and pysdf is installed"
-    )
-    raise
-
 from .geometry import Geometry
 from .parameterization import Parameterization, Bounds, Parameter
 from .curve import Curve
 from modulus.sym.constants import diff_str
+from modulus.utils.sdf import signed_distance_field
 
 
 class Tessellation(Geometry):
@@ -102,16 +95,17 @@ class Tessellation(Geometry):
                     invar["normal_z"].append(
                         np.full(x.shape, mesh.normals[index, 2]) / normal_scale
                     )
-                    invar["area"].append(
-                        np.full(x.shape, triangle_areas[index] / x.shape[0])
-                    )
+
                 invar["x"] = np.concatenate(invar["x"], axis=0)
                 invar["y"] = np.concatenate(invar["y"], axis=0)
                 invar["z"] = np.concatenate(invar["z"], axis=0)
                 invar["normal_x"] = np.concatenate(invar["normal_x"], axis=0)
                 invar["normal_y"] = np.concatenate(invar["normal_y"], axis=0)
                 invar["normal_z"] = np.concatenate(invar["normal_z"], axis=0)
-                invar["area"] = np.concatenate(invar["area"], axis=0)
+                # Compute area from the original mesh
+                invar["area"] = np.ones_like(invar["x"]) * (
+                    np.sum(triangle_areas) / nr_points
+                )
 
                 # sample from the param ranges
                 params = parameterization.sample(nr_points, quasirandom=quasirandom)
@@ -135,7 +129,7 @@ class Tessellation(Geometry):
                 store_triangles[:, :, 1] -= miny
                 store_triangles[:, :, 2] -= minz
                 store_triangles *= 1 / max_dis
-                store_triangles = store_triangles.flatten()
+                store_triangles = store_triangles.reshape(-1, 3)
                 points[:, 0] -= minx
                 points[:, 1] -= miny
                 points[:, 2] -= minz
@@ -145,10 +139,15 @@ class Tessellation(Geometry):
                 # compute sdf values
                 outputs = {}
                 if airtight:
-                    sdf_field, sdf_derivative = pysdf.signed_distance_field(
-                        store_triangles, points, include_hit_points=True
+                    sdf_field, sdf_derivative = signed_distance_field(
+                        store_triangles,
+                        np.arange((store_triangles.shape[0])),
+                        points,
+                        include_hit_points=True,
                     )
+                    sdf_field = sdf_field.numpy()
                     sdf_field = -np.expand_dims(max_dis * sdf_field, axis=1)
+                    sdf_derivative = sdf_derivative.numpy().reshape(-1)
                 else:
                     sdf_field = np.zeros_like(invar["x"])
                 outputs["sdf"] = sdf_field
@@ -236,29 +235,14 @@ def _sample_triangle(
 
 
 # area of array of triangles
-def _area_of_triangles(
-    v0, v1, v2
-):  # ref https://math.stackexchange.com/questions/128991/how-to-calculate-the-area-of-a-3d-triangle
-    a = np.sqrt(
-        (v0[:, 0] - v1[:, 0]) ** 2
-        + (v0[:, 1] - v1[:, 1]) ** 2
-        + (v0[:, 2] - v1[:, 2]) ** 2
-        + 1e-10
-    )
-    b = np.sqrt(
-        (v1[:, 0] - v2[:, 0]) ** 2
-        + (v1[:, 1] - v2[:, 1]) ** 2
-        + (v1[:, 2] - v2[:, 2]) ** 2
-        + 1e-10
-    )
-    c = np.sqrt(
-        (v0[:, 0] - v2[:, 0]) ** 2
-        + (v0[:, 1] - v2[:, 1]) ** 2
-        + (v0[:, 2] - v2[:, 2]) ** 2
-        + 1e-10
-    )
-    s = (a + b + c) / 2
-    area = np.sqrt(s * (s - a) * (s - b) * (s - c) + 1e-10)
+def _area_of_triangles(v0, v1, v2):
+    edge1 = v1 - v0
+    edge2 = v2 - v0
+
+    # use cross product to find the area of the triangle
+    cross_product = np.cross(edge1, edge2)
+    area = np.linalg.norm(cross_product, axis=1) / 2
+
     return area
 
 

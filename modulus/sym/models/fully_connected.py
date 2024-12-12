@@ -21,6 +21,11 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+from modulus.sym.amp import (
+    amp_manager_scaler_enabled_and_disable_autocast_activation,
+    amp_manager_scaler_enabled_and_disable_autocast_firstlayer,
+)
+
 from modulus.models.layers import FCLayer, Conv1dFCLayer
 from modulus.sym.models.activation import Activation, get_activation_fn
 from modulus.sym.models.arch import Arch
@@ -90,7 +95,12 @@ class FullyConnectedArchCore(nn.Module):
     def forward(self, x: Tensor) -> Tensor:
         x_skip: Optional[Tensor] = None
         for i, layer in enumerate(self.layers):
-            x = layer(x)
+            if i == 0 and amp_manager_scaler_enabled_and_disable_autocast_firstlayer():
+                # disable autocast for the first layer
+                with torch.cuda.amp.autocast(enabled=False):
+                    x = layer(x.float())
+            else:
+                x = layer(x)
             if self.skip_connections and i % 2 == 0:
                 if x_skip is not None:
                     x, x_skip = x + x_skip, x

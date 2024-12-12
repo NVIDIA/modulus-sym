@@ -22,6 +22,7 @@ import torch
 import logging
 from typing import Dict, List, Optional
 
+from .amp import DerivScalers
 from .models.arch import Arch, FuncArch
 from .node import Node
 from .key import Key
@@ -239,6 +240,27 @@ class Graph(torch.nn.Module):
             key: value for key, value in outvar.items() if Key(key) in self.req_names
         }
         return outvar
+
+    def setup_deriv_scaler(self, deriv_scalers: DerivScalers, name: str = ""):
+        """
+        Setup derivative scalers for Derivative node and FuncArch node in the
+        graph.
+        """
+        for i, node in enumerate(self.node_evaluation_order):
+            if isinstance(node.evaluate, Derivative):
+                node.evaluate.setup_deriv_scaler(deriv_scalers)
+            if isinstance(node.evaluate, FuncArch):
+                node.evaluate.setup_deriv_scaler(deriv_scalers)
+            # If node.evaluate is a jitted Derivative instance, we do not have
+            # access to the original Derivative instance and could not setup
+            # derivative scalers, so we raise an error here.
+            if (
+                isinstance(node.evaluate, torch.jit._script.RecursiveScriptModule)
+                and node.evaluate.original_name == "Derivative"
+            ):
+                raise RuntimeError(
+                    "AMP FP16 does not work for TorchScripted Derivative node"
+                )
 
     def __str__(self):
         repr = "=" * 100 + "\n"

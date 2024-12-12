@@ -40,8 +40,8 @@ class TrainingConf:
     save_network_freq: int = MISSING
     print_stats_freq: int = MISSING
     summary_freq: int = MISSING
-    amp: bool = MISSING
-    amp_dtype: str = MISSING
+    grad_clip_max_norm: float = MISSING
+    monitor_grad_clip: bool = MISSING
 
 
 @dataclass
@@ -56,8 +56,8 @@ class DefaultTraining(TrainingConf):
     save_network_freq: int = 1000
     print_stats_freq: int = 100
     summary_freq: int = 1000
-    amp: bool = False
-    amp_dtype: str = "float16"
+    grad_clip_max_norm: float = 0.5
+    monitor_grad_clip: bool = True
 
     ntk: NTKConf = NTKConf()
 

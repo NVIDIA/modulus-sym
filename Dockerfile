@@ -20,7 +20,7 @@ FROM $BASE_CONTAINER as builder
 ARG TARGETPLATFORM
 
 # Update pip and setuptools
-RUN pip install "pip==23.2.1" "setuptools==68.2.2"  
+RUN pip install "pip>=23.2.1" "setuptools>=70.0.0"  
 
 # Setup git lfs, graphviz gl1(vtk dep)
 RUN apt-get update && \
@@ -46,9 +46,12 @@ RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/vtk-9.2.
     fi
 
 # Install modulus sym dependencies
-RUN pip install --no-cache-dir "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python==4.5.5.64" \
-    "scikit-learn==1.0.2" "symengine>=0.10.0" "sympy==1.12" "timm==0.5.4" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
-    "typing==3.7.4.3" "pillow==10.0.1" "notebook==6.4.12" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+RUN pip install --no-cache-dir "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python>=4.8.1.78" \
+    "scikit-learn>=1.0.2" "symengine>=0.10.0" "sympy>=1.12" "timm>=1.0.3" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
+    "typing==3.7.4.3" "pillow==10.3.0" "notebook>=7.2.2" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+
+# Install warp-lang
+RUN pip install --no-cache-dir warp-lang
 
 # Install tiny-cuda-nn
 ENV TCNN_CUDA_ARCHITECTURES="60;70;75;80;86;90"
@@ -63,74 +66,21 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ] && [ -e "/modulus-sym/deps/tinycuda
 	pip install --no-cache-dir git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch; \	
     fi
 
-
-FROM builder as pysdf-install
-
-ARG TARGETPLATFORM
-
-COPY . /modulus-sym/
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh /modulus-sym/ && \
-	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64.sh --skip-license --include-subdir --prefix=/root && \
-	cd /root && \
-	wget  https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-aarch64.tar.gz && \
-	tar xvfz cmake-3.24.1-linux-aarch64.tar.gz && \
-	cp -r /modulus-sym/deps/external /external/ && \
-	mkdir /external/pysdf/build/ && \
-	cd /external/pysdf/build && \
-	/root/cmake-3.24.1-linux-aarch64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-aarch64 -DCUDA_CUDA_LIBRARY="" && \
-	make -j && \
-	mkdir /external/lib && \
-	cp libpysdf.so /external/lib/ && \
-	cd /external/pysdf && pip install . ; \
-    elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
-	cp /modulus-sym/deps/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh /modulus-sym/ && \
-	cd /modulus-sym && ./NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64.sh --skip-license --include-subdir --prefix=/root && \
-	cd /root && \
-	wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz && \
-	tar xvfz cmake-3.24.1-linux-x86_64.tar.gz && \
-	cp -r /modulus-sym/deps/external /external/ && \
-	mkdir /external/pysdf/build/ && \
-	cd /external/pysdf/build && \
-	/root/cmake-3.24.1-linux-x86_64/bin/cmake .. -DGIT_SUBMODULE=OFF -DOptiX_INSTALL_DIR=/root/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64 -DCUDA_CUDA_LIBRARY="" && \
-	make -j && \
-	mkdir /external/lib && \
-	cp libpysdf.so /external/lib/ && \
-	cd /external/pysdf && pip install . ; \
-    fi
-
-# Cleanup
-RUN rm -rf /root/NVIDIA-OptiX-SDK* /root/cmake* /external/pysdf
-
-ENV LD_LIBRARY_PATH="/external/lib:${LD_LIBRARY_PATH}" \
-     NVIDIA_DRIVER_CAPABILITIES=graphics,compute,utility,video \
-    _CUDA_COMPAT_TIMEOUT=90
-
 # CI Image
-FROM pysdf-install as ci
+FROM builder as ci
 
 # Install Modulus
-RUN pip install --upgrade --no-cache-dir git+https://github.com/NVIDIA/modulus.git
+# TODO revert back to main branch after 0.7.0-rc is merged into main
+RUN pip install --upgrade --no-cache-dir git+https://github.com/NVIDIA/modulus.git@0.7.0-rc
 
 RUN pip install --no-cache-dir "black==22.10.0" "interrogate==1.5.0" "coverage==6.5.0"
-COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install -e . --no-deps && rm -rf /modulus-sym/
 
-# Image without pysdf
-FROM builder as no-pysdf
+# Deployment image
+FROM builder as deploy
 
 # Install modulus sym
 COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install --no-cache-dir . --no-deps
-RUN rm -rf /modulus-sym/
-
-# Image with pysdf 
-# Install pysdf
-FROM pysdf-install as deploy
-
-# Install modulus sym
-COPY . /modulus-sym/
-RUN cd /modulus-sym/ && pip install --no-cache-dir . --no-deps
+RUN cd /modulus-sym/ && pip install --no-cache-dir . --no-deps --no-build-isolation
 RUN rm -rf /modulus-sym/
 
 # Set Git Hash as a environment variable

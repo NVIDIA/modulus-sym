@@ -1,0 +1,3 @@
+exclude examples/*
+exclude docs/*
+exclude test/*

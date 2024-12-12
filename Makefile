@@ -1,6 +1,6 @@
 install:
 	pip install --upgrade pip && \
-		pip install -e .
+		pip install -e . --no-build-isolation
 
 setup-ci:
 	pip install pre-commit && \
@@ -17,7 +17,7 @@ lint:
 	# pre-commit run markdownlint -a
 	echo "Lint CI stage not currently implemented"
 
-license: 
+license:
 	pre-commit run license -a
 
 doctest:
@@ -27,7 +27,7 @@ doctest:
 	# 	--doctest-modules modulus/ --ignore-glob=*internal*
 	echo "Doctest CI stage not currently implemented"
 
-pytest: 
+pytest:
 	coverage run \
 		--rcfile='test/coverage.pytest.rc' \
 		-m pytest test/
@@ -36,6 +36,31 @@ coverage:
 	coverage combine && \
 		coverage report --show-missing --omit=*test* --omit=*internal* --fail-under=50 && \
 		coverage html
+
+# ============================================================================ #
+# CLEAN COMMANDS
+# ============================================================================ #
+
+clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+
+clean-build: ## remove build artifacts
+	rm -fr build/
+	rm -fr dist/
+	rm -fr .eggs/
+	find . -name '*.egg-info' -exec rm -fr {} +
+	find . -name '*.egg' -exec rm -f {} +
+
+clean-pyc: ## remove Python file artifacts
+	find . -name '*.pyc' -exec rm -f {} +
+	find . -name '*.pyo' -exec rm -f {} +
+	find . -name '*~' -exec rm -f {} +
+	find . -name '__pycache__' -exec rm -fr {} +
+
+clean-test: ## remove test and coverage artifacts
+	rm -fr .tox/
+	rm -f .coverage*
+	rm -fr htmlcov/
+	rm -fr .pytest_cache
 
 # For arch naming conventions, refer
 # https://docs.docker.com/build/building/multi-platform/
@@ -60,4 +85,3 @@ container-ci:
 
 container-docs:
 	docker build -t modulus-sym:docs --build-arg TARGETPLATFORM=${TARGETPLATFORM} --target docs -f Dockerfile .
-

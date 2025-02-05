@@ -20,7 +20,7 @@ Supported modulus training paradigms
 
 import torch
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING, II
 from typing import Any
@@ -59,7 +59,7 @@ class DefaultTraining(TrainingConf):
     grad_clip_max_norm: float = 0.5
     monitor_grad_clip: bool = True
 
-    ntk: NTKConf = NTKConf()
+    ntk: NTKConf = field(default_factory=NTKConf)
 
 
 @dataclass

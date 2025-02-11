@@ -47,6 +47,9 @@ In ParaView, you can visualize the flow field for a given case using the followi
     - Optionally, triangulate the point cloud using the "Delaunay 2D" filter to allow shading
     - Select the field variable you wish to visualize, and use either "Surface" or "Point" view to visualize the flow field
 
+Examples:
+![airfoil-cambered-pressure](../../docs/images/user_guide/airfoil-cambered-pressure.png)
+![airfoil-cambered-velocity](../../docs/images/user_guide/airfoil-cambered-velocity.png)
 
 ## Additional Reading and Future Work
 

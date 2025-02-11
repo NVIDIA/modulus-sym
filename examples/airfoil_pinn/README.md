@@ -17,21 +17,24 @@ Here, we examine the 2-dimensional steady, incompressible, viscous external aero
 
 ### Prerequisites
 
-If you are running this example outside of the Modulus container, install Modulus Sym using
-the instructions from [here](https://github.com/NVIDIA/modulus-sym?tab=readme-ov-file#pypi)
+If you are running this example outside the Modulus container, install Modulus Sym using
+the instructions from [here](https://github.com/NVIDIA/modulus-sym?tab=readme-ov-file#pypi).
 
 ### Training
 
-To train the model, run:
+To train the model on a single local GPU, run:
 
 ```bash
 python airfoil.py
 ```
 
-This should start training the model. Since this is training in a purely physics-based
-fashion, there is no dataset required.
+To start a multi-GPU training run, first check that multiple GPUs are available using `nvidia-smi`. Then, use the following command:
 
-Instead, we generate the geometry using the Modulus Sym's geometry module and a custom sampler, which is defined in `custom_airfoil_geometry.py`.
+```bash
+mpirun -np 2 python airfoil.py
+```
+
+Since this is training in a purely physics-based fashion, there is no dataset required. Instead, we generate the geometry using the Modulus Sym's geometry module and a custom sampler, which is defined in `custom_airfoil_geometry.py`.
 
 ### Post-Processing
 

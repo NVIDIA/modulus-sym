@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:24.03-py3
+ARG BASE_CONTAINER=nvcr.io/nvidia/pytorch:25.01-py3
 FROM $BASE_CONTAINER as builder
 
 ARG TARGETPLATFORM
@@ -29,38 +29,38 @@ RUN apt-get update && \
 
 # install vtk
 COPY . /modulus-sym/
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl" ]; then \
-	echo "VTK wheel for $TARGETPLATFORM exists, installing!" && \
-	pip install --no-cache-dir /modulus-sym/deps/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl; \
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ "$VTK_ARM64_WHEEL" != "unknown" ]; then \
+        echo "VTK wheel $VTK_ARM64_WHEEL for $TARGETPLATFORM exists, installing!" && \
+        pip install --no-cache-dir /modulus-sym/deps/${VTK_ARM64_WHEEL}; \
     elif [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
-	echo "Installing vtk for: $TARGETPLATFORM" && \
-	pip install --no-cache-dir "vtk>=9.2.6"; \ 
+        echo "Installing vtk for: $TARGETPLATFORM" && \
+        pip install --no-cache-dir "vtk>=9.2.6"; \
     else \
-	echo "Installing vtk for: $TARGETPLATFORM from source" && \
-	apt-get update && apt-get install -y libgl1-mesa-dev && \
-	git clone https://gitlab.kitware.com/vtk/vtk.git && cd vtk && git checkout tags/v9.2.6 && git submodule update --init --recursive && \
-	mkdir build && cd build && cmake -GNinja -DVTK_WHEEL_BUILD=ON -DVTK_WRAP_PYTHON=ON /workspace/vtk/ && ninja && \
-	python setup.py bdist_wheel && \
-	pip install --no-cache-dir dist/vtk-9.2.6.dev0-cp310-cp310-linux_aarch64.whl && \
-	cd ../../ && rm -r vtk; \
+        echo "No custom wheel or wheel on PyPi found. Installing vtk for: $TARGETPLATFORM from source" && \
+        apt-get update && apt-get install -y libgl1-mesa-dev && \
+        git clone https://gitlab.kitware.com/vtk/vtk.git && cd vtk && git checkout tags/v9.4.1 && git submodule update --init --recursive && \
+        mkdir build && cd build && cmake -GNinja -DVTK_WHEEL_BUILD=ON -DVTK_WRAP_PYTHON=ON /workspace/vtk/ && ninja && \
+        python setup.py bdist_wheel && \
+        pip install --no-cache-dir dist/vtk-*.whl && \
+        cd ../../ && rm -r vtk; \
     fi
-
+    
 # Install modulus sym dependencies
-RUN pip install --no-cache-dir "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython==0.29.28" "numpy-stl==2.16.3" "opencv-python>=4.8.1.78" \
-    "scikit-learn>=1.0.2" "symengine>=0.10.0" "sympy>=1.12" "timm>=1.0.3" "torch-optimizer==0.3.0" "transforms3d==0.3.1" \
-    "typing==3.7.4.3" "pillow==10.3.0" "notebook>=7.2.2" "mistune==2.0.3" "pint==0.19.2" "tensorboard>=2.8.0"
+RUN pip install --no-cache-dir "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=4.3.7" "Cython>=0.29.28" "numpy-stl>=2.16.3" "opencv-python>=4.8.1.78" \
+    "scikit-learn>=1.0.2" "symengine>=0.10.0" "sympy>=1.12" "timm>=1.0.3" "torch-optimizer>=0.3.0" "transforms3d>=0.3.1" \
+    "typing>=3.7.4.3" "pillow==10.3.0" "notebook>=7.2.2" "mistune>=2.0.3" "pint>=0.19.2" "tensorboard>=2.8.0" "numpy<2.0"
 
 # Install warp-lang
 RUN pip install --no-cache-dir warp-lang
 
 # Install tiny-cuda-nn
 ENV TCNN_CUDA_ARCHITECTURES="60;70;75;80;86;90"
-RUN if [ "$TARGETPLATFORM" = "linux/amd64" ] && [ -e "/modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_x86_64.whl" ]; then \
-        echo "Tiny CUDA NN wheel for $TARGETPLATFORM exists, installing!" && \
-        pip install --force-reinstall --no-cache-dir /modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_x86_64.whl; \
-    elif [ "$TARGETPLATFORM" = "linux/arm64" ] && [ -e "/modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_aarch64.whl" ]; then \
-        echo "Tiny CUDA NN wheel for $TARGETPLATFORM exists, installing!" && \
-        pip install --force-reinstall --no-cache-dir /modulus-sym/deps/tinycudann-1.7-cp310-cp310-linux_aarch64.whl; \
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ] && [ "$TCNN_CUDA_AMD64_WHEEL" != "unknown" ]; then \
+        echo "Tiny CUDA NN wheel $TCNN_CUDA_AMD64_WHEEL for $TARGETPLATFORM exists, installing!" && \
+        pip install --force-reinstall --no-cache-dir /modulus-sym/deps/$TCNN_CUDA_AMD64_WHEEL; \
+    elif [ "$TARGETPLATFORM" = "linux/arm64" ] && [ "$TCNN_CUDA_ARM64_WHEEL" != "unknown" ]; then \
+        echo "Tiny CUDA NN wheel $TCNN_CUDA_ARM64_WHEEL for $TARGETPLATFORM exists, installing!" && \
+        pip install --force-reinstall --no-cache-dir /modulus-sym/deps/$TCNN_CUDA_ARM64_WHEEL; \
     else \
         echo "No Tiny CUDA NN wheel present, building from source" && \
 	pip install --no-cache-dir git+https://github.com/NVlabs/tiny-cuda-nn/@master#subdirectory=bindings/torch; \	

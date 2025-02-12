@@ -28,6 +28,9 @@ RUN apt-get update && \
     git lfs install
 
 # install vtk
+ARG VTK_ARM64_WHEEL
+ENV VTK_ARM64_WHEEL=${VTK_ARM64_WHEEL:-unknown}
+
 COPY . /modulus-sym/
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ] && [ "$VTK_ARM64_WHEEL" != "unknown" ]; then \
         echo "VTK wheel $VTK_ARM64_WHEEL for $TARGETPLATFORM exists, installing!" && \
@@ -54,6 +57,12 @@ RUN pip install --no-cache-dir "hydra-core>=1.2.0" "termcolor>=2.1.1" "chaospy>=
 RUN pip install --no-cache-dir warp-lang
 
 # Install tiny-cuda-nn
+ARG TCNN_CUDA_AMD64_WHEEL
+ENV TCNN_CUDA_AMD64_WHEEL=${TCNN_CUDA_AMD64_WHEEL:-unknown}
+
+ARG TCNN_CUDA_ARM64_WHEEL
+ENV TCNN_CUDA_ARM64_WHEEL=${TCNN_CUDA_ARM64_WHEEL:-unknown}
+
 ENV TCNN_CUDA_ARCHITECTURES="60;70;75;80;86;90"
 RUN if [ "$TARGETPLATFORM" = "linux/amd64" ] && [ "$TCNN_CUDA_AMD64_WHEEL" != "unknown" ]; then \
         echo "Tiny CUDA NN wheel $TCNN_CUDA_AMD64_WHEEL for $TARGETPLATFORM exists, installing!" && \

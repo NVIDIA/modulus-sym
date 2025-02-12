@@ -17,13 +17,14 @@ such models can help solve real world problems.
 |[Spring-mass system ODE](./ode_spring_mass/)| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
 |[Surface PDE](./surface_pde/)| Fully Connected MLP PINN |Introductory|Steady state, Multi-GPU|
 
-## Turbulence
+## Fluid Dynamics
 
-|Use case|Model|Level|Attributes|
-| --- | --- | --- | --- |
-|[Taylor-Green](./taylor_green/)| Fully Connected MLP PINN | Intermediate |Steady state, Multi-GPU|
-|[Turbulent channel](./turbulent_channel/)| Fourier Feature MLP PINN |Intermediate|Steady state, Multi-GPU|
-|[Turbulent super-resolution](./super_resolution/)| Super Resolution Network, Pix2Pix |Intermediate|Steady state, Multi-GPU|
+| Use case                                          | Model                             | Level        | Attributes         |
+|---------------------------------------------------|-----------------------------------|--------------|--------------------|
+| [Taylor-Green](./taylor_green/)                   | Fully Connected MLP PINN          | Intermediate | Steady state, Multi-GPU |
+| [Turbulent channel](./turbulent_channel/)         | Fourier Feature MLP PINN          | Intermediate | Steady state, Multi-GPU |
+| [Turbulent super-resolution](./super_resolution/) | Super Resolution Network, Pix2Pix | Intermediate | Steady state, Multi-GPU | 
+| [Airfoil Aerodynamics](./airfoil_pinn/)           | Fully Connected MLP PINN          | Intermediate | Steady state       |
 
 ## Electromagnetics
 
